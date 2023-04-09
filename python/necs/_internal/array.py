@@ -3,8 +3,8 @@ import typing
 import numpy as np
 import numpy.typing as npt
 
+import necs.necs
 from necs._internal.element_type import ElementType
-from necs.necs import assign_value_at_indices
 
 _ints: typing.TypeAlias = (
     np.int8
@@ -19,10 +19,11 @@ _ints: typing.TypeAlias = (
 
 
 class Array(typing.Generic[ElementType]):
-    __slots__ = "_array", "_indices"
+    __slots__ = "_array", "_indices", "_assign_value_at_indices"
 
     _array: npt.NDArray[ElementType]
     _indices: npt.NDArray[np.uint64] | None
+    _assign_value_at_indices: typing.Any
 
     def __init__(
         self,
@@ -31,6 +32,19 @@ class Array(typing.Generic[ElementType]):
     ) -> None:
         self._array = array
         self._indices = indices
+        self._assign_value_at_indices = {
+            np.bool_: necs.necs.assign_value_at_indices_bool,
+            np.int8: necs.necs.assign_value_at_indices_i8,
+            np.int16: necs.necs.assign_value_at_indices_i16,
+            np.int32: necs.necs.assign_value_at_indices_i32,
+            np.int64: necs.necs.assign_value_at_indices_i64,
+            np.uint8: necs.necs.assign_value_at_indices_u8,
+            np.uint16: necs.necs.assign_value_at_indices_u16,
+            np.uint32: necs.necs.assign_value_at_indices_u32,
+            np.uint64: necs.necs.assign_value_at_indices_u64,
+            np.float32: necs.necs.assign_value_at_indices_f32,
+            np.float64: necs.necs.assign_value_at_indices_f64,
+        }[array.dtype.type]
 
     @typing.overload
     def __getitem__(
@@ -95,18 +109,22 @@ class Array(typing.Generic[ElementType]):
     def __setitem__(self, key: typing.Any, value: typing.Any) -> None:
         if isinstance(key, list | tuple | np.ndarray):
             if self._indices is None:
-                assign_value_at_indices(
-                    array=self._array,
-                    indices=np.arange(len(self._array), dtype=np.uint64)[key],
-                    value=value,
+                self._assign_value_at_indices(
+                    self._array,
+                    np.arange(len(self._array), dtype=np.uint64)[key],
+                    value,
                 )
             else:
-                assign_value_at_indices(self._array, self._indices[key], value)
+                self._assign_value_at_indices(
+                    self._array, self._indices[key], value
+                )
         elif isinstance(key, slice):
             if self._indices is None:
                 self._array[key] = value
             else:
-                assign_value_at_indices(self._array, self._indices[key], value)
+                self._assign_value_at_indices(
+                    self._array, self._indices[key], value
+                )
         else:
             if self._indices is None:
                 self._array[key] = value

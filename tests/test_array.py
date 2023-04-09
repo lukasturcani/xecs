@@ -90,3 +90,30 @@ def test_mulitple_complex_indices_reach_correct_elements() -> None:
     xs[:] = 1.0
     assert np.sum(numpy_array) == 2.0
     assert np.sum(numpy_array[[8, 9]]) == 2.0
+
+
+def test_setitem() -> None:
+    dtypes = (
+        bool,
+        np.int8,
+        np.int16,
+        np.int32,
+        np.int64,
+        np.uint8,
+        np.uint16,
+        np.uint32,
+        np.uint64,
+        np.float32,
+        np.float64,
+    )
+    for dtype in dtypes:
+        numpy_array = np.zeros(10, dtype=dtype)
+        array = ecs.Array(numpy_array)
+        array[:] = 1
+        assert np.sum(numpy_array) == len(numpy_array)
+
+        numpy_array = np.zeros(10, dtype=dtype)
+        array = ecs.Array(numpy_array)
+        array[[0, 5]] = dtype(1)
+        assert np.sum(numpy_array[:]) == 2
+        assert np.sum(numpy_array[[0, 5]]) == 2

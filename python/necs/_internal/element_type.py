@@ -13,8 +13,6 @@ ElementType = typing.TypeVar(
     np.uint16,
     np.uint32,
     np.uint64,
-    np.float16,
     np.float32,
     np.float64,
-    np.float128,
 )
