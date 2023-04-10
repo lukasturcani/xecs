@@ -9,10 +9,13 @@ use std::sync::{Arc, RwLock};
 struct Array<T>(Arc<RwLock<Vec<T>>>);
 
 fn cannot_read<T>(_err: T) -> PyErr {
-    PyRuntimeError::new_err("cannot read aray")
+    PyRuntimeError::new_err("cannot read array")
 }
 fn cannot_write<T>(_err: T) -> PyErr {
-    PyRuntimeError::new_err("cannot mutate aray")
+    PyRuntimeError::new_err("cannot mutate array")
+}
+fn bad_index() -> PyErr {
+    PyIndexError::new_err("index out of range")
 }
 
 impl<T> Array<T>
@@ -42,34 +45,55 @@ struct ArrayView<T> {
 }
 
 #[derive(FromPyObject)]
-enum SetItemKey<'a> {
+enum Key<'a> {
     Slice(&'a PySlice),
     Indices(Vec<usize>),
+    Mask(Vec<bool>),
 }
 
 impl<T> ArrayView<T>
 where
     T: numpy::Element + Copy,
 {
-    fn __getitem__(&self, key: Vec<usize>) -> PyResult<Self> {
-        let mut indices = Vec::with_capacity(key.len());
-        for index in key {
-            indices.push(
-                *self
-                    .indices
-                    .get(index)
-                    .ok_or_else(|| PyIndexError::new_err(format!("index {index} out of bounds")))?,
-            );
-        }
+    fn __getitem__(&self, key: Key) -> PyResult<Self> {
+        let indices = match key {
+            Key::Slice(slice) => {
+                println!("slice");
+                let mut new_indices = Vec::with_capacity(self.indices.len());
+                let indices = slice.indices(self.indices.len() as i64)?;
+                for index in (indices.start..indices.stop).step_by(indices.step as usize) {
+                    new_indices.push(*unsafe { self.indices.get_unchecked(index as usize) })
+                }
+                new_indices
+            }
+            Key::Indices(indices) => {
+                println!("indices");
+                let mut new_indices = Vec::with_capacity(indices.len());
+                for index in indices {
+                    new_indices.push(*self.indices.get(index).ok_or_else(bad_index)?);
+                }
+                new_indices
+            }
+            Key::Mask(mask) => {
+                let mut new_indices = Vec::with_capacity(self.indices.len());
+                for (keep, &index) in mask.into_iter().zip(self.indices.iter()) {
+                    if keep {
+                        new_indices.push(index);
+                    }
+                }
+                println!("{:#?}", new_indices);
+                new_indices
+            }
+        };
         Ok(Self {
             array: Arc::clone(&self.array),
             indices,
         })
     }
 
-    fn __setitem__(&mut self, key: SetItemKey, value: T) -> PyResult<()> {
+    fn __setitem__(&mut self, key: Key, value: T) -> PyResult<()> {
         match key {
-            SetItemKey::Slice(slice) => {
+            Key::Slice(slice) => {
                 let indices = slice.indices(self.indices.len() as i64)?;
                 let mut array = self.array.write().map_err(cannot_write)?;
                 for index in (indices.start..indices.stop).step_by(indices.step as usize) {
@@ -79,13 +103,24 @@ where
                     };
                 }
             }
-            SetItemKey::Indices(indices) => {
+            Key::Indices(indices) => {
                 let mut array = self.array.write().map_err(cannot_write)?;
                 for index in indices {
+                    let array_index = *self.indices.get(index as usize).ok_or_else(bad_index)?;
                     unsafe {
-                        *array.get_unchecked_mut(*self.indices.get_unchecked(index as usize)) =
-                            value;
-                    };
+                        *array.get_unchecked_mut(array_index) = value;
+                    }
+                }
+            }
+            Key::Mask(mask) => {
+                let mut array = self.array.write().map_err(cannot_write)?;
+                for (keep, &index) in mask.into_iter().zip(self.indices.iter()) {
+                    if keep {
+                        unsafe {
+                            *array.get_unchecked_mut(*self.indices.get_unchecked(index as usize)) =
+                                value;
+                        }
+                    }
                 }
             }
         }
@@ -127,11 +162,11 @@ struct ArrayViewF64(ArrayView<f64>);
 
 #[pymethods]
 impl ArrayViewF64 {
-    fn __getitem__(&self, key: Vec<usize>) -> PyResult<Self> {
+    fn __getitem__(&self, key: Key) -> PyResult<Self> {
         Ok(Self(self.0.__getitem__(key)?))
     }
 
-    fn __setitem__(&mut self, key: SetItemKey, value: f64) -> PyResult<()> {
+    fn __setitem__(&mut self, key: Key, value: f64) -> PyResult<()> {
         self.0.__setitem__(key, value)
     }
 }
