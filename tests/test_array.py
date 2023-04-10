@@ -7,6 +7,10 @@ def indices(xs: list[int]) -> npt.NDArray[np.uint64]:
     return np.array(xs, dtype=np.uint64)
 
 
+def mask(xs: list[int]) -> npt.NDArray[np.bool_]:
+    return np.array(xs, dtype=np.bool_)
+
+
 def test_indexing_with_array_of_indices_does_not_return_a_copy() -> None:
     array = ecs.ArrayF64.from_numpy(np.zeros(100, dtype=np.float64))
     assert np.sum(array.numpy()) == 0
@@ -31,7 +35,7 @@ def test_indexing_with_boolean_mask_does_not_return_a_copy() -> None:
     array = ecs.ArrayF64.from_numpy(np.zeros(5, dtype=np.float64))
     assert np.sum(array.numpy()) == 0
     view = array.view()
-    sub_view = view[indices([True, False, True, False, True])]
+    sub_view = view[mask([True, False, True, False, True])]
     sub_view[:] = 1.0
     assert np.sum(array.numpy()) == 3
     assert np.sum(array.numpy()[[0, 2, 4]]) == 3
@@ -41,14 +45,13 @@ def test_assigning_with_boolean_mask_does_not_return_a_copy() -> None:
     array = ecs.ArrayF64.from_numpy(np.zeros(5, dtype=np.float64))
     assert np.sum(array.numpy()) == 0
     view = array.view()
-    view[indices([True, False, True, False, True])] = 1.0
+    view[mask([True, False, True, False, True])] = 1.0
     assert np.sum(array.numpy()) == 3
     assert np.sum(array.numpy()[[0, 2, 4]]) == 3
 
     view[:] = np.arange(len(array.numpy()), dtype=np.float64)
     assert np.sum(array.numpy()) == 1 + 2 + 3 + 4
-    mask = list(array.numpy() < 3)
-    view[list(mask)] = 100.0
+    view[array.numpy() < 3] = 100.0
     assert np.sum(array.numpy()) == 300 + 3 + 4
 
 
