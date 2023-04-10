@@ -1,3 +1,4 @@
+use itertools::izip;
 use numpy::PyArray1;
 use pyo3::{
     exceptions::{PyIndexError, PyRuntimeError},
@@ -47,8 +48,14 @@ struct ArrayView<T> {
 #[derive(FromPyObject)]
 enum Key<'a> {
     Slice(&'a PySlice),
-    Indices(Vec<usize>),
     Mask(Vec<bool>),
+    Indices(Vec<usize>),
+}
+
+#[derive(FromPyObject)]
+enum Value<T> {
+    One(T),
+    Many(Vec<T>),
 }
 
 impl<T> ArrayView<T>
@@ -58,7 +65,6 @@ where
     fn __getitem__(&self, key: Key) -> PyResult<Self> {
         let indices = match key {
             Key::Slice(slice) => {
-                println!("slice");
                 let mut new_indices = Vec::with_capacity(self.indices.len());
                 let indices = slice.indices(self.indices.len() as i64)?;
                 for index in (indices.start..indices.stop).step_by(indices.step as usize) {
@@ -67,7 +73,6 @@ where
                 new_indices
             }
             Key::Indices(indices) => {
-                println!("indices");
                 let mut new_indices = Vec::with_capacity(indices.len());
                 for index in indices {
                     new_indices.push(*self.indices.get(index).ok_or_else(bad_index)?);
@@ -81,7 +86,6 @@ where
                         new_indices.push(index);
                     }
                 }
-                println!("{:#?}", new_indices);
                 new_indices
             }
         };
@@ -91,50 +95,75 @@ where
         })
     }
 
-    fn __setitem__(&mut self, key: Key, value: T) -> PyResult<()> {
-        match key {
-            Key::Slice(slice) => {
+    fn __setitem__(&mut self, key: Key, value: Value<T>) -> PyResult<()> {
+        match (key, value) {
+            (Key::Slice(slice), Value::One(item)) => {
                 let indices = slice.indices(self.indices.len() as i64)?;
                 let mut array = self.array.write().map_err(cannot_write)?;
                 for index in (indices.start..indices.stop).step_by(indices.step as usize) {
                     unsafe {
                         *array.get_unchecked_mut(*self.indices.get_unchecked(index as usize)) =
-                            value;
+                            item;
                     };
                 }
             }
-            Key::Indices(indices) => {
+            (Key::Indices(indices), Value::One(item)) => {
                 let mut array = self.array.write().map_err(cannot_write)?;
                 for index in indices {
                     let array_index = *self.indices.get(index as usize).ok_or_else(bad_index)?;
                     unsafe {
-                        *array.get_unchecked_mut(array_index) = value;
+                        *array.get_unchecked_mut(array_index) = item;
                     }
                 }
             }
-            Key::Mask(mask) => {
+            (Key::Mask(mask), Value::One(item)) => {
                 let mut array = self.array.write().map_err(cannot_write)?;
                 for (keep, &index) in mask.into_iter().zip(self.indices.iter()) {
                     if keep {
                         unsafe {
                             *array.get_unchecked_mut(*self.indices.get_unchecked(index as usize)) =
-                                value;
+                                item;
+                        }
+                    }
+                }
+            }
+            (Key::Slice(slice), Value::Many(items)) => {
+                let indices = slice.indices(self.indices.len() as i64)?;
+                let mut array = self.array.write().map_err(cannot_write)?;
+                for (index, item) in (indices.start..indices.stop)
+                    .step_by(indices.step as usize)
+                    .zip(items)
+                {
+                    unsafe {
+                        *array.get_unchecked_mut(*self.indices.get_unchecked(index as usize)) =
+                            item;
+                    };
+                }
+            }
+            (Key::Indices(indices), Value::Many(items)) => {
+                let mut array = self.array.write().map_err(cannot_write)?;
+                for (index, item) in indices.into_iter().zip(items) {
+                    let array_index = *self.indices.get(index as usize).ok_or_else(bad_index)?;
+                    unsafe {
+                        *array.get_unchecked_mut(array_index) = item;
+                    }
+                }
+            }
+            (Key::Mask(mask), Value::Many(items)) => {
+                let mut array = self.array.write().map_err(cannot_write)?;
+                for (keep, &index, item) in
+                    izip!(mask.into_iter(), self.indices.iter(), items.into_iter())
+                {
+                    if keep {
+                        unsafe {
+                            *array.get_unchecked_mut(*self.indices.get_unchecked(index as usize)) =
+                                item;
                         }
                     }
                 }
             }
         }
         Ok(())
-    }
-}
-
-fn assign_value_at_indices<T: Copy>(array: &PyArray1<T>, indices: Vec<usize>, value: T) {
-    let start = array.data();
-    unsafe {
-        for index in indices {
-            let item_pointer = start.add(index);
-            *item_pointer = value;
-        }
     }
 }
 
@@ -166,64 +195,9 @@ impl ArrayViewF64 {
         Ok(Self(self.0.__getitem__(key)?))
     }
 
-    fn __setitem__(&mut self, key: Key, value: f64) -> PyResult<()> {
+    fn __setitem__(&mut self, key: Key, value: Value<f64>) -> PyResult<()> {
         self.0.__setitem__(key, value)
     }
-}
-
-#[pyfunction]
-fn assign_value_at_indices_bool(array: &PyArray1<bool>, indices: Vec<usize>, value: bool) {
-    assign_value_at_indices(array, indices, value)
-}
-
-#[pyfunction]
-fn assign_value_at_indices_i8(array: &PyArray1<i8>, indices: Vec<usize>, value: i8) {
-    assign_value_at_indices(array, indices, value)
-}
-
-#[pyfunction]
-fn assign_value_at_indices_i16(array: &PyArray1<i16>, indices: Vec<usize>, value: i16) {
-    assign_value_at_indices(array, indices, value)
-}
-
-#[pyfunction]
-fn assign_value_at_indices_i32(array: &PyArray1<i32>, indices: Vec<usize>, value: i32) {
-    assign_value_at_indices(array, indices, value)
-}
-
-#[pyfunction]
-fn assign_value_at_indices_i64(array: &PyArray1<i64>, indices: Vec<usize>, value: i64) {
-    assign_value_at_indices(array, indices, value)
-}
-
-#[pyfunction]
-fn assign_value_at_indices_u8(array: &PyArray1<u8>, indices: Vec<usize>, value: u8) {
-    assign_value_at_indices(array, indices, value)
-}
-
-#[pyfunction]
-fn assign_value_at_indices_u16(array: &PyArray1<u16>, indices: Vec<usize>, value: u16) {
-    assign_value_at_indices(array, indices, value)
-}
-
-#[pyfunction]
-fn assign_value_at_indices_u32(array: &PyArray1<u32>, indices: Vec<usize>, value: u32) {
-    assign_value_at_indices(array, indices, value)
-}
-
-#[pyfunction]
-fn assign_value_at_indices_u64(array: &PyArray1<u64>, indices: Vec<usize>, value: u64) {
-    assign_value_at_indices(array, indices, value)
-}
-
-#[pyfunction]
-fn assign_value_at_indices_f32(array: &PyArray1<f32>, indices: Vec<usize>, value: f32) {
-    assign_value_at_indices(array, indices, value)
-}
-
-#[pyfunction]
-fn assign_value_at_indices_f64(array: &PyArray1<f64>, indices: Vec<usize>, value: f64) {
-    assign_value_at_indices(array, indices, value)
 }
 
 /// A Python module implemented in Rust.
@@ -231,16 +205,5 @@ fn assign_value_at_indices_f64(array: &PyArray1<f64>, indices: Vec<usize>, value
 fn necs(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<ArrayF64>()?;
     m.add_class::<ArrayViewF64>()?;
-    m.add_function(wrap_pyfunction!(assign_value_at_indices_bool, m)?)?;
-    m.add_function(wrap_pyfunction!(assign_value_at_indices_i8, m)?)?;
-    m.add_function(wrap_pyfunction!(assign_value_at_indices_i16, m)?)?;
-    m.add_function(wrap_pyfunction!(assign_value_at_indices_i32, m)?)?;
-    m.add_function(wrap_pyfunction!(assign_value_at_indices_i64, m)?)?;
-    m.add_function(wrap_pyfunction!(assign_value_at_indices_u8, m)?)?;
-    m.add_function(wrap_pyfunction!(assign_value_at_indices_u16, m)?)?;
-    m.add_function(wrap_pyfunction!(assign_value_at_indices_u32, m)?)?;
-    m.add_function(wrap_pyfunction!(assign_value_at_indices_u64, m)?)?;
-    m.add_function(wrap_pyfunction!(assign_value_at_indices_f32, m)?)?;
-    m.add_function(wrap_pyfunction!(assign_value_at_indices_f64, m)?)?;
     Ok(())
 }

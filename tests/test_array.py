@@ -33,88 +33,53 @@ def test_indexing_with_boolean_mask_does_not_return_a_copy() -> None:
 
 
 def test_assigning_with_boolean_mask_does_not_return_a_copy() -> None:
-    numpy_array = np.zeros(5, dtype=np.float64)
-    assert np.sum(numpy_array) == 0
-    array = ecs.Array(numpy_array)
-    array[[True, False, True, False, True]] = 1.0
-    assert np.sum(numpy_array) == 3
-    assert np.sum(numpy_array[[0, 2, 4]]) == 3
+    array = ecs.ArrayF64.from_numpy(np.zeros(5, dtype=np.float64))
+    assert np.sum(array.numpy()) == 0
+    view = array.view()
+    view[[True, False, True, False, True]] = 1.0
+    assert np.sum(array.numpy()) == 3
+    assert np.sum(array.numpy()[[0, 2, 4]]) == 3
 
-    array[:] = np.arange(len(numpy_array), dtype=np.float64)
-    assert np.sum(numpy_array) == 1 + 2 + 3 + 4
-    array[numpy_array < 3] = 100.0
-    assert np.sum(numpy_array) == 300 + 3 + 4
+    view[:] = np.arange(len(array.numpy()), dtype=np.float64)
+    assert np.sum(array.numpy()) == 1 + 2 + 3 + 4
+    mask = list(array.numpy() < 3)
+    view[list(mask)] = 100.0
+    assert np.sum(array.numpy()) == 300 + 3 + 4
 
 
 def test_indexing_with_slice_does_not_return_a_copy() -> None:
-    numpy_array = np.zeros(100, dtype=np.float64)
-    assert np.sum(numpy_array) == 0
-    array = ecs.Array(numpy_array)
-    sub_array = array[5:8]
-    sub_array[:] = 1.0
-    assert np.sum(numpy_array) == 3
-    assert np.sum(numpy_array[5:8]) == 3
+    array = ecs.ArrayF64.from_numpy(np.zeros(100, dtype=np.float64))
+    assert np.sum(array.numpy()) == 0
+    view = array.view()
+    sub_view = view[5:8]
+    sub_view[:] = 1.0
+    assert np.sum(array.numpy()) == 3
+    assert np.sum(array.numpy()[5:8]) == 3
 
 
 def test_assigning_with_slice_does_not_return_a_copy() -> None:
-    numpy_array = np.zeros(100, dtype=np.float64)
-    assert np.sum(numpy_array) == 0
-    array = ecs.Array(numpy_array)
-    array[5:8] = 1.0
-    assert np.sum(numpy_array) == 3
-    assert np.sum(numpy_array[5:8]) == 3
-    array[5:8] = np.array([1.0, 2.0, 3.0])
-    assert np.sum(numpy_array) == 6
-    assert np.sum(numpy_array[5:8]) == 6
-    array[5:8] = [10.0, 20.0, 30.0]
-    assert np.sum(numpy_array) == 60
-    assert np.sum(numpy_array[5:8]) == 60
-    array[5:8] = (100.0, 200.0, 300.0)
-    assert np.sum(numpy_array) == 600
-    assert np.sum(numpy_array[5:8]) == 600
-
-
-def test_assigning_with_number_does_not_return_a_copy() -> None:
-    numpy_array = np.zeros(100, dtype=np.float64)
-    assert np.sum(numpy_array) == 0
-    array = ecs.Array(numpy_array)
-    array[5] = 1.0
-    assert np.sum(numpy_array) == 1
-    assert numpy_array[5] == 1
+    array = ecs.ArrayF64.from_numpy(np.zeros(100, dtype=np.float64))
+    assert np.sum(array.numpy()) == 0
+    view = array.view()
+    view[5:8] = 1.0
+    assert np.sum(array.numpy()) == 3
+    assert np.sum(array.numpy()[5:8]) == 3
+    view[5:8] = np.array([1.0, 2.0, 3.0])
+    assert np.sum(array.numpy()) == 6
+    assert np.sum(array.numpy()[5:8]) == 6
+    view[5:8] = [10.0, 20.0, 30.0]
+    assert np.sum(array.numpy()) == 60
+    assert np.sum(array.numpy()[5:8]) == 60
+    view[5:8] = (100.0, 200.0, 300.0)
+    assert np.sum(array.numpy()) == 600
+    assert np.sum(array.numpy()[5:8]) == 600
 
 
 def test_mulitple_complex_indices_reach_correct_elements() -> None:
-    numpy_array = np.zeros(10, dtype=np.float64)
-    array = ecs.Array(numpy_array)
-    xs = array[[7, 8, 9]]
-    xs = xs[[1, 2]]
-    xs[:] = 1.0
-    assert np.sum(numpy_array) == 2.0
-    assert np.sum(numpy_array[[8, 9]]) == 2.0
-
-
-def test_setitem() -> None:
-    dtypes = (
-        bool,
-        np.int8,
-        np.int16,
-        np.int32,
-        np.int64,
-        np.uint8,
-        np.uint16,
-        np.uint32,
-        np.uint64,
-        np.float32,
-        np.float64,
-    )
-    for dtype in dtypes:
-        numpy_array = np.zeros(10, dtype=dtype)
-        array = ecs.Array(numpy_array)
-        array[:] = 1
-        assert np.sum(numpy_array) == len(numpy_array)
-
-        numpy_array = np.zeros(10, dtype=dtype)
-        array = ecs.Array(numpy_array)
-        array[[0, 5]] = dtype(1)
-        assert np.sum(numpy_array[:]) == 2
-        assert np.sum(numpy_array[[0, 5]]) == 2
+    array = ecs.ArrayF64.from_numpy(np.zeros(10, dtype=np.float64))
+    view = array.view()
+    view = view[[7, 8, 9]]
+    view = view[[1, 2]]
+    view[:] = 1.0
+    assert np.sum(array.numpy()) == 2.0
+    assert np.sum(array.numpy()[[8, 9]]) == 2.0

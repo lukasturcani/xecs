@@ -3,7 +3,6 @@ import typing
 import numpy as np
 import numpy.typing as npt
 
-import necs.necs
 from necs._internal.element_type import ElementType
 
 _ints: typing.TypeAlias = (
@@ -32,19 +31,6 @@ class Array(typing.Generic[ElementType]):
     ) -> None:
         self._array = array
         self._indices = indices
-        self._assign_value_at_indices = {
-            np.bool_: necs.necs.assign_value_at_indices_bool,
-            np.int8: necs.necs.assign_value_at_indices_i8,
-            np.int16: necs.necs.assign_value_at_indices_i16,
-            np.int32: necs.necs.assign_value_at_indices_i32,
-            np.int64: necs.necs.assign_value_at_indices_i64,
-            np.uint8: necs.necs.assign_value_at_indices_u8,
-            np.uint16: necs.necs.assign_value_at_indices_u16,
-            np.uint32: necs.necs.assign_value_at_indices_u32,
-            np.uint64: necs.necs.assign_value_at_indices_u64,
-            np.float32: necs.necs.assign_value_at_indices_f32,
-            np.float64: necs.necs.assign_value_at_indices_f64,
-        }[array.dtype.type]
 
     @typing.overload
     def __getitem__(
