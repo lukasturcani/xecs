@@ -193,6 +193,12 @@ impl ArrayF64 {
     }
 }
 
+#[derive(FromPyObject)]
+enum ValueF64<'a> {
+    One(f64),
+    Many(&'a PyArray1<f64>),
+}
+
 #[pyclass]
 struct ArrayViewF64(ArrayView<f64>);
 
@@ -202,8 +208,11 @@ impl ArrayViewF64 {
         Ok(Self(self.0.__getitem__(key)?))
     }
 
-    fn __setitem__(&mut self, key: Key, value: Value<f64>) -> PyResult<()> {
-        self.0.__setitem__(key, value)
+    fn __setitem__(&mut self, key: Key, value: ValueF64) -> PyResult<()> {
+        match value {
+            ValueF64::One(one) => self.0.__setitem__(key, Value::One(one)),
+            ValueF64::Many(many) => self.0.__setitem__(key, Value::Many(many)),
+        }
     }
 
     fn __len__(&self) -> usize {
