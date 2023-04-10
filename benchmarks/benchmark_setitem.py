@@ -15,7 +15,7 @@ def benchmark_numpy_setitem_indices_one(
     generator = np.random.default_rng(55)
     key = np.array(
         np.where(generator.random(len(array)) < key_size)[0],
-        dtype=np.uint64,
+        dtype=np.uint32,
     )
     benchmark(numpy_setitem, array, key, 123.0)
 
@@ -29,7 +29,7 @@ def benchmark_necs_setitem_indices_one(
     generator = np.random.default_rng(55)
     key = np.array(
         np.where(generator.random(len(view)) < key_size)[0],
-        dtype=np.uint64,
+        dtype=np.uint32,
     )
     benchmark(necs_setitem, view, key, 123.0)
 
@@ -43,7 +43,7 @@ def benchmark_numpy_setitem_indices_many(
     generator = np.random.default_rng(55)
     key = np.array(
         np.where(generator.random(len(array)) < key_size)[0],
-        dtype=np.uint64,
+        dtype=np.uint32,
     )
     value = generator.random(len(key), dtype=np.float64)
     benchmark(numpy_setitem, array, key, value)
@@ -58,7 +58,7 @@ def benchmark_necs_setitem_indices_many(
     generator = np.random.default_rng(55)
     key = np.array(
         np.where(generator.random(len(view)) < key_size)[0],
-        dtype=np.uint64,
+        dtype=np.uint32,
     )
     value = generator.random(len(key), dtype=np.float64)
     benchmark(necs_setitem, view, key, value)
@@ -66,7 +66,7 @@ def benchmark_necs_setitem_indices_many(
 
 def numpy_setitem(
     array: npt.NDArray[np.float64],
-    key: npt.NDArray[np.uint64],
+    key: npt.NDArray[np.uint32],
     value: float | npt.NDArray[np.float64],
 ) -> None:
     array[key] = value
@@ -98,7 +98,7 @@ def benchmark_necs_setitem_mask_many(
 
 def necs_setitem(
     view: ecs.ArrayViewF64,
-    key: npt.NDArray[np.uint64],
+    key: npt.NDArray[np.uint32],
     value: float | npt.NDArray[np.float64],
 ) -> None:
     view[key] = value

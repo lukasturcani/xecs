@@ -15,7 +15,7 @@ def benchmark_numpy_getitem_indices(
     generator = np.random.default_rng(55)
     key = np.array(
         np.where(generator.random(len(array)) < key_size)[0],
-        dtype=np.uint64,
+        dtype=np.uint32,
     )
     benchmark(numpy_getitem, array, key)
 
@@ -29,7 +29,7 @@ def benchmark_necs_getitem_indices(
     generator = np.random.default_rng(55)
     key = np.array(
         np.where(generator.random(len(view)) < key_size)[0],
-        dtype=np.uint64,
+        dtype=np.uint32,
     )
     benchmark(necs_getitem, view, key)
 
@@ -58,14 +58,14 @@ def benchmark_necs_getitem_mask(
 
 def numpy_getitem(
     array: npt.NDArray[np.float64],
-    key: npt.NDArray[np.uint64 | np.bool_],
+    key: npt.NDArray[np.uint32 | np.bool_],
 ) -> None:
     array[key]
 
 
 def necs_getitem(
     view: ecs.ArrayViewF64,
-    key: npt.NDArray[np.uint64 | np.bool_],
+    key: npt.NDArray[np.uint32 | np.bool_],
 ) -> None:
     view[key]
 

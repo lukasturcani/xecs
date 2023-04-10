@@ -26,7 +26,7 @@ class _Array(typing.Generic[ElementType, ViewType]):
     def numpy(self) -> npt.NDArray[ElementType]: ...
     def view(self) -> ViewType: ...
 
-Key: typing.TypeAlias = npt.NDArray[np.uint64 | np.bool_] | slice
+Key: typing.TypeAlias = npt.NDArray[np.uint32 | np.bool_] | slice
 
 class ArrayViewF64:
     def __getitem__(self, key: Key) -> typing.Self:

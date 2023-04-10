@@ -35,20 +35,20 @@ where
     fn view(&self) -> PyResult<ArrayView<T>> {
         Ok(ArrayView {
             array: Arc::clone(&self.0),
-            indices: (0..self.0.read().map_err(cannot_read)?.len()).collect(),
+            indices: (0..self.0.read().map_err(cannot_read)?.len() as u32).collect(),
         })
     }
 }
 
 struct ArrayView<T> {
     array: Arc<RwLock<Vec<T>>>,
-    indices: Vec<usize>,
+    indices: Vec<u32>,
 }
 
 #[derive(FromPyObject)]
 enum Key<'a> {
     Slice(&'a PySlice),
-    ArrayIndices(&'a PyArray1<usize>),
+    ArrayIndices(&'a PyArray1<u32>),
     ArrayMask(&'a PyArray1<bool>),
 }
 
@@ -74,7 +74,7 @@ where
             Key::ArrayIndices(indices) => {
                 let mut new_indices = Vec::with_capacity(indices.len());
                 for &index in indices.readonly().as_array() {
-                    new_indices.push(*self.indices.get(index).ok_or_else(bad_index)?);
+                    new_indices.push(*self.indices.get(index as usize).ok_or_else(bad_index)?);
                 }
                 new_indices
             }
@@ -101,17 +101,18 @@ where
                 let mut array = self.array.write().map_err(cannot_write)?;
                 for index in (indices.start..indices.stop).step_by(indices.step as usize) {
                     unsafe {
-                        *array.get_unchecked_mut(*self.indices.get_unchecked(index as usize)) =
-                            item;
+                        *array.get_unchecked_mut(
+                            *self.indices.get_unchecked(index as usize) as usize
+                        ) = item;
                     };
                 }
             }
             (Key::ArrayIndices(indices), Value::One(item)) => {
                 let mut array = self.array.write().map_err(cannot_write)?;
                 for &index in indices.readonly().as_array() {
-                    let array_index = *self.indices.get(index).ok_or_else(bad_index)?;
+                    let array_index = *self.indices.get(index as usize).ok_or_else(bad_index)?;
                     unsafe {
-                        *array.get_unchecked_mut(array_index) = item;
+                        *array.get_unchecked_mut(array_index as usize) = item;
                     }
                 }
             }
@@ -120,7 +121,9 @@ where
                 for (&keep, &index) in mask.readonly().as_array().iter().zip(self.indices.iter()) {
                     if keep {
                         unsafe {
-                            *array.get_unchecked_mut(*self.indices.get_unchecked(index)) = item;
+                            *array.get_unchecked_mut(
+                                *self.indices.get_unchecked(index as usize) as usize
+                            ) = item;
                         }
                     }
                 }
@@ -133,8 +136,9 @@ where
                     .zip(items.readonly().as_array())
                 {
                     unsafe {
-                        *array.get_unchecked_mut(*self.indices.get_unchecked(index as usize)) =
-                            item;
+                        *array.get_unchecked_mut(
+                            *self.indices.get_unchecked(index as usize) as usize
+                        ) = item;
                     };
                 }
             }
@@ -146,9 +150,9 @@ where
                     .iter()
                     .zip(items.readonly().as_array())
                 {
-                    let array_index = *self.indices.get(index).ok_or_else(bad_index)?;
+                    let array_index = *self.indices.get(index as usize).ok_or_else(bad_index)?;
                     unsafe {
-                        *array.get_unchecked_mut(array_index) = item;
+                        *array.get_unchecked_mut(array_index as usize) = item;
                     }
                 }
             }
@@ -161,7 +165,9 @@ where
                 ) {
                     if keep {
                         unsafe {
-                            *array.get_unchecked_mut(*self.indices.get_unchecked(index)) = item;
+                            *array.get_unchecked_mut(
+                                *self.indices.get_unchecked(index as usize) as usize
+                            ) = item;
                         }
                     }
                 }

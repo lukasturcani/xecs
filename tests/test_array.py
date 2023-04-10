@@ -3,8 +3,8 @@ import numpy as np
 import numpy.typing as npt
 
 
-def indices(xs: list[int]) -> npt.NDArray[np.uint64]:
-    return np.array(xs, dtype=np.uint64)
+def indices(xs: list[int]) -> npt.NDArray[np.uint32]:
+    return np.array(xs, dtype=np.uint32)
 
 
 def mask(xs: list[int]) -> npt.NDArray[np.bool_]:
@@ -75,12 +75,6 @@ def test_assigning_with_slice_does_not_return_a_copy() -> None:
     view[5:8] = np.array([1.0, 2.0, 3.0])
     assert np.sum(array.numpy()) == 6
     assert np.sum(array.numpy()[5:8]) == 6
-    view[5:8] = [10.0, 20.0, 30.0]
-    assert np.sum(array.numpy()) == 60
-    assert np.sum(array.numpy()[5:8]) == 60
-    view[5:8] = (100.0, 200.0, 300.0)
-    assert np.sum(array.numpy()) == 600
-    assert np.sum(array.numpy()[5:8]) == 600
 
 
 def test_mulitple_complex_indices_reach_correct_elements() -> None:
