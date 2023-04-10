@@ -6,8 +6,8 @@ import numpy.typing as npt
 import pytest
 
 
-@pytest.mark.benchmark(group="numpy-getitem-indices")
-def benchmark_numpy_getitem_indices(
+@pytest.mark.benchmark(group="numpy-setitem-indices-one")
+def benchmark_numpy_setitem_indices_one(
     benchmark: typing.Any,
     array: npt.NDArray[np.float64],
     key_size: float,
@@ -17,11 +17,11 @@ def benchmark_numpy_getitem_indices(
         np.where(generator.random(len(array)) < key_size)[0],
         dtype=np.uint64,
     )
-    benchmark(numpy_getitem, array, key)
+    benchmark(numpy_setitem, array, key, 123.0)
 
 
-@pytest.mark.benchmark(group="necs-getitem-indices")
-def benchmark_necs_getitem_indices(
+@pytest.mark.benchmark(group="necs-setitem-indices-one")
+def benchmark_necs_setitem_indices_one(
     benchmark: typing.Any,
     view: ecs.ArrayViewF64,
     key_size: float,
@@ -31,43 +31,53 @@ def benchmark_necs_getitem_indices(
         np.where(generator.random(len(view)) < key_size)[0],
         dtype=np.uint64,
     )
-    benchmark(necs_getitem, view, key)
+    benchmark(necs_setitem, view, key, 123.0)
 
 
-@pytest.mark.benchmark(group="numpy-getitem-mask")
-def benchmark_numpy_getitem_mask(
+@pytest.mark.benchmark(group="numpy-setitem-indices-many")
+def benchmark_numpy_setitem_indices_many(
     benchmark: typing.Any,
     array: npt.NDArray[np.float64],
     key_size: float,
 ) -> None:
     generator = np.random.default_rng(55)
-    key = generator.random(len(array)) < key_size
-    benchmark(numpy_getitem, array, key)
+    key = np.array(
+        np.where(generator.random(len(array)) < key_size)[0],
+        dtype=np.uint64,
+    )
+    value = generator.random(len(key), dtype=np.float64)
+    benchmark(numpy_setitem, array, key, value)
 
 
-@pytest.mark.benchmark(group="necs-getitem-mask")
-def benchmark_necs_getitem_mask(
+@pytest.mark.benchmark(group="necs-setitem-indices-many")
+def benchmark_necs_setitem_indices_many(
     benchmark: typing.Any,
     view: ecs.ArrayViewF64,
     key_size: float,
 ) -> None:
     generator = np.random.default_rng(55)
-    key = generator.random(len(view)) < key_size
-    benchmark(necs_getitem, view, key)
+    key = np.array(
+        np.where(generator.random(len(view)) < key_size)[0],
+        dtype=np.uint64,
+    )
+    value = generator.random(len(key), dtype=np.float64)
+    benchmark(necs_setitem, view, key, value)
 
 
-def numpy_getitem(
+def numpy_setitem(
     array: npt.NDArray[np.float64],
-    key: npt.NDArray[np.uint64 | np.bool_],
+    key: npt.NDArray[np.uint64],
+    value: float | npt.NDArray[np.float64],
 ) -> None:
-    array[key]
+    array[key] = value
 
 
-def necs_getitem(
+def necs_setitem(
     view: ecs.ArrayViewF64,
-    key: npt.NDArray[np.uint64 | np.bool_],
+    key: npt.NDArray[np.uint64],
+    value: float | npt.NDArray[np.float64],
 ) -> None:
-    view[key]
+    view[key] = value
 
 
 @pytest.fixture(
