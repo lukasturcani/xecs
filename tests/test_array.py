@@ -1,23 +1,28 @@
 import necs as ecs
 import numpy as np
+import numpy.typing as npt
 
 
-def test_indexing_with_list_of_indices_does_not_return_a_copy() -> None:
+def indices(xs: list[int]) -> npt.NDArray[np.uint64]:
+    return np.array(xs, dtype=np.uint64)
+
+
+def test_indexing_with_array_of_indices_does_not_return_a_copy() -> None:
     array = ecs.ArrayF64.from_numpy(np.zeros(100, dtype=np.float64))
     assert np.sum(array.numpy()) == 0
     view = array.view()
 
-    sub_view = view[[0, 10, 50]]
+    sub_view = view[indices([0, 10, 50])]
     sub_view[:] = 1.0
     assert np.sum(array.numpy()) == 3
     assert np.sum(array.numpy()[[0, 10, 50]]) == 3
 
 
-def test_assigning_with_list_of_indices_does_not_return_a_copy() -> None:
+def test_assigning_with_array_of_indices_does_not_return_a_copy() -> None:
     array = ecs.ArrayF64.from_numpy(np.zeros(100, dtype=np.float64))
     assert np.sum(array.numpy()) == 0
     view = array.view()
-    view[[0, 10, 50]] = 1.0
+    view[indices([0, 10, 50])] = 1.0
     assert np.sum(array.numpy()) == 3
     assert np.sum(array.numpy()[[0, 10, 50]]) == 3
 
@@ -26,7 +31,7 @@ def test_indexing_with_boolean_mask_does_not_return_a_copy() -> None:
     array = ecs.ArrayF64.from_numpy(np.zeros(5, dtype=np.float64))
     assert np.sum(array.numpy()) == 0
     view = array.view()
-    sub_view = view[[True, False, True, False, True]]
+    sub_view = view[indices([True, False, True, False, True])]
     sub_view[:] = 1.0
     assert np.sum(array.numpy()) == 3
     assert np.sum(array.numpy()[[0, 2, 4]]) == 3
@@ -36,7 +41,7 @@ def test_assigning_with_boolean_mask_does_not_return_a_copy() -> None:
     array = ecs.ArrayF64.from_numpy(np.zeros(5, dtype=np.float64))
     assert np.sum(array.numpy()) == 0
     view = array.view()
-    view[[True, False, True, False, True]] = 1.0
+    view[indices([True, False, True, False, True])] = 1.0
     assert np.sum(array.numpy()) == 3
     assert np.sum(array.numpy()[[0, 2, 4]]) == 3
 
@@ -78,8 +83,8 @@ def test_assigning_with_slice_does_not_return_a_copy() -> None:
 def test_mulitple_complex_indices_reach_correct_elements() -> None:
     array = ecs.ArrayF64.from_numpy(np.zeros(10, dtype=np.float64))
     view = array.view()
-    view = view[[7, 8, 9]]
-    view = view[[1, 2]]
+    view = view[indices([7, 8, 9])]
+    view = view[indices([1, 2])]
     view[:] = 1.0
     assert np.sum(array.numpy()) == 2.0
     assert np.sum(array.numpy()[[8, 9]]) == 2.0

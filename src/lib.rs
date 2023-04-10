@@ -48,13 +48,14 @@ struct ArrayView<T> {
 #[derive(FromPyObject)]
 enum Key<'a> {
     Slice(&'a PySlice),
-    Mask(Vec<bool>),
-    Indices(Vec<usize>),
+    ArrayIndices(&'a PyArray1<usize>),
+    ArrayMask(&'a PyArray1<bool>),
 }
 
 #[derive(FromPyObject)]
 enum Value<T> {
     One(T),
+    // TODO: Check if this is faster as PyArray
     Many(Vec<T>),
 }
 
@@ -72,16 +73,16 @@ where
                 }
                 new_indices
             }
-            Key::Indices(indices) => {
+            Key::ArrayIndices(indices) => {
                 let mut new_indices = Vec::with_capacity(indices.len());
-                for index in indices {
+                for &index in indices.readonly().as_array() {
                     new_indices.push(*self.indices.get(index).ok_or_else(bad_index)?);
                 }
                 new_indices
             }
-            Key::Mask(mask) => {
+            Key::ArrayMask(mask) => {
                 let mut new_indices = Vec::with_capacity(self.indices.len());
-                for (keep, &index) in mask.into_iter().zip(self.indices.iter()) {
+                for (&keep, &index) in mask.readonly().as_array().iter().zip(self.indices.iter()) {
                     if keep {
                         new_indices.push(index);
                     }
@@ -107,22 +108,21 @@ where
                     };
                 }
             }
-            (Key::Indices(indices), Value::One(item)) => {
+            (Key::ArrayIndices(indices), Value::One(item)) => {
                 let mut array = self.array.write().map_err(cannot_write)?;
-                for index in indices {
-                    let array_index = *self.indices.get(index as usize).ok_or_else(bad_index)?;
+                for &index in indices.readonly().as_array() {
+                    let array_index = *self.indices.get(index).ok_or_else(bad_index)?;
                     unsafe {
                         *array.get_unchecked_mut(array_index) = item;
                     }
                 }
             }
-            (Key::Mask(mask), Value::One(item)) => {
+            (Key::ArrayMask(mask), Value::One(item)) => {
                 let mut array = self.array.write().map_err(cannot_write)?;
-                for (keep, &index) in mask.into_iter().zip(self.indices.iter()) {
+                for (&keep, &index) in mask.readonly().as_array().iter().zip(self.indices.iter()) {
                     if keep {
                         unsafe {
-                            *array.get_unchecked_mut(*self.indices.get_unchecked(index as usize)) =
-                                item;
+                            *array.get_unchecked_mut(*self.indices.get_unchecked(index)) = item;
                         }
                     }
                 }
@@ -140,24 +140,25 @@ where
                     };
                 }
             }
-            (Key::Indices(indices), Value::Many(items)) => {
+            (Key::ArrayIndices(indices), Value::Many(items)) => {
                 let mut array = self.array.write().map_err(cannot_write)?;
-                for (index, item) in indices.into_iter().zip(items) {
-                    let array_index = *self.indices.get(index as usize).ok_or_else(bad_index)?;
+                for (&index, item) in indices.readonly().as_array().iter().zip(items) {
+                    let array_index = *self.indices.get(index).ok_or_else(bad_index)?;
                     unsafe {
                         *array.get_unchecked_mut(array_index) = item;
                     }
                 }
             }
-            (Key::Mask(mask), Value::Many(items)) => {
+            (Key::ArrayMask(mask), Value::Many(items)) => {
                 let mut array = self.array.write().map_err(cannot_write)?;
-                for (keep, &index, item) in
-                    izip!(mask.into_iter(), self.indices.iter(), items.into_iter())
-                {
+                for (&keep, &index, item) in izip!(
+                    mask.readonly().as_array().iter(),
+                    self.indices.iter(),
+                    items
+                ) {
                     if keep {
                         unsafe {
-                            *array.get_unchecked_mut(*self.indices.get_unchecked(index as usize)) =
-                                item;
+                            *array.get_unchecked_mut(*self.indices.get_unchecked(index)) = item;
                         }
                     }
                 }
