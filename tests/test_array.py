@@ -14,12 +14,12 @@ def test_indexing_with_list_of_indices_does_not_return_a_copy() -> None:
 
 
 def test_assigning_with_list_of_indices_does_not_return_a_copy() -> None:
-    numpy_array = np.zeros(100, dtype=np.float64)
-    assert np.sum(numpy_array) == 0
-    array = ecs.Array(numpy_array)
-    array[[0, 10, 50]] = 1.0
-    assert np.sum(numpy_array) == 3
-    assert np.sum(numpy_array[[0, 10, 50]]) == 3
+    array = ecs.ArrayF64.from_numpy(np.zeros(100, dtype=np.float64))
+    assert np.sum(array.numpy()) == 0
+    view = array.view()
+    view[[0, 10, 50]] = 1.0
+    assert np.sum(array.numpy()) == 3
+    assert np.sum(array.numpy()[[0, 10, 50]]) == 3
 
 
 def test_indexing_with_boolean_mask_does_not_return_a_copy() -> None:

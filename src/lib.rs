@@ -41,6 +41,12 @@ struct ArrayView<T> {
     indices: Vec<usize>,
 }
 
+#[derive(FromPyObject)]
+enum SetItemKey<'a> {
+    Slice(&'a PySlice),
+    Indices(Vec<usize>),
+}
+
 impl<T> ArrayView<T>
 where
     T: numpy::Element + Copy,
@@ -61,13 +67,27 @@ where
         })
     }
 
-    fn __setitem__(&mut self, key: &PySlice, value: T) -> PyResult<()> {
-        let indices = key.indices(self.indices.len() as i64)?;
-        let mut array = self.array.write().map_err(cannot_write)?;
-        for index in (indices.start..indices.stop).step_by(indices.step as usize) {
-            unsafe {
-                *array.get_unchecked_mut(*self.indices.get_unchecked(index as usize)) = value;
-            };
+    fn __setitem__(&mut self, key: SetItemKey, value: T) -> PyResult<()> {
+        match key {
+            SetItemKey::Slice(slice) => {
+                let indices = slice.indices(self.indices.len() as i64)?;
+                let mut array = self.array.write().map_err(cannot_write)?;
+                for index in (indices.start..indices.stop).step_by(indices.step as usize) {
+                    unsafe {
+                        *array.get_unchecked_mut(*self.indices.get_unchecked(index as usize)) =
+                            value;
+                    };
+                }
+            }
+            SetItemKey::Indices(indices) => {
+                let mut array = self.array.write().map_err(cannot_write)?;
+                for index in indices {
+                    unsafe {
+                        *array.get_unchecked_mut(*self.indices.get_unchecked(index as usize)) =
+                            value;
+                    };
+                }
+            }
         }
         Ok(())
     }
@@ -111,7 +131,7 @@ impl ArrayViewF64 {
         Ok(Self(self.0.__getitem__(key)?))
     }
 
-    fn __setitem__(&mut self, key: &PySlice, value: f64) -> PyResult<()> {
+    fn __setitem__(&mut self, key: SetItemKey, value: f64) -> PyResult<()> {
         self.0.__setitem__(key, value)
     }
 }
