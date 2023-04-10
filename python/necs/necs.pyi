@@ -40,5 +40,6 @@ class ArrayViewF64:
         | npt.NDArray[np.float64],
     ) -> None:
         pass
+    def __len__(self) -> int: ...
 
 class ArrayF64(_Array[np.float64, ArrayViewF64]): ...

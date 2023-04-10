@@ -166,6 +166,9 @@ where
         }
         Ok(())
     }
+    fn __len__(&self) -> usize {
+        self.indices.len()
+    }
 }
 
 #[pyclass]
@@ -198,6 +201,10 @@ impl ArrayViewF64 {
 
     fn __setitem__(&mut self, key: Key, value: Value<f64>) -> PyResult<()> {
         self.0.__setitem__(key, value)
+    }
+
+    fn __len__(&self) -> usize {
+        self.0.__len__()
     }
 }
 
