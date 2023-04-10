@@ -72,6 +72,30 @@ def numpy_setitem(
     array[key] = value
 
 
+@pytest.mark.benchmark(group="numpy-setitem-mask-many")
+def benchmark_numpy_setitem_mask_many(
+    benchmark: typing.Any,
+    array: npt.NDArray[np.float64],
+    key_size: float,
+) -> None:
+    generator = np.random.default_rng(55)
+    key = generator.random(len(array)) < key_size
+    value = generator.random(np.count_nonzero(key), dtype=np.float64)
+    benchmark(numpy_setitem, array, key, value)
+
+
+@pytest.mark.benchmark(group="necs-setitem-mask-many")
+def benchmark_necs_setitem_mask_many(
+    benchmark: typing.Any,
+    view: ecs.ArrayViewF64,
+    key_size: float,
+) -> None:
+    generator = np.random.default_rng(55)
+    key = generator.random(len(view)) < key_size
+    value = generator.random(np.count_nonzero(key), dtype=np.float64)
+    benchmark(necs_setitem, view, key, value)
+
+
 def necs_setitem(
     view: ecs.ArrayViewF64,
     key: npt.NDArray[np.uint64],
