@@ -52,11 +52,9 @@ enum Key<'a> {
     ArrayMask(&'a PyArray1<bool>),
 }
 
-#[derive(FromPyObject)]
-enum Value<T> {
+enum Value<'a, T> {
     One(T),
-    // TODO: Check if this is faster as PyArray
-    Many(Vec<T>),
+    Many(&'a PyArray1<T>),
 }
 
 impl<T> ArrayView<T>
@@ -130,9 +128,9 @@ where
             (Key::Slice(slice), Value::Many(items)) => {
                 let indices = slice.indices(self.indices.len() as i64)?;
                 let mut array = self.array.write().map_err(cannot_write)?;
-                for (index, item) in (indices.start..indices.stop)
+                for (index, &item) in (indices.start..indices.stop)
                     .step_by(indices.step as usize)
-                    .zip(items)
+                    .zip(items.readonly().as_array())
                 {
                     unsafe {
                         *array.get_unchecked_mut(*self.indices.get_unchecked(index as usize)) =
@@ -142,7 +140,12 @@ where
             }
             (Key::ArrayIndices(indices), Value::Many(items)) => {
                 let mut array = self.array.write().map_err(cannot_write)?;
-                for (&index, item) in indices.readonly().as_array().iter().zip(items) {
+                for (&index, &item) in indices
+                    .readonly()
+                    .as_array()
+                    .iter()
+                    .zip(items.readonly().as_array())
+                {
                     let array_index = *self.indices.get(index).ok_or_else(bad_index)?;
                     unsafe {
                         *array.get_unchecked_mut(array_index) = item;
@@ -151,10 +154,10 @@ where
             }
             (Key::ArrayMask(mask), Value::Many(items)) => {
                 let mut array = self.array.write().map_err(cannot_write)?;
-                for (&keep, &index, item) in izip!(
+                for (&keep, &index, &item) in izip!(
                     mask.readonly().as_array().iter(),
                     self.indices.iter(),
-                    items
+                    items.readonly().as_array()
                 ) {
                     if keep {
                         unsafe {
