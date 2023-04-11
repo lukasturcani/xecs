@@ -3,8 +3,12 @@ use pyo3::prelude::*;
 mod array;
 mod array_view;
 mod component_pool;
+mod entity_id;
+mod entity_index;
+mod map;
 mod python_arrays;
 mod query;
+mod set;
 
 /// A Python module implemented in Rust.
 #[pymodule]

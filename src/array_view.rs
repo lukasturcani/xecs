@@ -1,3 +1,4 @@
+use crate::entity_index::EntityIndex;
 use itertools::izip;
 use numpy::PyArray1;
 use pyo3::{
@@ -9,7 +10,7 @@ use std::sync::{Arc, RwLock};
 
 pub struct ArrayView<T> {
     pub array: Arc<RwLock<Vec<T>>>,
-    pub indices: Vec<u32>,
+    pub indices: Vec<EntityIndex>,
 }
 
 impl<T> ArrayView<T>
@@ -138,7 +139,7 @@ where
 #[derive(FromPyObject)]
 pub enum Key<'a> {
     Slice(&'a PySlice),
-    ArrayIndices(&'a PyArray1<u32>),
+    ArrayIndices(&'a PyArray1<EntityIndex>),
     ArrayMask(&'a PyArray1<bool>),
 }
 
