@@ -8,6 +8,8 @@ use pyo3::{
 };
 use std::sync::{Arc, RwLock};
 
+pub struct ComponentPool<T>(Arc<RwLock<Vec<T>>>);
+
 pub struct ArrayView<T> {
     pub array: Arc<RwLock<Vec<T>>>,
     pub indices: Vec<Index>,
@@ -17,6 +19,10 @@ impl<T> ArrayView<T>
 where
     T: numpy::Element + Copy,
 {
+    pub fn create_pool(size: usize) -> ComponentPool<T> {
+        Arc::new(RwLock::new(Vec::))
+    }
+
     pub fn __getitem__(&self, key: Key) -> PyResult<Self> {
         let indices = match key {
             Key::Slice(slice) => {

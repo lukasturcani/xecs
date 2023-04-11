@@ -1,8 +1,8 @@
 import typing
 
-Components = typing.TypeVarTuple("Components")
+T = typing.TypeVar("T")
 
 
-class Query(typing.Generic[*Components]):
-    def result(self) -> tuple[*Components]:
+class Query(typing.Generic[T]):
+    def result(self) -> T:
         ...
