@@ -1,4 +1,4 @@
-import necs as ecs
+import ecstacy as ecs
 import numpy as np
 import numpy.typing as npt
 

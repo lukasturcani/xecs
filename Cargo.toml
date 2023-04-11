@@ -1,11 +1,11 @@
 [package]
-name = "necs"
+name = "ecstacy"
 version = "0.1.0"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [lib]
-name = "necs"
+name = "ecstacy"
 crate-type = ["cdylib"]
 
 [dependencies]

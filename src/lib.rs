@@ -228,7 +228,7 @@ impl ArrayViewF64 {
 
 /// A Python module implemented in Rust.
 #[pymodule]
-fn necs(_py: Python, m: &PyModule) -> PyResult<()> {
+fn ecstacy(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<ArrayF64>()?;
     m.add_class::<ArrayViewF64>()?;
     Ok(())

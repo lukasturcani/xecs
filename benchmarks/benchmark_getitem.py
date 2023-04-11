@@ -1,6 +1,6 @@
 import typing
 
-import necs as ecs
+import ecstacy as ecs
 import numpy as np
 import numpy.typing as npt
 import pytest
@@ -20,8 +20,8 @@ def benchmark_numpy_getitem_indices(
     benchmark(numpy_getitem, array, key)
 
 
-@pytest.mark.benchmark(group="necs-getitem-indices")
-def benchmark_necs_getitem_indices(
+@pytest.mark.benchmark(group="ecstacy-getitem-indices")
+def benchmark_ecstacy_getitem_indices(
     benchmark: typing.Any,
     view: ecs.ArrayViewF64,
     key_size: float,
@@ -31,7 +31,7 @@ def benchmark_necs_getitem_indices(
         np.where(generator.random(len(view)) < key_size)[0],
         dtype=np.uint32,
     )
-    benchmark(necs_getitem, view, key)
+    benchmark(ecstacy_getitem, view, key)
 
 
 @pytest.mark.benchmark(group="numpy-getitem-mask")
@@ -45,15 +45,15 @@ def benchmark_numpy_getitem_mask(
     benchmark(numpy_getitem, array, key)
 
 
-@pytest.mark.benchmark(group="necs-getitem-mask")
-def benchmark_necs_getitem_mask(
+@pytest.mark.benchmark(group="ecstacy-getitem-mask")
+def benchmark_ecstacy_getitem_mask(
     benchmark: typing.Any,
     view: ecs.ArrayViewF64,
     key_size: float,
 ) -> None:
     generator = np.random.default_rng(55)
     key = generator.random(len(view)) < key_size
-    benchmark(necs_getitem, view, key)
+    benchmark(ecstacy_getitem, view, key)
 
 
 def numpy_getitem(
@@ -63,7 +63,7 @@ def numpy_getitem(
     array[key]
 
 
-def necs_getitem(
+def ecstacy_getitem(
     view: ecs.ArrayViewF64,
     key: npt.NDArray[np.uint32 | np.bool_],
 ) -> None:
