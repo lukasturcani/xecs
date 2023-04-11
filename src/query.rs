@@ -1,17 +1,13 @@
-use crate::entity_id::EntityId;
-use crate::entity_index::EntityIndex;
-use crate::map::Map;
-use crate::set::Set;
+use crate::component_pool::ComponentPool;
+use crate::index::Index;
 
 pub struct Query<'pool> {
-    pub first_component_entity_ids: &'pool Set<EntityId>,
-    pub component_entity_ids: Vec<&'pool Set<EntityId>>,
-    pub first_component_entity_indices: &'pool Map<EntityId, EntityIndex>,
-    pub component_entity_indices: Vec<&'pool Map<EntityId, EntityIndex>>,
+    first_component: &'pool ComponentPool,
+    other_components: Vec<&'pool ComponentPool>,
 }
 
 impl<'pool> Query<'pool> {
-    fn result(&self) -> Vec<Vec<EntityIndex>> {
+    fn result(&self) -> Vec<Vec<Index>> {
         // TODO: You can probabably cache the intersection. If a component
         // is added or removed the cache can be cleared.
         // There is probably also an intelligent way of updating the intersection
@@ -19,23 +15,24 @@ impl<'pool> Query<'pool> {
         // from scratch. This is because you know which queries are affected when
         // a component is added or removed from an entity the query intersection
         // only needs to be updated with those entities.
-        let intersection = *self
-            .component_entity_ids
+        let intersection = self
+            .other_components
             .iter()
-            .fold(self.first_component_entity_ids, |acc, &x| {
-                &acc.intersection(x).map(|x| *x).collect()
+            .map(|pool| pool.entity_ids)
+            .fold(self.first_component.entity_ids, |acc, entity_ids| {
+                acc.intersection(&entity_ids).map(|x| *x).collect()
             });
-        let result = Vec::with_capacity(self.first_component_entity_indices.len() + 1);
+        let result = Vec::with_capacity(self.other_components.len() + 1);
         result.push(
             intersection
                 .iter()
-                .map(|entity_id| *self.first_component_entity_indices.get(entity_id).unwrap())
+                .map(|entity_id| *self.first_component.entity_indices.get(entity_id).unwrap())
                 .collect(),
         );
-        result.extend(self.component_entity_indices.iter().map(|entity_indices| {
+        result.extend(self.other_components.iter().map(|pool| {
             intersection
                 .iter()
-                .map(|entity_id| *entity_indices.get(entity_id).unwrap())
+                .map(|entity_id| *pool.entity_indices.get(entity_id).unwrap())
                 .collect()
         }));
         result

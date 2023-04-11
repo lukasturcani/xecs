@@ -1,10 +1,12 @@
 use pyo3::prelude::*;
 
+mod app;
 mod array;
 mod array_view;
+mod component_id;
 mod component_pool;
 mod entity_id;
-mod entity_index;
+mod index;
 mod map;
 mod python_arrays;
 mod query;
