@@ -1,6 +1,6 @@
 import typing
 
-import ecstacy as ecs
+import ecstasy as ecs
 import numpy as np
 import numpy.typing as npt
 import pytest
@@ -20,8 +20,8 @@ def benchmark_numpy_setitem_indices_one(
     benchmark(numpy_setitem, array, key, 123.0)
 
 
-@pytest.mark.benchmark(group="ecstacy-setitem-indices-one")
-def benchmark_ecstacy_setitem_indices_one(
+@pytest.mark.benchmark(group="ecstasy-setitem-indices-one")
+def benchmark_ecstasy_setitem_indices_one(
     benchmark: typing.Any,
     view: ecs.ArrayViewF64,
     key_size: float,
@@ -31,7 +31,7 @@ def benchmark_ecstacy_setitem_indices_one(
         np.where(generator.random(len(view)) < key_size)[0],
         dtype=np.uint32,
     )
-    benchmark(ecstacy_setitem, view, key, 123.0)
+    benchmark(ecstasy_setitem, view, key, 123.0)
 
 
 @pytest.mark.benchmark(group="numpy-setitem-indices-many")
@@ -49,8 +49,8 @@ def benchmark_numpy_setitem_indices_many(
     benchmark(numpy_setitem, array, key, value)
 
 
-@pytest.mark.benchmark(group="ecstacy-setitem-indices-many")
-def benchmark_ecstacy_setitem_indices_many(
+@pytest.mark.benchmark(group="ecstasy-setitem-indices-many")
+def benchmark_ecstasy_setitem_indices_many(
     benchmark: typing.Any,
     view: ecs.ArrayViewF64,
     key_size: float,
@@ -61,7 +61,7 @@ def benchmark_ecstacy_setitem_indices_many(
         dtype=np.uint32,
     )
     value = generator.random(len(key), dtype=np.float64)
-    benchmark(ecstacy_setitem, view, key, value)
+    benchmark(ecstasy_setitem, view, key, value)
 
 
 def numpy_setitem(
@@ -84,8 +84,8 @@ def benchmark_numpy_setitem_mask_many(
     benchmark(numpy_setitem, array, key, value)
 
 
-@pytest.mark.benchmark(group="ecstacy-setitem-mask-many")
-def benchmark_ecstacy_setitem_mask_many(
+@pytest.mark.benchmark(group="ecstasy-setitem-mask-many")
+def benchmark_ecstasy_setitem_mask_many(
     benchmark: typing.Any,
     view: ecs.ArrayViewF64,
     key_size: float,
@@ -93,10 +93,10 @@ def benchmark_ecstacy_setitem_mask_many(
     generator = np.random.default_rng(55)
     key = generator.random(len(view)) < key_size
     value = generator.random(np.count_nonzero(key), dtype=np.float64)
-    benchmark(ecstacy_setitem, view, key, value)
+    benchmark(ecstasy_setitem, view, key, value)
 
 
-def ecstacy_setitem(
+def ecstasy_setitem(
     view: ecs.ArrayViewF64,
     key: npt.NDArray[np.uint32],
     value: float | npt.NDArray[np.float64],

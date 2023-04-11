@@ -1,4 +1,4 @@
-from ecstacy.ecstacy import ArrayF64, ArrayViewF64
+from ecstasy.ecstasy import ArrayF64, ArrayViewF64
 
 __all__ = [
     "ArrayF64",

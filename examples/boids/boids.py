@@ -1,6 +1,6 @@
 import numpy as np
 
-import ecstacy as ecs
+import ecstasy as ecs
 
 
 class Transform(ecs.Component):
