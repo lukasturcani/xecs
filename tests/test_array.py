@@ -12,7 +12,7 @@ def mask(xs: list[int]) -> npt.NDArray[np.bool_]:
 
 
 def test_indexing_with_array_of_indices_does_not_return_a_copy() -> None:
-    array = ecs.ArrayF64.from_numpy(np.zeros(100, dtype=np.float64))
+    array = ecs.Float64Array.from_numpy(np.zeros(100, dtype=np.float64))
     assert np.sum(array.numpy()) == 0
     view = array.view()
 
@@ -23,7 +23,7 @@ def test_indexing_with_array_of_indices_does_not_return_a_copy() -> None:
 
 
 def test_assigning_with_array_of_indices_does_not_return_a_copy() -> None:
-    array = ecs.ArrayF64.from_numpy(np.zeros(100, dtype=np.float64))
+    array = ecs.Float64Array.from_numpy(np.zeros(100, dtype=np.float64))
     assert np.sum(array.numpy()) == 0
     view = array.view()
     view[indices([0, 10, 50])] = 1.0
@@ -32,7 +32,7 @@ def test_assigning_with_array_of_indices_does_not_return_a_copy() -> None:
 
 
 def test_indexing_with_boolean_mask_does_not_return_a_copy() -> None:
-    array = ecs.ArrayF64.from_numpy(np.zeros(5, dtype=np.float64))
+    array = ecs.Float64Array.from_numpy(np.zeros(5, dtype=np.float64))
     assert np.sum(array.numpy()) == 0
     view = array.view()
     sub_view = view[mask([True, False, True, False, True])]
@@ -42,7 +42,7 @@ def test_indexing_with_boolean_mask_does_not_return_a_copy() -> None:
 
 
 def test_assigning_with_boolean_mask_does_not_return_a_copy() -> None:
-    array = ecs.ArrayF64.from_numpy(np.zeros(5, dtype=np.float64))
+    array = ecs.Float64Array.from_numpy(np.zeros(5, dtype=np.float64))
     assert np.sum(array.numpy()) == 0
     view = array.view()
     view[mask([True, False, True, False, True])] = 1.0
@@ -56,7 +56,7 @@ def test_assigning_with_boolean_mask_does_not_return_a_copy() -> None:
 
 
 def test_indexing_with_slice_does_not_return_a_copy() -> None:
-    array = ecs.ArrayF64.from_numpy(np.zeros(100, dtype=np.float64))
+    array = ecs.Float64Array.from_numpy(np.zeros(100, dtype=np.float64))
     assert np.sum(array.numpy()) == 0
     view = array.view()
     sub_view = view[5:8]
@@ -66,7 +66,7 @@ def test_indexing_with_slice_does_not_return_a_copy() -> None:
 
 
 def test_assigning_with_slice_does_not_return_a_copy() -> None:
-    array = ecs.ArrayF64.from_numpy(np.zeros(100, dtype=np.float64))
+    array = ecs.Float64Array.from_numpy(np.zeros(100, dtype=np.float64))
     assert np.sum(array.numpy()) == 0
     view = array.view()
     view[5:8] = 1.0
@@ -78,7 +78,7 @@ def test_assigning_with_slice_does_not_return_a_copy() -> None:
 
 
 def test_mulitple_complex_indices_reach_correct_elements() -> None:
-    array = ecs.ArrayF64.from_numpy(np.zeros(10, dtype=np.float64))
+    array = ecs.Float64Array.from_numpy(np.zeros(10, dtype=np.float64))
     view = array.view()
     view = view[indices([7, 8, 9])]
     view = view[indices([1, 2])]

@@ -28,7 +28,7 @@ class _Array(typing.Generic[ElementType, ViewType]):
 
 Key: typing.TypeAlias = npt.NDArray[np.uint32 | np.bool_] | slice
 
-class ArrayViewF64:
+class Float64:
     def __getitem__(self, key: Key) -> typing.Self:
         pass
     def __setitem__(
@@ -42,4 +42,4 @@ class ArrayViewF64:
         pass
     def __len__(self) -> int: ...
 
-class ArrayF64(_Array[np.float64, ArrayViewF64]): ...
+class Float64Array(_Array[np.float64, Float64]): ...

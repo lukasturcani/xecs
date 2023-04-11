@@ -1,6 +1,5 @@
-from ecstasy.ecstasy import ArrayF64, ArrayViewF64
+from ecstasy._internal.component import Component
+from ecstasy._internal.query import Query
+from ecstasy.ecstasy import Float64, Float64Array
 
-__all__ = [
-    "ArrayF64",
-    "ArrayViewF64",
-]
+__all__ = ["Component", "Float64Array", "Float64", "Query"]
