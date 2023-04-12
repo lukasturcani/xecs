@@ -1,2 +1,8 @@
+import typing
+
+T = typing.TypeVar("T")
+
+
 class Commands:
-    pass
+    def spawn(self, components: T, num: int) -> T:
+        pass

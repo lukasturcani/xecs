@@ -38,7 +38,7 @@ def query_with_two_components(query: ecs.Query[tuple[One, Two]]) -> None:
 
 
 def spawn_entities(commands: ecs.Commands) -> None:
-    commands.spawn(One, 5)
+    commands.spawn((One,), 5)
     commands.spawn((One, Two), 5)
 
 

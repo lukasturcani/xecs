@@ -7,7 +7,7 @@ fn cannot_read<T>(_err: T) -> PyErr {
     PyRuntimeError::new_err("cannot read array")
 }
 
-pub struct Array<T>(Arc<RwLock<Vec<T>>>);
+pub struct Array<T>(pub Arc<RwLock<Vec<T>>>);
 
 impl<T> Array<T>
 where

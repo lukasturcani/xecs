@@ -33,6 +33,11 @@ pub struct Float64(ArrayView<f64>);
 
 #[pymethods]
 impl Float64 {
+    #[staticmethod]
+    fn create_pool(size: usize) -> Float64Array {
+        Float64Array(Array(ArrayView::create_pool(size)))
+    }
+
     fn __getitem__(&self, key: Key) -> PyResult<Self> {
         Ok(Self(self.0.__getitem__(key)?))
     }
