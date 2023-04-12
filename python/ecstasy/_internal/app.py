@@ -41,7 +41,6 @@ class SystemSpec:
 
 class App:
     _rust_app: RustApp
-    _component_ids: dict[type[Component], ComponentId]
     _pools: dict[ComponentId, ComponentPool[typing.Any]]
     _startup_systems: list[SystemSpec]
     _systems: list[SystemSpec]
@@ -51,7 +50,6 @@ class App:
     def new(cls) -> typing.Self:
         app = cls()
         app._rust_app = RustApp()
-        app._component_ids = {}
         app._pools = {}
         app._startup_systems = []
         app._systems = []
@@ -80,7 +78,8 @@ class App:
         kwargs: dict[str, SystemParameter] = {}
         for name, parameter in inspect.signature(system).parameters.items():
             if typing.get_origin(parameter.annotation) is Query:
-                kwargs[name] = Query()
+                (components,) = typing.get_args(parameter.annotation)
+                kwargs[name] = Query.p_new(typing.get_args(components))
             elif parameter.annotation is Commands:
                 kwargs[name] = self._commands
             else:
@@ -101,7 +100,6 @@ class App:
 
         self._commands.p_apply(
             app=self._rust_app,
-            component_ids=self._component_ids,
             pools=self._pools,
         )
 
@@ -109,7 +107,6 @@ class App:
             system.function(**system.kwargs)
 
     def add_component_pool(self, pool: ComponentPool[ComponentT]) -> None:
-        component_id = len(self._component_ids)
-        self._component_ids[type(pool.p_inner)] = component_id
+        component_id = Component.component_ids[type(pool.p_inner)]
         self._rust_app.add_component_pool(component_id, pool.p_capacity)
         self._pools[component_id] = pool

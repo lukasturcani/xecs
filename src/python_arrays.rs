@@ -33,6 +33,10 @@ pub struct Float64(ArrayView<f64>);
 
 #[pymethods]
 impl Float64 {
+    fn p_spawn(&mut self, num: usize) {
+        self.0.p_spawn(num)
+    }
+
     #[staticmethod]
     fn p_create_pool(size: usize) -> Float64 {
         Self(ArrayView::p_create_pool(size))

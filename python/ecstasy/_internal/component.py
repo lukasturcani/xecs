@@ -21,7 +21,7 @@ class ComponentPool(typing.Generic[ComponentT]):
 
 
 class Component:
-    _component_types: "typing.ClassVar[list[type[Component]]]" = []
+    component_ids: "typing.ClassVar[dict[type[Component], ComponentId]]" = {}
     _len: int
 
     @classmethod
@@ -41,4 +41,4 @@ class Component:
 
     def __init_subclass__(cls) -> None:
         super().__init_subclass__()
-        cls._component_types.append(cls)
+        cls.component_ids[cls] = len(cls.component_ids)

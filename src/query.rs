@@ -5,12 +5,12 @@ use crate::map::Map;
 use pyo3::prelude::*;
 
 #[pyclass]
-pub struct Query {
+pub struct RustQuery {
     first_component: ComponentId,
     other_components: Vec<ComponentId>,
 }
 
-impl Query {
+impl RustQuery {
     pub fn result(&self, pools: &Map<ComponentId, ComponentPool>) -> Vec<Vec<Index>> {
         let first_component = pools.get(&self.first_component).unwrap();
         let other_components: Vec<_> = self
@@ -46,5 +46,16 @@ impl Query {
                 .collect()
         }));
         result
+    }
+}
+
+#[pymethods]
+impl RustQuery {
+    #[new]
+    fn __new__(first_component: ComponentId, other_components: Vec<ComponentId>) -> Self {
+        Self {
+            first_component,
+            other_components,
+        }
     }
 }

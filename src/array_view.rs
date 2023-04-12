@@ -17,6 +17,11 @@ impl<T> ArrayView<T>
 where
     T: numpy::Element + Copy + Default,
 {
+    pub fn p_spawn(&mut self, num: usize) {
+        self.indices
+            .extend((self.indices.len() as Index)..(self.indices.len() as Index) + (num as Index))
+    }
+
     pub fn p_create_pool(size: usize) -> ArrayView<T> {
         Self {
             array: Arc::new(RwLock::new(vec![T::default(); size])),
