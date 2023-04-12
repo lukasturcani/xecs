@@ -14,8 +14,8 @@ pub enum Key<'a> {
 }
 
 macro_rules! python_array {
-    (struct $name:ident($type:ty)) => {
-        pub mod $name {
+    (pub mod $mod_name:ident { struct $name:ident($type:ty) }) => {
+        pub mod $mod_name {
             use super::*;
 
             #[derive(FromPyObject)]
@@ -209,5 +209,5 @@ fn cannot_write<T>(_err: T) -> PyErr {
 }
 
 python_array! {
-    struct Float64(f64)
+    pub mod float64 { struct Float64(f64) }
 }
