@@ -44,7 +44,7 @@ class SystemSpec:
 
 class App:
     _rust_app: RustApp
-    _pools: dict[ComponentId, ComponentPool[typing.Any]]
+    _pools: dict[ComponentId, ComponentPool[Component]]
     _startup_systems: list[SystemSpec]
     _systems: list[SystemSpec]
     _commands: Commands
@@ -94,14 +94,17 @@ class App:
                 first_component, *other_components = typing.get_args(
                     components
                 )
-                query_id = self._rust_app.add_query(
-                    Component.component_ids[first_component],
-                    tuple(
-                        Component.component_ids[component]
-                        for component in other_components
-                    ),
+                component_ids = [Component.component_ids[first_component]]
+                component_ids.extend(
+                    Component.component_ids[component]
+                    for component in other_components
                 )
-                query_args[name] = Query.p_new(query_id)
+
+                query_id = self._rust_app.add_query(
+                    first_component=component_ids[0],
+                    other_components=component_ids[1:],
+                )
+                query_args[name] = Query.p_new(query_id, components)
 
             elif parameter.annotation is Commands:
                 other_args[name] = self._commands
@@ -120,7 +123,18 @@ class App:
     def run(self) -> None:
         for system in self._startup_systems:
             for query in system.query_args.values():
-                query.p_result = self._rust_app.run_query(query.p_query_id)
+                component_indices = self._rust_app.run_query(query.p_query_id)
+                query.p_result = tuple(
+                    pool.p_inner[indices]
+                    for pool, indices in zip(
+                        (
+                            self._pools[component_id]
+                            for component_id in query.p_component_ids
+                        ),
+                        component_indices,
+                        strict=True,
+                    )
+                )
 
             system.function(
                 **system.query_args,

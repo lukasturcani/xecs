@@ -1,7 +1,8 @@
+use crate::array_view_indices::MultipleArrayViewIndices;
 use crate::component_id::ComponentId;
 use crate::component_pool::ComponentPool;
-use crate::index::Index;
 use crate::map::Map;
+use std::sync::Arc;
 
 pub struct Query {
     first_component: ComponentId,
@@ -15,7 +16,7 @@ impl Query {
             other_components,
         }
     }
-    pub fn result(&self, pools: &Map<ComponentId, ComponentPool>) -> Vec<Vec<Index>> {
+    pub fn result(&self, pools: &Map<ComponentId, ComponentPool>) -> MultipleArrayViewIndices {
         let first_component = pools.get(&self.first_component).unwrap();
         let other_components: Vec<_> = self
             .other_components
@@ -37,18 +38,20 @@ impl Query {
                 acc.intersection(entity_ids).map(|x| *x).collect()
             });
         let mut result = Vec::with_capacity(other_components.len() + 1);
-        result.push(
+        result.push(Arc::new(
             intersection
                 .iter()
                 .map(|entity_id| *first_component.entity_indices.get(entity_id).unwrap())
                 .collect(),
-        );
+        ));
         result.extend(other_components.iter().map(|pool| {
-            intersection
-                .iter()
-                .map(|entity_id| *pool.entity_indices.get(entity_id).unwrap())
-                .collect()
+            Arc::new(
+                intersection
+                    .iter()
+                    .map(|entity_id| *pool.entity_indices.get(entity_id).unwrap())
+                    .collect(),
+            )
         }));
-        result
+        MultipleArrayViewIndices(result)
     }
 }

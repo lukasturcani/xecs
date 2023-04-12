@@ -13,9 +13,5 @@ class Struct:
             setattr(pool, key, value.p_create_pool(size))
         return pool
 
-    def p_spawn(self, num: int) -> None:
-        for attr in inspect.get_annotations(self.__class__):
-            getattr(self, attr).p_spawn(num)
-
     def __len__(self) -> int:
         return self._len

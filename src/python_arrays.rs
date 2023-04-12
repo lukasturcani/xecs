@@ -27,10 +27,7 @@ macro_rules! python_array {
             #[pyclass]
             pub struct $name {
                 array: Arc<RwLock<Vec<$type>>>,
-                // TODO: Use a data structure that can be shared by
-                // multiple views like Arc<Vec<Index>> to prevent
-                // unnecesary copies and allocations.
-                indices: Vec<Index>,
+                indices: Arc<Vec<Index>>,
             }
 
             #[pymethods]
@@ -39,7 +36,7 @@ macro_rules! python_array {
                 pub fn from_numpy(array: &PyArray1<$type>) -> PyResult<Self> {
                     Ok(Self {
                         array: Arc::new(RwLock::new(array.to_vec()?)),
-                        indices: ((0 as u32)..(array.len() as u32)).collect(),
+                        indices: Arc::new(((0 as u32)..(array.len() as u32)).collect()),
                     })
                 }
 
@@ -59,7 +56,7 @@ macro_rules! python_array {
                 pub fn p_create_pool(size: usize) -> Self {
                     Self {
                         array: Arc::new(RwLock::new(vec![0 as $type; size])),
-                        indices: Vec::new(),
+                        indices: Arc::new(Vec::new()),
                     }
                 }
 
@@ -98,7 +95,7 @@ macro_rules! python_array {
                     };
                     Ok(Self {
                         array: Arc::clone(&self.array),
-                        indices,
+                        indices: Arc::clone(indices),
                     })
                 }
 

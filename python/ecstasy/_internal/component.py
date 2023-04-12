@@ -1,6 +1,11 @@
 import inspect
 import typing
 
+import numpy as np
+import numpy.typing as npt
+
+from ecstasy.ecstasy import ArrayViewIndices
+
 ComponentId: typing.TypeAlias = int
 
 ComponentT = typing.TypeVar("ComponentT", bound="Component")
@@ -20,9 +25,13 @@ class ComponentPool(typing.Generic[ComponentT]):
         self.p_inner.p_spawn(num)
 
 
+Key: typing.TypeAlias = npt.NDArray[np.uint32 | np.bool_] | slice
+
+
 class Component:
     component_ids: "typing.ClassVar[dict[type[Component], ComponentId]]" = {}
     _len: int
+    _indices: ArrayViewIndices
 
     @classmethod
     def create_pool(cls, size: int) -> ComponentPool[typing.Self]:
@@ -33,8 +42,10 @@ class Component:
         return ComponentPool(pool, size)
 
     def p_spawn(self, num: int) -> None:
-        for attr in inspect.get_annotations(self.__class__):
-            getattr(self, attr).p_spawn(num)
+        self._indices.spawn(num)
+
+    def __getitem__(self, key: Key) -> typing.Self:
+        pass
 
     def __len__(self) -> int:
         return self._len

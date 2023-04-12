@@ -1,3 +1,4 @@
+use crate::array_view_indices::MultipleArrayViewIndices;
 use crate::component_id::ComponentId;
 use crate::component_pool::ComponentPool;
 use crate::entity_id::EntityId;
@@ -10,6 +11,9 @@ use pyo3::prelude::*;
 #[pyclass]
 pub struct RustApp {
     num_spawned_entities: Index,
+    // TODO: Queries should be cached by the COmponents they have
+    // so that if two of the same query appear in different systems
+    // it only needs to be performed once
     queries: Vec<Query>,
     pools: Map<ComponentId, ComponentPool>,
 }
@@ -53,7 +57,7 @@ impl RustApp {
         self.queries.len() - 1
     }
 
-    // fn run_query(&self, query_id: QueryId) -> ArrayView {
-    //     unsafe { self.queries.get_unchecked(query_id) }.result(&self.pools);
-    // }
+    fn run_query(&self, query_id: QueryId) -> MultipleArrayViewIndices {
+        unsafe { self.queries.get_unchecked(query_id) }.result(&self.pools)
+    }
 }
