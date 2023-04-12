@@ -3,11 +3,14 @@ use crate::component_pool::ComponentPool;
 use crate::entity_id::EntityId;
 use crate::index::Index;
 use crate::map::Map;
+use crate::query::Query;
+use crate::query_id::QueryId;
 use pyo3::prelude::*;
 
 #[pyclass]
 pub struct RustApp {
     num_spawned_entities: Index,
+    queries: Vec<Query>,
     pools: Map<ComponentId, ComponentPool>,
 }
 
@@ -27,15 +30,26 @@ impl RustApp {
     }
 
     #[new]
-    fn __new__() -> Self {
+    fn __new__(num_pools: usize, num_queries: usize) -> Self {
         Self {
             num_spawned_entities: 0,
-            pools: Map::new(),
+            pools: Map::with_capacity(num_pools),
+            queries: Vec::with_capacity(num_queries),
         }
     }
 
     fn add_component_pool(&mut self, component_id: ComponentId, capacity: usize) {
         self.pools
             .insert(component_id, ComponentPool::with_capacity(capacity));
+    }
+
+    fn add_query(
+        &mut self,
+        first_component: ComponentId,
+        other_components: Vec<ComponentId>,
+    ) -> QueryId {
+        self.queries
+            .push(Query::new(first_component, other_components));
+        self.queries.len() - 1
     }
 }

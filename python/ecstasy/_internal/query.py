@@ -1,25 +1,16 @@
 import typing
 
-from ecstasy._internal.component import Component
-from ecstasy.ecstasy import RustQuery
-
 T = typing.TypeVar("T")
 
 
 class Query(typing.Generic[T]):
-    _query: RustQuery
+    p_query_id: int
 
     @classmethod
-    def p_new(cls, components: tuple[type[Component], ...]) -> typing.Self:
+    def p_new(cls, query_id: int) -> typing.Self:
         query = cls()
-        first, *rest = components
-        query._query = RustQuery(
-            first_component=Component.component_ids[first],
-            other_components=tuple(
-                Component.component_ids[component] for component in rest
-            ),
-        )
+        query.p_query_id = query_id
         return query
 
     def result(self) -> T:
-        ...
+        self._app.run_query(self.p_query_id)

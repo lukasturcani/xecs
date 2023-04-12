@@ -10,6 +10,7 @@ mod index;
 mod map;
 mod python_arrays;
 mod query;
+mod query_id;
 mod set;
 
 /// A Python module implemented in Rust.
@@ -17,7 +18,6 @@ mod set;
 fn ecstasy(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<python_arrays::Float64Array>()?;
     m.add_class::<python_arrays::Float64>()?;
-    m.add_class::<query::RustQuery>()?;
     m.add_class::<app::RustApp>()?;
     Ok(())
 }

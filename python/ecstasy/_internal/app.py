@@ -49,7 +49,10 @@ class App:
     @classmethod
     def new(cls) -> typing.Self:
         app = cls()
-        app._rust_app = RustApp()
+        app._rust_app = RustApp(
+            num_pools=len(Component.component_ids),
+            num_queries=len(Query),
+        )
         app._pools = {}
         app._startup_systems = []
         app._systems = []
@@ -79,7 +82,18 @@ class App:
         for name, parameter in inspect.signature(system).parameters.items():
             if typing.get_origin(parameter.annotation) is Query:
                 (components,) = typing.get_args(parameter.annotation)
-                kwargs[name] = Query.p_new(typing.get_args(components))
+                first_component, *other_components = typing.get_args(
+                    components
+                )
+                query_id = self._rust_app.add_query(
+                    Component.component_ids[first_component],
+                    tuple(
+                        Component.component_ids[component]
+                        for component in other_components
+                    ),
+                )
+                kwargs[name] = Query.p_new(query_id)
+
             elif parameter.annotation is Commands:
                 kwargs[name] = self._commands
             else:

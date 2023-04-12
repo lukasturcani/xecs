@@ -2,15 +2,19 @@ use crate::component_id::ComponentId;
 use crate::component_pool::ComponentPool;
 use crate::index::Index;
 use crate::map::Map;
-use pyo3::prelude::*;
 
-#[pyclass]
-pub struct RustQuery {
+pub struct Query {
     first_component: ComponentId,
     other_components: Vec<ComponentId>,
 }
 
-impl RustQuery {
+impl Query {
+    pub fn new(first_component: ComponentId, other_components: Vec<ComponentId>) -> Self {
+        Self {
+            first_component,
+            other_components,
+        }
+    }
     pub fn result(&self, pools: &Map<ComponentId, ComponentPool>) -> Vec<Vec<Index>> {
         let first_component = pools.get(&self.first_component).unwrap();
         let other_components: Vec<_> = self
@@ -46,16 +50,5 @@ impl RustQuery {
                 .collect()
         }));
         result
-    }
-}
-
-#[pymethods]
-impl RustQuery {
-    #[new]
-    fn __new__(first_component: ComponentId, other_components: Vec<ComponentId>) -> Self {
-        Self {
-            first_component,
-            other_components,
-        }
     }
 }
