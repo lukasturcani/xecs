@@ -2,14 +2,17 @@ import inspect
 import typing
 
 from ecstasy._internal.commands import Commands
-from ecstasy._internal.component import Component, ComponentPool, ComponentT
+from ecstasy._internal.component import (
+    Component,
+    ComponentId,
+    ComponentPool,
+    ComponentT,
+)
 from ecstasy._internal.query import Query
+from ecstasy.ecstasy import RustApp
 
 P = typing.ParamSpec("P")
 R = typing.TypeVar("R")
-
-
-ComponentId: typing.TypeAlias = int
 
 
 class SystemSignatureError(Exception):
@@ -37,7 +40,9 @@ class SystemSpec:
 
 
 class App:
-    _pools: dict[type[Component], ComponentPool[typing.Any]]
+    _rust_app: RustApp
+    _component_ids: dict[type[Component], ComponentId]
+    _pools: dict[ComponentId, ComponentPool[typing.Any]]
     _startup_systems: list[SystemSpec]
     _systems: list[SystemSpec]
     _commands: Commands
@@ -45,6 +50,8 @@ class App:
     @classmethod
     def new(cls) -> typing.Self:
         app = cls()
+        app._rust_app = RustApp()
+        app._component_ids = {}
         app._pools = {}
         app._startup_systems = []
         app._systems = []
@@ -92,8 +99,17 @@ class App:
         for system in self._startup_systems:
             system.function(**system.kwargs)
 
+        self._commands.p_apply(
+            app=self._rust_app,
+            component_ids=self._component_ids,
+            pools=self._pools,
+        )
+
         for system in self._systems:
             system.function(**system.kwargs)
 
     def add_component_pool(self, pool: ComponentPool[ComponentT]) -> None:
-        self._pools[type(pool.inner)] = pool
+        component_id = len(self._component_ids)
+        self._component_ids[type(pool.p_inner)] = component_id
+        self._rust_app.add_component_pool(component_id, pool.p_capacity)
+        self._pools[component_id] = pool

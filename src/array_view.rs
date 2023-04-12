@@ -17,8 +17,11 @@ impl<T> ArrayView<T>
 where
     T: numpy::Element + Copy + Default,
 {
-    pub fn create_pool(size: usize) -> Arc<RwLock<Vec<T>>> {
-        Arc::new(RwLock::new(vec![T::default(); size]))
+    pub fn p_create_pool(size: usize) -> ArrayView<T> {
+        Self {
+            array: Arc::new(RwLock::new(vec![T::default(); size])),
+            indices: Vec::new(),
+        }
     }
 
     pub fn __getitem__(&self, key: Key) -> PyResult<Self> {
