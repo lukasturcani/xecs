@@ -53,5 +53,7 @@ impl RustApp {
         self.queries.len() - 1
     }
 
-    fn run_query(&self, query_id: QueryId) {}
+    // fn run_query(&self, query_id: QueryId) -> ArrayView {
+    //     unsafe { self.queries.get_unchecked(query_id) }.result(&self.pools);
+    // }
 }
