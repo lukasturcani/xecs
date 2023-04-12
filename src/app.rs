@@ -52,4 +52,6 @@ impl RustApp {
             .push(Query::new(first_component, other_components));
         self.queries.len() - 1
     }
+
+    fn run_query(&self, query_id: QueryId) {}
 }
