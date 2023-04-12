@@ -17,6 +17,18 @@ impl<T> ArrayView<T>
 where
     T: numpy::Element + Copy + Default,
 {
+    pub fn from_numpy(array: &PyArray1<T>) -> PyResult<Self> {
+        Ok(Self {
+            array: Arc::new(RwLock::new(array.to_vec()?)),
+            indices: ((0 as u32)..(array.len() as u32)).collect(),
+        })
+    }
+
+    pub fn numpy(&self, py: Python) -> PyResult<Py<PyArray1<T>>> {
+        let vec = self.array.read().map_err(cannot_read)?;
+        Ok(PyArray1::from_vec(py, vec.clone()).into_py(py))
+    }
+
     pub fn p_spawn(&mut self, num: usize) {
         self.indices
             .extend((self.indices.len() as Index)..(self.indices.len() as Index) + (num as Index))
@@ -158,6 +170,10 @@ pub enum Key<'a> {
 pub enum Value<'a, T> {
     One(T),
     Many(&'a PyArray1<T>),
+}
+
+fn cannot_read<T>(_err: T) -> PyErr {
+    PyRuntimeError::new_err("cannot read array")
 }
 
 fn bad_index() -> PyErr {

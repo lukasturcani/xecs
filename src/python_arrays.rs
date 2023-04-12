@@ -1,26 +1,6 @@
-use crate::array::Array;
 use crate::array_view::{ArrayView, Key, Value};
 use numpy::PyArray1;
 use pyo3::prelude::*;
-
-#[pyclass]
-pub struct Float64Array(Array<f64>);
-
-#[pymethods]
-impl Float64Array {
-    #[staticmethod]
-    fn from_numpy(array: &PyArray1<f64>) -> PyResult<Self> {
-        Array::from_numpy(array).map(Self)
-    }
-
-    fn numpy(&self, py: Python) -> PyResult<Py<PyArray1<f64>>> {
-        self.0.numpy(py)
-    }
-
-    fn view(&self) -> PyResult<Float64> {
-        self.0.view().map(Float64)
-    }
-}
 
 #[derive(FromPyObject)]
 pub enum ValueF64<'a> {
@@ -33,6 +13,15 @@ pub struct Float64(ArrayView<f64>);
 
 #[pymethods]
 impl Float64 {
+    #[staticmethod]
+    fn from_numpy(array: &PyArray1<f64>) -> PyResult<Self> {
+        ArrayView::from_numpy(array).map(Self)
+    }
+
+    fn numpy(&self, py: Python) -> PyResult<Py<PyArray1<f64>>> {
+        self.0.numpy(py)
+    }
+
     fn p_spawn(&mut self, num: usize) {
         self.0.p_spawn(num)
     }
@@ -43,7 +32,7 @@ impl Float64 {
     }
 
     fn __getitem__(&self, key: Key) -> PyResult<Self> {
-        Ok(Self(self.0.__getitem__(key)?))
+        self.0.__getitem__(key).map(Self)
     }
 
     fn __setitem__(&mut self, key: Key, value: ValueF64) -> PyResult<()> {
