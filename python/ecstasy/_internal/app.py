@@ -20,6 +20,7 @@ class SystemSignatureError(Exception):
 
 
 SystemParameter: typing.TypeAlias = Query | Commands
+NonQueryParameter: typing.TypeAlias = Commands
 
 
 class System(typing.Protocol):
@@ -28,15 +29,17 @@ class System(typing.Protocol):
 
 
 class SystemSpec:
-    __slots__ = "function", "kwargs"
+    __slots__ = "function", "query_args", "other_args"
 
     def __init__(
         self,
         function: System,
-        kwargs: dict[str, SystemParameter],
+        query_args: dict[str, Query],
+        other_args: dict[str, NonQueryParameter],
     ) -> None:
         self.function = function
-        self.kwargs = kwargs
+        self.query_args = query_args
+        self.other_args = other_args
 
 
 class App:
@@ -51,7 +54,7 @@ class App:
         app = cls()
         app._rust_app = RustApp(
             num_pools=len(Component.component_ids),
-            num_queries=len(Query),
+            num_queries=Query.p_num_queries,
         )
         app._pools = {}
         app._startup_systems = []
@@ -60,25 +63,31 @@ class App:
         return app
 
     def add_startup_system(self, system: System) -> None:
+        query_args, other_args = self._get_system_args(system)
         self._startup_systems.append(
             SystemSpec(
                 function=system,
-                kwargs=self._get_system_kwargs(system),
+                query_args=query_args,
+                other_args=other_args,
             )
         )
 
     def add_system(self, system: System) -> None:
+        query_args, other_args = self._get_system_args(system)
         self._systems.append(
             SystemSpec(
                 function=system,
-                kwargs=self._get_system_kwargs(system),
+                query_args=query_args,
+                other_args=other_args,
             )
         )
 
-    def _get_system_kwargs(
-        self, system: typing.Callable[P, R]
-    ) -> dict[str, SystemParameter]:
-        kwargs: dict[str, SystemParameter] = {}
+    def _get_system_args(
+        self,
+        system: typing.Callable[P, R],
+    ) -> tuple[dict[str, Query], dict[str, NonQueryParameter]]:
+        query_args: dict[str, Query] = {}
+        other_args: dict[str, NonQueryParameter] = {}
         for name, parameter in inspect.signature(system).parameters.items():
             if typing.get_origin(parameter.annotation) is Query:
                 (components,) = typing.get_args(parameter.annotation)
@@ -92,10 +101,10 @@ class App:
                         for component in other_components
                     ),
                 )
-                kwargs[name] = Query.p_new(query_id)
+                query_args[name] = Query.p_new(query_id)
 
             elif parameter.annotation is Commands:
-                kwargs[name] = self._commands
+                other_args[name] = self._commands
             else:
                 expected_type = " | ".join(
                     arg.__name__ for arg in typing.get_args(SystemParameter)
@@ -106,19 +115,36 @@ class App:
                     "but needs to be "
                     f"{expected_type}"
                 )
-        return kwargs
+        return query_args, other_args
 
     def run(self) -> None:
         for system in self._startup_systems:
-            system.function(**system.kwargs)
+            for query in system.query_args.values():
+                query.p_result = self._rust_app.run_query(query.p_query_id)
 
-        self._commands.p_apply(
-            app=self._rust_app,
-            pools=self._pools,
-        )
+            system.function(
+                **system.query_args,
+                **system.other_args,
+            )
+
+            self._commands.p_apply(
+                app=self._rust_app,
+                pools=self._pools,
+            )
 
         for system in self._systems:
-            system.function(**system.kwargs)
+            for query in system.query_args.values():
+                query.p_result = self._rust_app.run_query(query.p_query_id)
+
+            system.function(
+                **system.query_args,
+                **system.other_args,
+            )
+
+            self._commands.p_apply(
+                app=self._rust_app,
+                pools=self._pools,
+            )
 
     def add_component_pool(self, pool: ComponentPool[ComponentT]) -> None:
         component_id = Component.component_ids[type(pool.p_inner)]

@@ -4,7 +4,9 @@ T = typing.TypeVar("T")
 
 
 class Query(typing.Generic[T]):
+    p_num_queries: typing.ClassVar[int] = 0
     p_query_id: int
+    p_result: T
 
     @classmethod
     def p_new(cls, query_id: int) -> typing.Self:
@@ -13,4 +15,8 @@ class Query(typing.Generic[T]):
         return query
 
     def result(self) -> T:
-        self._app.run_query(self.p_query_id)
+        return self.p_result
+
+    def __class_getitem__(cls, key: typing.Any) -> typing.Any:
+        cls.p_num_queries += 1
+        return super().__class_getitem__(key)
