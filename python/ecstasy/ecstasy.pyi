@@ -3,7 +3,29 @@ import typing
 import numpy as np
 import numpy.typing as npt
 
+from ecstasy._internal.component_id import ComponentId
 from ecstasy._internal.getitem_key import Key
+
+QueryId: typing.TypeAlias = int
+
+class MultipleArrayInidices:
+    pass
+
+class RustApp:
+    def __init__(self, num_pools: int, num_queries: int) -> None: ...
+    def spawn(self, components: list[ComponentId], num: int) -> None: ...
+    def add_component_pool(
+        self,
+        component_id: ComponentId,
+        capacity: int,
+    ) -> None: ...
+    def add_query(
+        self,
+        first_component: ComponentId,
+        other_components: list[ComponentId],
+    ) -> QueryId: ...
+    def run_query(self, query_id: QueryId) -> MultipleArrayInidices:
+        pass
 
 class ArrayViewIndices:
     @staticmethod

@@ -1,6 +1,6 @@
 import typing
 
-from ecstasy._internal.component import ComponentId
+from ecstasy._internal.component_id import ComponentId
 
 T = typing.TypeVar("T")
 

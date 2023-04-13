@@ -4,8 +4,6 @@ import typing
 from ecstasy._internal.getitem_key import Key
 from ecstasy.ecstasy import ArrayViewIndices
 
-ComponentId: typing.TypeAlias = int
-
 ComponentT = typing.TypeVar("ComponentT", bound="Component")
 
 

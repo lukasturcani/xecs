@@ -4,10 +4,10 @@ import typing
 from ecstasy._internal.commands import Commands
 from ecstasy._internal.component import (
     Component,
-    ComponentId,
     ComponentPool,
     ComponentT,
 )
+from ecstasy._internal.component_id import ComponentId
 from ecstasy._internal.query import Query
 from ecstasy.ecstasy import RustApp
 
