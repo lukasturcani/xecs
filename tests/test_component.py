@@ -1,7 +1,6 @@
 import ecstasy as ecs
 import numpy as np
 import numpy.typing as npt
-import pytest
 
 
 def indices(xs: list[int]) -> npt.NDArray[np.uint32]:
@@ -67,5 +66,5 @@ def test_spawning_entities_updates_views_of_children() -> None:
     assert len(sub_view.f.c.a) == 3
 
 
-def test_taking_view_of_struct_creates_shared_view() -> None:
+def test_struct_getitem_creates_shared_view() -> None:
     assert False
