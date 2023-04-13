@@ -124,9 +124,10 @@ def test_spawning_to_a_full_array_causes_error() -> None:
         indices=indices,
     )
     indices.spawn(6)
+    indices.spawn(4)
     with pytest.raises(
         RuntimeError,
         match="cannot spawn more entities because pool is full",
     ):
-        indices.spawn(11)
+        indices.spawn(1)
     array[:] = 1.0
