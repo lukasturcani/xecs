@@ -1,9 +1,7 @@
 import inspect
 import typing
 
-import numpy as np
-import numpy.typing as npt
-
+from ecstasy._internal.getitem_key import Key
 from ecstasy.ecstasy import ArrayViewIndices
 
 ComponentId: typing.TypeAlias = int
@@ -22,36 +20,40 @@ class ComponentPool(typing.Generic[ComponentT]):
         self.p_capacity = capacity
 
     def p_spawn(self, num: int) -> None:
-        self.p_inner.p_spawn(num)
-
-
-Key: typing.TypeAlias = npt.NDArray[np.uint32 | np.bool_] | slice
+        self.p_inner.p_indices.spawn(num)
 
 
 class Component:
     component_ids: "typing.ClassVar[dict[type[Component], ComponentId]]" = {}
-    _indices: ArrayViewIndices
+    p_indices: ArrayViewIndices
 
     @classmethod
     def create_pool(cls, capacity: int) -> ComponentPool[typing.Self]:
         component = cls()
-        component._indices = ArrayViewIndices.with_capacity(capacity)
+        component.p_indices = ArrayViewIndices.with_capacity(capacity)
         for key, value in inspect.get_annotations(cls).items():
             setattr(
                 component,
                 key,
-                value.p_with_indices(component._indices),
+                value.p_with_indices(component.p_indices),
             )
         return ComponentPool(component, capacity)
 
-    def p_spawn(self, num: int) -> None:
-        self._indices.spawn(num)
-
     def __getitem__(self, key: Key) -> typing.Self:
-        pass
+        cls = self.__class__
+        component = cls()
+        component.p_indices = self.p_indices[key]
+        for attr_name in inspect.get_annotations(cls):
+            attr_value = getattr(self, attr_name)
+            setattr(
+                component,
+                attr_name,
+                attr_value.p_new_view_with_indices(component.p_indices),
+            )
+        return component
 
     def __len__(self) -> int:
-        return len(self._indices)
+        return len(self.p_indices)
 
     def __init_subclass__(cls) -> None:
         super().__init_subclass__()

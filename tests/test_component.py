@@ -26,6 +26,7 @@ class MyComponent(ecs.Component):
 @pytest.fixture
 def component() -> MyComponent:
     pool = MyComponent.create_pool(100)
+    pool.p_spawn(100)
     return pool.p_inner
 
 

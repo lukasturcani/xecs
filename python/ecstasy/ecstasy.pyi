@@ -3,13 +3,14 @@ import typing
 import numpy as np
 import numpy.typing as npt
 
-Key: typing.TypeAlias = npt.NDArray[np.uint32 | np.bool_] | slice
+from ecstasy._internal.getitem_key import Key
 
 class ArrayViewIndices:
     @staticmethod
     def with_capacity(capacity: int) -> ArrayViewIndices: ...
     def spawn(self, num: int) -> None: ...
     def __len__(self) -> int: ...
+    def __getitem__(self, key: Key) -> typing.Self: ...
 
 class Float64:
     @staticmethod
