@@ -30,16 +30,19 @@ Key: typing.TypeAlias = npt.NDArray[np.uint32 | np.bool_] | slice
 
 class Component:
     component_ids: "typing.ClassVar[dict[type[Component], ComponentId]]" = {}
-    _len: int
     _indices: ArrayViewIndices
 
     @classmethod
-    def create_pool(cls, size: int) -> ComponentPool[typing.Self]:
-        pool = cls()
-        pool._len = size
+    def create_pool(cls, capacity: int) -> ComponentPool[typing.Self]:
+        component = cls()
+        component._indices = ArrayViewIndices.with_capacity(capacity)
         for key, value in inspect.get_annotations(cls).items():
-            setattr(pool, key, value.p_create_pool(size))
-        return ComponentPool(pool, size)
+            setattr(
+                component,
+                key,
+                value.p_with_indices(component._indices),
+            )
+        return ComponentPool(component, capacity)
 
     def p_spawn(self, num: int) -> None:
         self._indices.spawn(num)
@@ -48,7 +51,7 @@ class Component:
         pass
 
     def __len__(self) -> int:
-        return self._len
+        return len(self._indices)
 
     def __init_subclass__(cls) -> None:
         super().__init_subclass__()

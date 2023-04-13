@@ -1,17 +1,19 @@
 import inspect
 import typing
 
+from ecstasy.ecstasy import ArrayViewIndices
+
 
 class Struct:
-    _len: int
+    _indices: ArrayViewIndices
 
     @classmethod
-    def p_create_pool(cls, size: int) -> typing.Self:
-        pool = cls()
-        pool._len = size
+    def p_with_indices(cls, indices: ArrayViewIndices) -> typing.Self:
+        struct = cls()
+        struct._indices = indices
         for key, value in inspect.get_annotations(cls).items():
-            setattr(pool, key, value.p_create_pool(size))
-        return pool
+            setattr(struct, key, value.p_with_indices(indices))
+        return struct
 
     def __len__(self) -> int:
-        return self._len
+        return len(self._indices)

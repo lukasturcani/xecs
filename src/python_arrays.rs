@@ -1,8 +1,8 @@
 use crate::array_view_indices::ArrayViewIndices;
+use crate::error_handlers::{bad_index, cannot_read, cannot_write};
 use crate::index::Index;
 use itertools::izip;
 use numpy::PyArray1;
-use pyo3::exceptions::{PyIndexError, PyRuntimeError};
 use pyo3::prelude::*;
 use pyo3::types::PySlice;
 use std::sync::{Arc, RwLock};
@@ -56,11 +56,18 @@ macro_rules! python_array {
                 }
 
                 #[staticmethod]
-                pub fn p_with_capacity(capacity: usize, indices: &ArrayViewIndices) -> Self {
-                    Self {
-                        array: Arc::new(RwLock::new(vec![0 as $type; capacity])),
+                pub fn p_with_indices(indices: &ArrayViewIndices) -> PyResult<Self> {
+                    Ok(Self {
+                        array: Arc::new(RwLock::new(vec![
+                            0 as $type;
+                            indices
+                                .0
+                                .read()
+                                .map_err(cannot_read)?
+                                .capacity()
+                        ])),
                         indices: Arc::clone(&indices.0),
-                    }
+                    })
                 }
 
                 pub fn __getitem__(&self, key: Key) -> PyResult<Self> {
@@ -191,17 +198,6 @@ macro_rules! python_array {
             }
         }
     };
-}
-fn cannot_read<T>(_err: T) -> PyErr {
-    PyRuntimeError::new_err("cannot read array")
-}
-
-fn bad_index() -> PyErr {
-    PyIndexError::new_err("index out of range")
-}
-
-fn cannot_write<T>(_err: T) -> PyErr {
-    PyRuntimeError::new_err("cannot mutate array")
 }
 
 python_array! {

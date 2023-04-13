@@ -1,3 +1,4 @@
+use crate::error_handlers::{cannot_read, cannot_write};
 use crate::index::Index;
 use pyo3::exceptions::PyRuntimeError;
 use pyo3::prelude::*;
@@ -27,8 +28,7 @@ impl ArrayViewIndices {
             Ok(())
         }
     }
-}
-
-fn cannot_write<T>(_err: T) -> PyErr {
-    PyRuntimeError::new_err("cannot mutate array")
+    fn __len__(&self) -> PyResult<usize> {
+        Ok(self.0.read().map_err(cannot_read)?.len())
+    }
 }

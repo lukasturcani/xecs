@@ -5,6 +5,7 @@ mod array_view_indices;
 mod component_id;
 mod component_pool;
 mod entity_id;
+mod error_handlers;
 mod index;
 mod map;
 mod python_arrays;

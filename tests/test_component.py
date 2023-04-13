@@ -25,7 +25,8 @@ class MyComponent(ecs.Component):
 
 @pytest.fixture
 def component() -> MyComponent:
-    return MyComponent.create_pool(100).p_inner
+    pool = MyComponent.create_pool(100)
+    return pool.p_inner
 
 
 def test_spawning_entities_updates_views_of_children(

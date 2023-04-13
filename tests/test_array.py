@@ -91,10 +91,7 @@ def test_length_of_sub_array_is_accurate() -> None:
 
 def test_spawning_increases_length() -> None:
     indices = ecs.ecstasy.ArrayViewIndices.with_capacity(10)
-    array = ecs.Float64.p_with_capacity(
-        capacity=10,
-        indices=indices,
-    )
+    array = ecs.Float64.p_with_indices(indices)
     assert len(array) == 0
     indices.spawn(2)
     assert len(array) == 2
@@ -104,14 +101,8 @@ def test_spawning_increases_length() -> None:
 
 def test_view_indices_are_shared_between_arrays() -> None:
     indices = ecs.ecstasy.ArrayViewIndices.with_capacity(10)
-    array_1 = ecs.Float64.p_with_capacity(
-        capacity=10,
-        indices=indices,
-    )
-    array_2 = ecs.Float64.p_with_capacity(
-        capacity=10,
-        indices=indices,
-    )
+    array_1 = ecs.Float64.p_with_indices(indices)
+    array_2 = ecs.Float64.p_with_indices(indices)
     assert len(array_1) == len(array_2) == 0
     indices.spawn(5)
     assert len(array_1) == len(array_2) == 5
@@ -119,10 +110,7 @@ def test_view_indices_are_shared_between_arrays() -> None:
 
 def test_spawning_to_a_full_array_causes_error() -> None:
     indices = ecs.ecstasy.ArrayViewIndices.with_capacity(10)
-    array = ecs.Float64.p_with_capacity(
-        capacity=10,
-        indices=indices,
-    )
+    array = ecs.Float64.p_with_indices(indices)
     indices.spawn(6)
     indices.spawn(4)
     with pytest.raises(
