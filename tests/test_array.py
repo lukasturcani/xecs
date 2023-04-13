@@ -130,4 +130,5 @@ def test_spawning_to_a_full_array_causes_error() -> None:
         match="cannot spawn more entities because pool is full",
     ):
         indices.spawn(1)
+    # Prove that writing does not cause a segfault.
     array[:] = 1.0
