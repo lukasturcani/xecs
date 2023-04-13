@@ -14,8 +14,6 @@ pub enum Key<'a> {
     ArrayMask(&'a PyArray1<bool>),
 }
 
-// TODO: check that locks are acquired once per function both for RWLock and NumpyArray locks
-// check that self.indices is used once per function too
 macro_rules! python_array {
     (pub mod $mod_name:ident { struct $name:ident($type:ty) }) => {
         pub mod $mod_name {
@@ -50,13 +48,18 @@ macro_rules! python_array {
                     Ok(PyArray1::from_vec(py, vec.clone()).into_py(py))
                 }
 
-                pub fn p_spawn(&mut self, num: usize) -> PyResult<()> {
-                    self.indices.write().map_err(cannot_write)?.extend(
-                        (self.indices.read().map_err(cannot_read)?.len() as Index)
-                            ..(self.indices.read().map_err(cannot_read)?.len() as Index)
-                                + (num as Index),
-                    );
-                    Ok(())
+                pub fn p_spawn(&mut self, num: Index) -> PyResult<()> {
+                    let mut indices = self.indices.write().map_err(cannot_write)?;
+                    let num_indices = indices.len() as Index;
+                    if num_indices + num > (self.array.read().map_err(cannot_read)?.len() as Index)
+                    {
+                        Err(PyRuntimeError::new_err(
+                            "cannot spawn more entities because pool is full",
+                        ))
+                    } else {
+                        indices.extend(num_indices..num_indices + num);
+                        Ok(())
+                    }
                 }
 
                 pub fn p_new_view_with_indices(&self, indices: &ArrayViewIndices) -> Self {
@@ -67,9 +70,9 @@ macro_rules! python_array {
                 }
 
                 #[staticmethod]
-                pub fn p_create_pool(size: usize, indices: &ArrayViewIndices) -> Self {
+                pub fn p_with_capacity(capacity: usize, indices: &ArrayViewIndices) -> Self {
                     Self {
-                        array: Arc::new(RwLock::new(vec![0 as $type; size])),
+                        array: Arc::new(RwLock::new(vec![0 as $type; capacity])),
                         indices: Arc::clone(&indices.0),
                     }
                 }

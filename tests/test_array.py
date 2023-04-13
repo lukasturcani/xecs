@@ -1,6 +1,7 @@
 import ecstasy as ecs
 import numpy as np
 import numpy.typing as npt
+import pytest
 
 
 def indices(xs: list[int]) -> npt.NDArray[np.uint32]:
@@ -78,3 +79,52 @@ def test_mulitple_complex_indices_reach_correct_elements() -> None:
     array[:] = 1.0
     assert np.sum(array.numpy()) == 2.0
     assert np.sum(array.numpy()[[8, 9]]) == 2.0
+
+
+def test_length_of_sub_array_is_accurate() -> None:
+    array = ecs.Float64.from_numpy(np.zeros(10, dtype=np.float64))
+    assert len(array) == 10
+    sub_array = array[indices([5, 8, 9])]
+    assert len(sub_array) == 3
+    assert len(sub_array[indices([1])]) == 1
+
+
+def test_spawning_increases_length() -> None:
+    array = ecs.Float64.p_with_capacity(
+        capacity=10,
+        indices=ecs.ecstasy.ArrayViewIndices.with_capacity(10),
+    )
+    assert len(array) == 0
+    array.p_spawn(2)
+    assert len(array) == 2
+    array.p_spawn(5)
+    assert len(array) == 7
+
+
+def test_view_indices_are_shared_between_arrays() -> None:
+    indices = ecs.ecstasy.ArrayViewIndices.with_capacity(10)
+    array_1 = ecs.Float64.p_with_capacity(
+        capacity=10,
+        indices=indices,
+    )
+    array_2 = ecs.Float64.p_with_capacity(
+        capacity=10,
+        indices=indices,
+    )
+    assert len(array_1) == len(array_2) == 0
+    array_1.p_spawn(5)
+    assert len(array_1) == len(array_2) == 5
+
+
+def test_spawning_to_a_full_array_causes_error() -> None:
+    array = ecs.Float64.p_with_capacity(
+        capacity=10,
+        indices=ecs.ecstasy.ArrayViewIndices.with_capacity(10),
+    )
+    array.p_spawn(6)
+    with pytest.raises(
+        RuntimeError,
+        match="cannot spawn more entities because pool is full",
+    ):
+        array.p_spawn(11)
+    array[:] = 1.0

@@ -6,7 +6,9 @@ import numpy.typing as npt
 Key: typing.TypeAlias = npt.NDArray[np.uint32 | np.bool_] | slice
 
 class ArrayViewIndices:
-    pass
+    @staticmethod
+    def with_capacity(capacity: int) -> ArrayViewIndices:
+        pass
 
 class Float64:
     @staticmethod
@@ -18,7 +20,10 @@ class Float64:
         indices: ArrayViewIndices,
     ) -> "Float64": ...
     @staticmethod
-    def p_create_pool(size: int, indices: ArrayViewIndices) -> "Float64": ...
+    def p_with_capacity(
+        capacity: int,
+        indices: ArrayViewIndices,
+    ) -> "Float64": ...
     def __getitem__(self, key: Key) -> typing.Self:
         pass
     def __setitem__(
