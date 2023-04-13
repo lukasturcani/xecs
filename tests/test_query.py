@@ -25,16 +25,19 @@ def query_with_one_component(
     query_two: ecs.Query[tuple[Two]],
 ) -> None:
     (one,) = query_one.result()
+    assert isinstance(one, One)
     assert len(one) == 10
 
     (two,) = query_two.result()
+    assert isinstance(two, Two)
     assert len(two) == 5
 
 
 def query_with_two_components(query: ecs.Query[tuple[One, Two]]) -> None:
     one, two = query.result()
-    assert len(one) == 5
-    assert len(one) == len(two)
+    assert len(one) == len(two) == 5
+    assert isinstance(one, One)
+    assert isinstance(two, Two)
 
 
 def spawn_entities(commands: ecs.Commands) -> None:
