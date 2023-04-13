@@ -5,10 +5,20 @@ import numpy.typing as npt
 
 Key: typing.TypeAlias = npt.NDArray[np.uint32 | np.bool_] | slice
 
+class ArrayViewIndices:
+    pass
+
 class Float64:
-    @classmethod
-    def from_numpy(cls, array: npt.NDArray[np.float64]) -> typing.Self: ...
+    @staticmethod
+    def from_numpy(array: npt.NDArray[np.float64]) -> "Float64": ...
     def numpy(self) -> npt.NDArray[np.float64]: ...
+    def p_spawn(self, num: int) -> None: ...
+    def p_new_view_with_indices(
+        self,
+        indices: ArrayViewIndices,
+    ) -> "Float64": ...
+    @staticmethod
+    def p_create_pool(size: int, indices: ArrayViewIndices) -> "Float64": ...
     def __getitem__(self, key: Key) -> typing.Self:
         pass
     def __setitem__(

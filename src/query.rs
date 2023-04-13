@@ -2,7 +2,7 @@ use crate::array_view_indices::MultipleArrayViewIndices;
 use crate::component_id::ComponentId;
 use crate::component_pool::ComponentPool;
 use crate::map::Map;
-use std::sync::Arc;
+use std::sync::{Arc, RwLock};
 
 pub struct Query {
     first_component: ComponentId,
@@ -38,19 +38,19 @@ impl Query {
                 acc.intersection(entity_ids).map(|x| *x).collect()
             });
         let mut result = Vec::with_capacity(other_components.len() + 1);
-        result.push(Arc::new(
+        result.push(Arc::new(RwLock::new(
             intersection
                 .iter()
                 .map(|entity_id| *first_component.entity_indices.get(entity_id).unwrap())
                 .collect(),
-        ));
+        )));
         result.extend(other_components.iter().map(|pool| {
-            Arc::new(
+            Arc::new(RwLock::new(
                 intersection
                     .iter()
                     .map(|entity_id| *pool.entity_indices.get(entity_id).unwrap())
                     .collect(),
-            )
+            ))
         }));
         MultipleArrayViewIndices(result)
     }

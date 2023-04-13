@@ -1,3 +1,4 @@
+use crate::array_view_indices::ArrayViewIndices;
 use crate::index::Index;
 use itertools::izip;
 use numpy::PyArray1;
@@ -13,6 +14,8 @@ pub enum Key<'a> {
     ArrayMask(&'a PyArray1<bool>),
 }
 
+// TODO: check that locks are acquired once per function both for RWLock and NumpyArray locks
+// check that self.indices is used once per function too
 macro_rules! python_array {
     (pub mod $mod_name:ident { struct $name:ident($type:ty) }) => {
         pub mod $mod_name {
@@ -27,7 +30,7 @@ macro_rules! python_array {
             #[pyclass]
             pub struct $name {
                 array: Arc<RwLock<Vec<$type>>>,
-                indices: Arc<Vec<Index>>,
+                indices: Arc<RwLock<Vec<Index>>>,
             }
 
             #[pymethods]
@@ -36,7 +39,9 @@ macro_rules! python_array {
                 pub fn from_numpy(array: &PyArray1<$type>) -> PyResult<Self> {
                     Ok(Self {
                         array: Arc::new(RwLock::new(array.to_vec()?)),
-                        indices: Arc::new(((0 as u32)..(array.len() as u32)).collect()),
+                        indices: Arc::new(RwLock::new(
+                            ((0 as u32)..(array.len() as u32)).collect(),
+                        )),
                     })
                 }
 
@@ -45,46 +50,55 @@ macro_rules! python_array {
                     Ok(PyArray1::from_vec(py, vec.clone()).into_py(py))
                 }
 
-                pub fn p_spawn(&mut self, num: usize) {
-                    self.indices.extend(
-                        (self.indices.len() as Index)
-                            ..(self.indices.len() as Index) + (num as Index),
-                    )
+                pub fn p_spawn(&mut self, num: usize) -> PyResult<()> {
+                    self.indices.write().map_err(cannot_write)?.extend(
+                        (self.indices.read().map_err(cannot_read)?.len() as Index)
+                            ..(self.indices.read().map_err(cannot_read)?.len() as Index)
+                                + (num as Index),
+                    );
+                    Ok(())
+                }
+
+                pub fn p_new_view_with_indices(&self, indices: &ArrayViewIndices) -> Self {
+                    Self {
+                        array: Arc::clone(&self.array),
+                        indices: Arc::clone(&indices.0),
+                    }
                 }
 
                 #[staticmethod]
-                pub fn p_create_pool(size: usize) -> Self {
+                pub fn p_create_pool(size: usize, indices: &ArrayViewIndices) -> Self {
                     Self {
                         array: Arc::new(RwLock::new(vec![0 as $type; size])),
-                        indices: Arc::new(Vec::new()),
+                        indices: Arc::clone(&indices.0),
                     }
                 }
 
                 pub fn __getitem__(&self, key: Key) -> PyResult<Self> {
-                    let indices = match key {
+                    let indices = self.indices.read().map_err(cannot_read)?;
+                    let new_indices = match key {
                         Key::Slice(slice) => {
-                            let mut new_indices = Vec::with_capacity(self.indices.len());
-                            let indices = slice.indices(self.indices.len() as i64)?;
-                            for index in
-                                (indices.start..indices.stop).step_by(indices.step as usize)
+                            let mut new_indices = Vec::with_capacity(indices.len());
+                            let slice_indices = slice.indices(indices.len() as i64)?;
+                            for index in (slice_indices.start..slice_indices.stop)
+                                .step_by(slice_indices.step as usize)
                             {
-                                new_indices
-                                    .push(*unsafe { self.indices.get_unchecked(index as usize) })
+                                new_indices.push(*unsafe { indices.get_unchecked(index as usize) })
                             }
                             new_indices
                         }
-                        Key::ArrayIndices(indices) => {
+                        Key::ArrayIndices(array_indices) => {
                             let mut new_indices = Vec::with_capacity(indices.len());
-                            for &index in indices.readonly().as_array() {
+                            for &index in array_indices.readonly().as_array() {
                                 new_indices
-                                    .push(*self.indices.get(index as usize).ok_or_else(bad_index)?);
+                                    .push(*indices.get(index as usize).ok_or_else(bad_index)?);
                             }
                             new_indices
                         }
                         Key::ArrayMask(mask) => {
-                            let mut new_indices = Vec::with_capacity(self.indices.len());
+                            let mut new_indices = Vec::with_capacity(indices.len());
                             for (&keep, &index) in
-                                mask.readonly().as_array().iter().zip(self.indices.iter())
+                                mask.readonly().as_array().iter().zip(indices.iter())
                             {
                                 if keep {
                                     new_indices.push(index);
@@ -95,89 +109,85 @@ macro_rules! python_array {
                     };
                     Ok(Self {
                         array: Arc::clone(&self.array),
-                        indices: Arc::clone(indices),
+                        indices: Arc::new(RwLock::new(new_indices)),
                     })
                 }
 
                 pub fn __setitem__(&mut self, key: Key, value: Value) -> PyResult<()> {
+                    let mut array = self.array.write().map_err(cannot_write)?;
+                    let indices = self.indices.read().map_err(cannot_read)?;
                     match (key, value) {
                         (Key::Slice(slice), Value::One(item)) => {
-                            let indices = slice.indices(self.indices.len() as i64)?;
-                            let mut array = self.array.write().map_err(cannot_write)?;
-                            for index in
-                                (indices.start..indices.stop).step_by(indices.step as usize)
+                            let slice_indices = slice.indices(indices.len() as i64)?;
+                            for index in (slice_indices.start..slice_indices.stop)
+                                .step_by(slice_indices.step as usize)
                             {
                                 unsafe {
                                     *array.get_unchecked_mut(
-                                        *self.indices.get_unchecked(index as usize) as usize,
+                                        *indices.get_unchecked(index as usize) as usize,
                                     ) = item;
                                 };
                             }
                         }
-                        (Key::ArrayIndices(indices), Value::One(item)) => {
-                            let mut array = self.array.write().map_err(cannot_write)?;
-                            for &index in indices.readonly().as_array() {
+                        (Key::ArrayIndices(array_indices), Value::One(item)) => {
+                            for &index in array_indices.readonly().as_array() {
                                 let array_index =
-                                    *self.indices.get(index as usize).ok_or_else(bad_index)?;
+                                    *indices.get(index as usize).ok_or_else(bad_index)?;
                                 unsafe {
                                     *array.get_unchecked_mut(array_index as usize) = item;
                                 }
                             }
                         }
                         (Key::ArrayMask(mask), Value::One(item)) => {
-                            let mut array = self.array.write().map_err(cannot_write)?;
                             for (&keep, &index) in
-                                mask.readonly().as_array().iter().zip(self.indices.iter())
+                                mask.readonly().as_array().iter().zip(indices.iter())
                             {
                                 if keep {
                                     unsafe {
                                         *array.get_unchecked_mut(
-                                            *self.indices.get_unchecked(index as usize) as usize,
+                                            *indices.get_unchecked(index as usize) as usize,
                                         ) = item;
                                     }
                                 }
                             }
                         }
                         (Key::Slice(slice), Value::Many(items)) => {
-                            let indices = slice.indices(self.indices.len() as i64)?;
-                            let mut array = self.array.write().map_err(cannot_write)?;
-                            for (index, &item) in (indices.start..indices.stop)
-                                .step_by(indices.step as usize)
+                            let slice_indices = slice.indices(indices.len() as i64)?;
+                            for (index, &item) in (slice_indices.start..slice_indices.stop)
+                                .step_by(slice_indices.step as usize)
                                 .zip(items.readonly().as_array())
                             {
                                 unsafe {
                                     *array.get_unchecked_mut(
-                                        *self.indices.get_unchecked(index as usize) as usize,
+                                        *indices.get_unchecked(index as usize) as usize,
                                     ) = item;
                                 };
                             }
                         }
-                        (Key::ArrayIndices(indices), Value::Many(items)) => {
-                            let mut array = self.array.write().map_err(cannot_write)?;
-                            for (&index, &item) in indices
+                        (Key::ArrayIndices(array_indices), Value::Many(items)) => {
+                            for (&index, &item) in array_indices
                                 .readonly()
                                 .as_array()
                                 .iter()
                                 .zip(items.readonly().as_array())
                             {
                                 let array_index =
-                                    *self.indices.get(index as usize).ok_or_else(bad_index)?;
+                                    *indices.get(index as usize).ok_or_else(bad_index)?;
                                 unsafe {
                                     *array.get_unchecked_mut(array_index as usize) = item;
                                 }
                             }
                         }
                         (Key::ArrayMask(mask), Value::Many(items)) => {
-                            let mut array = self.array.write().map_err(cannot_write)?;
                             for (&keep, &index, &item) in izip!(
                                 mask.readonly().as_array().iter(),
-                                self.indices.iter(),
+                                indices.iter(),
                                 items.readonly().as_array()
                             ) {
                                 if keep {
                                     unsafe {
                                         *array.get_unchecked_mut(
-                                            *self.indices.get_unchecked(index as usize) as usize,
+                                            *indices.get_unchecked(index as usize) as usize,
                                         ) = item;
                                     }
                                 }
@@ -186,8 +196,8 @@ macro_rules! python_array {
                     }
                     Ok(())
                 }
-                pub fn __len__(&self) -> usize {
-                    self.indices.len()
+                pub fn __len__(&self) -> PyResult<usize> {
+                    Ok(self.indices.read().map_err(cannot_read)?.len())
                 }
             }
         }
