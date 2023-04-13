@@ -6,6 +6,7 @@ mod component_id;
 mod component_pool;
 mod entity_id;
 mod error_handlers;
+mod getitem_key;
 mod index;
 mod map;
 mod python_arrays;

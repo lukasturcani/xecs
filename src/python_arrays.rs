@@ -1,18 +1,11 @@
 use crate::array_view_indices::ArrayViewIndices;
 use crate::error_handlers::{bad_index, cannot_read, cannot_write};
+use crate::getitem_key::Key;
 use crate::index::Index;
 use itertools::izip;
 use numpy::PyArray1;
 use pyo3::prelude::*;
-use pyo3::types::PySlice;
 use std::sync::{Arc, RwLock};
-
-#[derive(FromPyObject)]
-pub enum Key<'a> {
-    Slice(&'a PySlice),
-    ArrayIndices(&'a PyArray1<Index>),
-    ArrayMask(&'a PyArray1<bool>),
-}
 
 macro_rules! python_array {
     (pub mod $mod_name:ident { struct $name:ident($type:ty) }) => {
@@ -28,7 +21,7 @@ macro_rules! python_array {
             #[pyclass]
             pub struct $name {
                 array: Arc<RwLock<Vec<$type>>>,
-                indices: Arc<RwLock<Vec<Index>>>,
+                indices: ArrayViewIndices,
             }
 
             #[pymethods]
@@ -74,8 +67,8 @@ macro_rules! python_array {
                     let indices = self.indices.read().map_err(cannot_read)?;
                     let new_indices = match key {
                         Key::Slice(slice) => {
-                            let mut new_indices = Vec::with_capacity(indices.len());
                             let slice_indices = slice.indices(indices.len() as i64)?;
+                            let mut new_indices = Vec::with_capacity(slice.len()?);
                             for index in (slice_indices.start..slice_indices.stop)
                                 .step_by(slice_indices.step as usize)
                             {
@@ -83,16 +76,22 @@ macro_rules! python_array {
                             }
                             new_indices
                         }
-                        Key::ArrayIndices(array_indices) => {
-                            let mut new_indices = Vec::with_capacity(indices.len());
-                            for &index in array_indices.readonly().as_array() {
+                        Key::ArrayIndices(array_indices_) => {
+                            let array_indices = array_indices_.readonly();
+                            let array_indices = array_indices.as_array();
+                            let mut new_indices = Vec::with_capacity(array_indices.len());
+                            for &index in array_indices {
                                 new_indices
                                     .push(*indices.get(index as usize).ok_or_else(bad_index)?);
                             }
                             new_indices
                         }
                         Key::ArrayMask(mask) => {
-                            let mut new_indices = Vec::with_capacity(indices.len());
+                            // Ideally the capacity if new_indices would be the number of
+                            // true values in mask. However, because that would mean we count
+                            // them first, we allocate for the worst-case scenario instead -- we
+                            // assume all values in the mask are true.
+                            let mut new_indices = Vec::with_capacity(mask.len());
                             for (&keep, &index) in
                                 mask.readonly().as_array().iter().zip(indices.iter())
                             {
