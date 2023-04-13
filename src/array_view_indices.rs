@@ -6,7 +6,30 @@ use pyo3::prelude::*;
 use std::sync::{Arc, RwLock};
 
 #[pyclass]
-pub struct MultipleArrayViewIndices(pub Vec<Arc<RwLock<Vec<Index>>>>);
+pub struct MultipleArrayViewIndices {
+    indices: Vec<Arc<RwLock<Vec<Index>>>>,
+    next: u8,
+}
+
+impl MultipleArrayViewIndices {
+    pub fn new(indices: Vec<Arc<RwLock<Vec<Index>>>>) -> Self {
+        Self { indices, next: 0 }
+    }
+}
+
+#[pymethods]
+impl MultipleArrayViewIndices {
+    fn next(&mut self) -> Option<ArrayViewIndices> {
+        if self.next < (self.indices.len() as u8) {
+            self.next += 1;
+            Some(ArrayViewIndices(Arc::clone(unsafe {
+                self.indices.get_unchecked((self.next - 1) as usize)
+            })))
+        } else {
+            None
+        }
+    }
+}
 
 #[pyclass]
 pub struct ArrayViewIndices(pub Arc<RwLock<Vec<Index>>>);

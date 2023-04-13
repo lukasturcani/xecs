@@ -7,8 +7,8 @@ from ecstasy._internal.component import (
     ComponentPool,
     ComponentT,
 )
-from ecstasy._internal.component_id import ComponentId
 from ecstasy._internal.query import Query
+from ecstasy._internal.rust_type_aliases import ComponentId
 from ecstasy.ecstasy import RustApp
 
 P = typing.ParamSpec("P")
@@ -120,21 +120,24 @@ class App:
                 )
         return query_args, other_args
 
+    def _run_query(self, query: Query) -> None:
+        component_indices = self._rust_app.run_query(query.p_query_id)
+        query.p_result = tuple(
+            pool.p_component.p_new_view_with_indices(indices)
+            for pool, indices in zip(
+                (
+                    self._pools[component_id]
+                    for component_id in query.p_component_ids
+                ),
+                iter(lambda: component_indices.next(), None),
+                strict=True,
+            )
+        )
+
     def run(self) -> None:
         for system in self._startup_systems:
             for query in system.query_args.values():
-                component_indices = self._rust_app.run_query(query.p_query_id)
-                query.p_result = tuple(
-                    pool.p_inner[indices]
-                    for pool, indices in zip(
-                        (
-                            self._pools[component_id]
-                            for component_id in query.p_component_ids
-                        ),
-                        component_indices,
-                        strict=True,
-                    )
-                )
+                self._run_query(query)
 
             system.function(
                 **system.query_args,
@@ -148,7 +151,7 @@ class App:
 
         for system in self._systems:
             for query in system.query_args.values():
-                query.p_result = self._rust_app.run_query(query.p_query_id)
+                self._run_query(query)
 
             system.function(
                 **system.query_args,
@@ -161,6 +164,6 @@ class App:
             )
 
     def add_component_pool(self, pool: ComponentPool[ComponentT]) -> None:
-        component_id = Component.component_ids[type(pool.p_inner)]
+        component_id = Component.component_ids[type(pool.p_component)]
         self._rust_app.add_component_pool(component_id, pool.p_capacity)
         self._pools[component_id] = pool

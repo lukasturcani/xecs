@@ -1,7 +1,7 @@
 import inspect
 import typing
 
-from ecstasy._internal.getitem_key import Key
+from ecstasy._internal.rust_type_aliases import Key
 from ecstasy.ecstasy import ArrayViewIndices
 
 

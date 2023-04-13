@@ -1,7 +1,7 @@
 import typing
 
 from ecstasy._internal.component import Component, ComponentPool
-from ecstasy._internal.component_id import ComponentId
+from ecstasy._internal.rust_type_aliases import ComponentId
 from ecstasy.ecstasy import RustApp
 
 T = typing.TypeVar("T")

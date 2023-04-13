@@ -52,6 +52,6 @@ impl Query {
                     .collect(),
             ))
         }));
-        MultipleArrayViewIndices(result)
+        MultipleArrayViewIndices::new(result)
     }
 }
