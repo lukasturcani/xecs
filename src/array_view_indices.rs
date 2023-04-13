@@ -14,7 +14,7 @@ pub struct ArrayViewIndices(pub Arc<RwLock<Vec<Index>>>);
 #[pymethods]
 impl ArrayViewIndices {
     #[staticmethod]
-    fn with_capacity(capacity: usize) -> Self {
+    pub fn with_capacity(capacity: usize) -> Self {
         Self(Arc::new(RwLock::new(Vec::with_capacity(capacity))))
     }
     pub fn spawn(&mut self, num: Index) -> PyResult<()> {
@@ -29,16 +29,16 @@ impl ArrayViewIndices {
             Ok(())
         }
     }
-    fn __len__(&self) -> PyResult<usize> {
+    pub fn __len__(&self) -> PyResult<usize> {
         Ok(self.0.read().map_err(cannot_read)?.len())
     }
 
-    fn __getitem__(&self, key: Key) -> PyResult<Self> {
+    pub fn __getitem__(&self, key: Key) -> PyResult<Self> {
         let indices = self.0.read().map_err(cannot_read)?;
         let new_indices = match key {
             Key::Slice(slice) => {
                 let slice_indices = slice.indices(indices.len() as i64)?;
-                let mut new_indices = Vec::with_capacity(slice.len()?);
+                let mut new_indices = Vec::with_capacity(slice_indices.slicelength as usize);
                 for index in
                     (slice_indices.start..slice_indices.stop).step_by(slice_indices.step as usize)
                 {
