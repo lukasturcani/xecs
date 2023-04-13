@@ -7,14 +7,13 @@ Key: typing.TypeAlias = npt.NDArray[np.uint32 | np.bool_] | slice
 
 class ArrayViewIndices:
     @staticmethod
-    def with_capacity(capacity: int) -> ArrayViewIndices:
-        pass
+    def with_capacity(capacity: int) -> ArrayViewIndices: ...
+    def spawn(self, num: int) -> None: ...
 
 class Float64:
     @staticmethod
     def from_numpy(array: npt.NDArray[np.float64]) -> "Float64": ...
     def numpy(self) -> npt.NDArray[np.float64]: ...
-    def p_spawn(self, num: int) -> None: ...
     def p_new_view_with_indices(
         self,
         indices: ArrayViewIndices,

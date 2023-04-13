@@ -90,14 +90,15 @@ def test_length_of_sub_array_is_accurate() -> None:
 
 
 def test_spawning_increases_length() -> None:
+    indices = ecs.ecstasy.ArrayViewIndices.with_capacity(10)
     array = ecs.Float64.p_with_capacity(
         capacity=10,
-        indices=ecs.ecstasy.ArrayViewIndices.with_capacity(10),
+        indices=indices,
     )
     assert len(array) == 0
-    array.p_spawn(2)
+    indices.spawn(2)
     assert len(array) == 2
-    array.p_spawn(5)
+    indices.spawn(5)
     assert len(array) == 7
 
 
@@ -112,19 +113,20 @@ def test_view_indices_are_shared_between_arrays() -> None:
         indices=indices,
     )
     assert len(array_1) == len(array_2) == 0
-    array_1.p_spawn(5)
+    indices.spawn(5)
     assert len(array_1) == len(array_2) == 5
 
 
 def test_spawning_to_a_full_array_causes_error() -> None:
+    indices = ecs.ecstasy.ArrayViewIndices.with_capacity(10)
     array = ecs.Float64.p_with_capacity(
         capacity=10,
-        indices=ecs.ecstasy.ArrayViewIndices.with_capacity(10),
+        indices=indices,
     )
-    array.p_spawn(6)
+    indices.spawn(6)
     with pytest.raises(
         RuntimeError,
         match="cannot spawn more entities because pool is full",
     ):
-        array.p_spawn(11)
+        indices.spawn(11)
     array[:] = 1.0

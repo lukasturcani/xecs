@@ -48,20 +48,6 @@ macro_rules! python_array {
                     Ok(PyArray1::from_vec(py, vec.clone()).into_py(py))
                 }
 
-                pub fn p_spawn(&mut self, num: Index) -> PyResult<()> {
-                    let mut indices = self.indices.write().map_err(cannot_write)?;
-                    let num_indices = indices.len() as Index;
-                    if num_indices + num > (self.array.read().map_err(cannot_read)?.len() as Index)
-                    {
-                        Err(PyRuntimeError::new_err(
-                            "cannot spawn more entities because pool is full",
-                        ))
-                    } else {
-                        indices.extend(num_indices..num_indices + num);
-                        Ok(())
-                    }
-                }
-
                 pub fn p_new_view_with_indices(&self, indices: &ArrayViewIndices) -> Self {
                     Self {
                         array: Arc::clone(&self.array),
