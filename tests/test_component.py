@@ -67,4 +67,22 @@ def test_spawning_entities_updates_views_of_children() -> None:
 
 
 def test_struct_getitem_creates_shared_view() -> None:
-    assert False
+    pool = MyComponent.create_pool(10)
+    pool.p_spawn(10)
+
+    struct = pool.p_component.f
+    assert len(struct) == 10
+    assert len(struct.b) == 10
+    assert len(struct.c) == 10
+    assert len(struct.c.a) == 10
+    sub_view = struct[:5]
+    assert len(sub_view) == 5
+    assert len(sub_view.b) == 5
+    assert len(sub_view.c) == 5
+    assert len(sub_view.c.a) == 5
+
+    assert np.sum(struct.c.a.numpy()) == 0
+    assert np.sum(sub_view.c.a.numpy()) == 0
+    sub_view.c.a[:] = 1
+    assert np.sum(struct.c.a.numpy()) == 5
+    assert np.sum(sub_view.c.a.numpy()) == 5
