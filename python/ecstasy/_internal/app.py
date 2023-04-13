@@ -166,4 +166,4 @@ class App:
     def add_component_pool(self, pool: ComponentPool[ComponentT]) -> None:
         component_id = Component.component_ids[type(pool.p_component)]
         self._rust_app.add_component_pool(component_id, pool.p_capacity)
-        self._pools[component_id] = pool
+        self._pools[component_id] = pool  # type: ignore

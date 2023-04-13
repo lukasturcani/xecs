@@ -27,4 +27,4 @@ class Query(typing.Generic[T]):
 
     def __class_getitem__(cls, key: typing.Any) -> typing.Any:
         cls.p_num_queries += 1
-        return super().__class_getitem__(key)
+        return super().__class_getitem__(key)  # type: ignore
