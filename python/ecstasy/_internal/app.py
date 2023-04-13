@@ -104,7 +104,7 @@ class App:
                     first_component=component_ids[0],
                     other_components=component_ids[1:],
                 )
-                query_args[name] = Query.p_new(query_id, components)
+                query_args[name] = Query.p_new(query_id, component_ids)
 
             elif parameter.annotation is Commands:
                 other_args[name] = self._commands
