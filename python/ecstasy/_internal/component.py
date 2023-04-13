@@ -1,6 +1,7 @@
 import inspect
 import typing
 
+from ecstasy._internal.component_id import ComponentId
 from ecstasy._internal.getitem_key import Key
 from ecstasy.ecstasy import ArrayViewIndices
 
