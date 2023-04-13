@@ -65,3 +65,7 @@ def test_spawning_entities_updates_views_of_children() -> None:
     assert len(sub_view.f.b) == 3
     assert len(sub_view.f.c) == 3
     assert len(sub_view.f.c.a) == 3
+
+
+def test_taking_view_of_struct_creates_shared_view() -> None:
+    assert False
