@@ -10,17 +10,17 @@ ComponentT = typing.TypeVar("ComponentT", bound="Component")
 
 
 class ComponentPool(typing.Generic[ComponentT]):
-    __slots__ = "p_inner", "p_capacity"
+    __slots__ = "p_component", "p_capacity"
 
-    p_inner: ComponentT
+    p_component: ComponentT
     p_capacity: int
 
-    def __init__(self, inner: ComponentT, capacity: int) -> None:
-        self.p_inner = inner
+    def __init__(self, component: ComponentT, capacity: int) -> None:
+        self.p_component = component
         self.p_capacity = capacity
 
     def p_spawn(self, num: int) -> None:
-        self.p_inner.p_indices.spawn(num)
+        self.p_component.p_indices.spawn(num)
 
 
 class Component:

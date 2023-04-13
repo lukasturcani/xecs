@@ -23,19 +23,14 @@ class MyComponent(ecs.Component):
     f: StructB
 
 
-@pytest.fixture
-def component() -> MyComponent:
+def test_spawning_entities_updates_views_of_children() -> None:
     pool = MyComponent.create_pool(100)
-    pool.p_spawn(100)
-    return pool.p_inner
+    pool.p_spawn(50)
+    component = pool.p_component
 
-
-def test_spawning_entities_updates_views_of_children(
-    component: MyComponent,
-) -> None:
-    assert len(component) == 100
+    assert len(component) == 50
     sub_view = component[indices([0, 10, 32])]
-    assert len(component) == 100
+    assert len(component) == 50
     assert len(sub_view) == 3
     assert len(sub_view.d) == 3
     assert len(sub_view.e) == 3
