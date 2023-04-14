@@ -8,7 +8,11 @@ class One(ecs.Component):
     x: ecs.Float64
 
 
-@pytest.mark.benchmark(group="single-one-component-query")
+class Two(ecs.Component):
+    x: ecs.Float64
+
+
+@pytest.mark.benchmark(group="unrepeated-one-component-query")
 def benchmark_query(
     benchmark: typing.Any,
     app: ecs.App,
@@ -17,7 +21,8 @@ def benchmark_query(
 
 
 @pytest.fixture(
-    params=(10, 100, 10_000),
+    params=(10, 100, 1_000, 1_000_000),
+    ids=("10", "100", "1_000", "1_000_000"),
 )
 def app(request: pytest.FixtureRequest) -> ecs.App:
     def startup_system(commands: ecs.Commands) -> None:
