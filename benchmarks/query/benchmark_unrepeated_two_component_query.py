@@ -32,9 +32,9 @@ class Two(ecs.Component):
 )
 def benchmark_one_component_grows_but_overlap_constant(
     benchmark: typing.Any,
-    fixed_overlap_app: ecs.App,
+    fixed_overlap_app_one_grows: ecs.App,
 ) -> None:
-    benchmark(fixed_overlap_app.p_run_systems)
+    benchmark(fixed_overlap_app_one_grows.p_run_systems)
 
 
 @pytest.mark.benchmark(
@@ -42,9 +42,9 @@ def benchmark_one_component_grows_but_overlap_constant(
 )
 def benchmark_both_components_grow_but_overlap_constant(
     benchmark: typing.Any,
-    fixed_overlap_app: ecs.App,
+    fixed_overlap_app_both_grow: ecs.App,
 ) -> None:
-    benchmark(fixed_overlap_app.p_run_systems)
+    benchmark(fixed_overlap_app_both_grow.p_run_systems)
 
 
 @pytest.mark.benchmark(
@@ -62,8 +62,8 @@ def system(query: ecs.Query[tuple[One, Two]]) -> None:
 
 
 @pytest.fixture(
-    params=(10, 100, 1_000, 1_000_000),
-    ids=("10", "100", "1_000", "1_000_000"),
+    params=(10, 100, 1_000, 1_000_000, 100_000_000),
+    ids=("10", "100", "1_000", "1_000_000", "100_000_000"),
 )
 def fixed_overlap_app_one_grows(request: pytest.FixtureRequest) -> ecs.App:
     def startup_system(commands: ecs.Commands) -> None:
