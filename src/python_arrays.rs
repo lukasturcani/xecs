@@ -155,9 +155,27 @@ macro_rules! python_array {
                 pub fn __len__(&self) -> PyResult<usize> {
                     self.indices.__len__()
                 }
+
+                pub fn __iadd__(&mut self, other: &Self) -> PyResult<()> {
+                    let mut self_array = self.array.write().map_err(cannot_write)?;
+                    let self_indices = self.indices.0.read().map_err(cannot_read)?;
+                    let other_array = other.array.read().map_err(cannot_read)?;
+                    let other_indices = other.indices.0.read().map_err(cannot_read)?;
+                    self_indices.iter().zip(other_indices.iter()).for_each(
+                        |(&self_index, &other_index)| unsafe {
+                            *self_array.get_unchecked_mut(self_index as usize) +=
+                                other_array.get_unchecked(other_index as usize);
+                        },
+                    );
+                    Ok(())
+                }
             }
         }
     };
+}
+
+python_array! {
+    pub mod float32 { struct Float32(f32) }
 }
 
 python_array! {
