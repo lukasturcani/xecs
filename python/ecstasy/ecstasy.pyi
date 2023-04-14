@@ -3,32 +3,46 @@ import typing
 import numpy as np
 import numpy.typing as npt
 
-ElementType = typing.TypeVar(
-    "ElementType",
-    np.bool_,
-    np.int8,
-    np.int16,
-    np.int32,
-    np.int64,
-    np.uint8,
-    np.uint16,
-    np.uint32,
-    np.uint64,
-    np.float32,
-    np.float64,
-)
+from ecstasy._internal.rust_type_aliases import ComponentId, Key, QueryId
 
-ViewType = typing.TypeVar("ViewType")
+class MultipleArrayInidices:
+    def next(self) -> ArrayViewIndices | None: ...
 
-class _Array(typing.Generic[ElementType, ViewType]):
-    @classmethod
-    def from_numpy(cls, array: npt.NDArray[ElementType]) -> typing.Self: ...
-    def numpy(self) -> npt.NDArray[ElementType]: ...
-    def view(self) -> ViewType: ...
+class RustApp:
+    def __init__(self, num_pools: int, num_queries: int) -> None: ...
+    def spawn(self, components: list[ComponentId], num: int) -> None: ...
+    def add_component_pool(
+        self,
+        component_id: ComponentId,
+        capacity: int,
+    ) -> None: ...
+    def add_query(
+        self,
+        first_component: ComponentId,
+        other_components: list[ComponentId],
+    ) -> QueryId: ...
+    def run_query(self, query_id: QueryId) -> MultipleArrayInidices:
+        pass
 
-Key: typing.TypeAlias = npt.NDArray[np.uint32 | np.bool_] | slice
+class ArrayViewIndices:
+    @staticmethod
+    def with_capacity(capacity: int) -> ArrayViewIndices: ...
+    def spawn(self, num: int) -> None: ...
+    def __len__(self) -> int: ...
+    def __getitem__(self, key: Key) -> typing.Self: ...
 
-class ArrayViewF64:
+class Float64:
+    @staticmethod
+    def from_numpy(array: npt.NDArray[np.float64]) -> "Float64": ...
+    def numpy(self) -> npt.NDArray[np.float64]: ...
+    def p_new_view_with_indices(
+        self,
+        indices: ArrayViewIndices,
+    ) -> "Float64": ...
+    @staticmethod
+    def p_with_indices(
+        indices: ArrayViewIndices,
+    ) -> "Float64": ...
     def __getitem__(self, key: Key) -> typing.Self:
         pass
     def __setitem__(
@@ -41,5 +55,3 @@ class ArrayViewF64:
     ) -> None:
         pass
     def __len__(self) -> int: ...
-
-class ArrayF64(_Array[np.float64, ArrayViewF64]): ...
