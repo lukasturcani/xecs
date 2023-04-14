@@ -131,34 +131,30 @@ class App:
             )
         )
 
+    def _run_systems(self, systems: list[SystemSpec]) -> None:
+        for system in systems:
+            for query in system.query_args.values():
+                self._run_query(query)
+
+            system.function(
+                **system.query_args,
+                **system.other_args,
+            )
+
+            self._commands.p_apply(
+                app=self._rust_app,
+                pools=self._pools,
+            )
+
+    def p_run_startup_systems(self) -> None:
+        self._run_systems(self._startup_systems)
+
+    def p_run_systems(self) -> None:
+        self._run_systems(self._systems)
+
     def run(self) -> None:
-        for system in self._startup_systems:
-            for query in system.query_args.values():
-                self._run_query(query)
-
-            system.function(
-                **system.query_args,
-                **system.other_args,
-            )
-
-            self._commands.p_apply(
-                app=self._rust_app,
-                pools=self._pools,
-            )
-
-        for system in self._systems:
-            for query in system.query_args.values():
-                self._run_query(query)
-
-            system.function(
-                **system.query_args,
-                **system.other_args,
-            )
-
-            self._commands.p_apply(
-                app=self._rust_app,
-                pools=self._pools,
-            )
+        self.p_run_startup_systems()
+        self.p_run_systems()
 
     def add_component_pool(self, pool: ComponentPool[ComponentT]) -> None:
         component_id = Component.component_ids[type(pool.p_component)]

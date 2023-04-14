@@ -75,13 +75,13 @@ def setitem(
 @pytest.mark.benchmark(group="numpy-setitem-mask-many")
 def benchmark_numpy_setitem_mask_many(
     benchmark: typing.Any,
-    array: npt.NDArray[np.float64],
+    numpy_array: npt.NDArray[np.float64],
     key_size: float,
 ) -> None:
     generator = np.random.default_rng(55)
-    key = generator.random(len(array)) < key_size
+    key = generator.random(len(numpy_array)) < key_size
     value = generator.random(np.count_nonzero(key), dtype=np.float64)
-    benchmark(setitem, array, key, value)
+    benchmark(setitem, numpy_array, key, value)
 
 
 @pytest.mark.benchmark(group="ecstasy-setitem-mask-many")
