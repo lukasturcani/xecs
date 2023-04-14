@@ -25,8 +25,7 @@ def app(request: pytest.FixtureRequest) -> ecs.App:
         commands.spawn(components=(One,), num=request.param)
 
     def system(query: ecs.Query[tuple[One]]) -> None:
-        (one,) = query.result()
-        assert len(one) == request.param
+        pass
 
     app = ecs.App.new()
     app.add_startup_system(startup_system)

@@ -8,7 +8,7 @@ class One(ecs.Component):
     x: ecs.Float64
 
 
-@pytest.mark.benchmark(group="single-one-component-query")
+@pytest.mark.benchmark(group="repeated-one-component-query")
 def benchmark_query(
     benchmark: typing.Any,
     app: ecs.App,
@@ -24,9 +24,11 @@ def app(request: pytest.FixtureRequest) -> ecs.App:
     def startup_system(commands: ecs.Commands) -> None:
         commands.spawn(components=(One,), num=request.param)
 
-    def system(query: ecs.Query[tuple[One]]) -> None:
-        (one,) = query.result()
-        assert len(one) == request.param
+    def system(
+        query1: ecs.Query[tuple[One]],
+        query2: ecs.Query[tuple[One]],
+    ) -> None:
+        pass
 
     app = ecs.App.new()
     app.add_startup_system(startup_system)
