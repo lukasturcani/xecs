@@ -101,12 +101,16 @@ def benchmark_ecstasy_setitem_mask_many(
         np.arange(10, dtype=np.float64),
         np.arange(100, dtype=np.float64),
         np.arange(1_000, dtype=np.float64),
-        np.arange(10_000, dtype=np.float64),
-        np.arange(100_000, dtype=np.float64),
         np.arange(1_000_000, dtype=np.float64),
     ),
+    ids=(
+        "10",
+        "100",
+        "1_000",
+        "1_000_000",
+    ),
 )
-def numpy_array(request: typing.Any) -> npt.NDArray[np.float64]:
+def numpy_array(request: pytest.FixtureRequest) -> npt.NDArray[np.float64]:
     return request.param
 
 
@@ -118,5 +122,5 @@ def ecs_array(numpy_array: npt.NDArray[np.float64]) -> ecs.Float64:
 @pytest.fixture(
     params=(0.1, 0.5, 0.9),
 )
-def key_size(request: typing.Any) -> float:
+def key_size(request: pytest.FixtureRequest) -> float:
     return request.param

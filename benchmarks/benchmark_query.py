@@ -19,7 +19,7 @@ def benchmark_query(
 @pytest.fixture(
     params=(10, 100, 10_000),
 )
-def app(request: typing.Any) -> ecs.App:
+def app(request: pytest.FixtureRequest) -> ecs.App:
     def startup_system(commands: ecs.Commands) -> None:
         commands.spawn(components=(One,), num=request.param)
 
