@@ -1,5 +1,6 @@
 import inspect
 import typing
+from collections import abc
 
 from ecstasy._internal.commands import Commands
 from ecstasy._internal.component import (
@@ -21,11 +22,7 @@ class SystemSignatureError(Exception):
 
 SystemParameter: typing.TypeAlias = Query | Commands
 NonQueryParameter: typing.TypeAlias = Commands
-
-
-class System(typing.Protocol):
-    def __call__(self, *args: SystemParameter) -> None:
-        pass
+System: typing.TypeAlias = abc.Callable
 
 
 class SystemSpec:
@@ -84,7 +81,7 @@ class App:
 
     def _get_system_args(
         self,
-        system: typing.Callable[P, R],
+        system: abc.Callable[P, R],
     ) -> tuple[dict[str, Query], dict[str, NonQueryParameter]]:
         query_args: dict[str, Query] = {}
         other_args: dict[str, NonQueryParameter] = {}
