@@ -13,7 +13,7 @@ class Two(ecs.Component):
 
 
 @pytest.mark.benchmark(
-    group="unrepeated-two-component-query-fixed-overlap",
+    group="repeated-two-component-query-fixed-overlap",
 )
 def benchmark_components_grow_but_overlap_constant(
     benchmark: typing.Any,
@@ -23,7 +23,7 @@ def benchmark_components_grow_but_overlap_constant(
 
 
 @pytest.mark.benchmark(
-    group="unrepeated-two-component-query-increasing-overlap",
+    group="repeated-two-component-query-increasing-overlap",
 )
 def benchmark_overlap_increases(
     benchmark: typing.Any,
@@ -32,7 +32,10 @@ def benchmark_overlap_increases(
     benchmark(increasing_overlap_app.p_run_systems)
 
 
-def system(query: ecs.Query[tuple[One, Two]]) -> None:
+def system(
+    query1: ecs.Query[tuple[One, Two]],
+    query2: ecs.Query[tuple[One, Two]],
+) -> None:
     pass
 
 

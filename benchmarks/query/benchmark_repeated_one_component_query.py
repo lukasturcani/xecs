@@ -16,6 +16,13 @@ def benchmark_query(
     benchmark(app.p_run_systems)
 
 
+def system(
+    query1: ecs.Query[tuple[One]],
+    query2: ecs.Query[tuple[One]],
+) -> None:
+    pass
+
+
 @pytest.fixture(
     params=(10, 100, 1_000, 1_000_000),
     ids=("10", "100", "1_000", "1_000_000"),
@@ -23,12 +30,6 @@ def benchmark_query(
 def app(request: pytest.FixtureRequest) -> ecs.App:
     def startup_system(commands: ecs.Commands) -> None:
         commands.spawn(components=(One,), num=request.param)
-
-    def system(
-        query1: ecs.Query[tuple[One]],
-        query2: ecs.Query[tuple[One]],
-    ) -> None:
-        pass
 
     app = ecs.App.new()
     app.add_startup_system(startup_system)
