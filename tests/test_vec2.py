@@ -33,6 +33,22 @@ def test_iadd_numpy(vec1: ecs.Vec2) -> None:
     assert np.all(np.equal(vec1.numpy(), expected))
 
 
+def test_isub_vec2(vec1: ecs.Vec2, vec2: ecs.Vec2) -> None:
+    vec1 -= vec2
+    assert np.all(np.equal(vec1.numpy(), np.zeros((2, 10), dtype=np.float32)))
+
+
+def test_isub_float(vec1: ecs.Vec2) -> None:
+    vec1 -= 1.0
+    expected = np.array([np.arange(10), np.arange(10)], dtype=np.float32) - 1
+    assert np.all(np.equal(vec1.numpy(), expected))
+
+
+def test_isub_numpy(vec1: ecs.Vec2) -> None:
+    vec1 -= np.arange(10, dtype=np.float32)
+    assert np.all(np.equal(vec1.numpy(), np.zeros((2, 10), dtype=np.float32)))
+
+
 @pytest.fixture
 def vec1() -> ecs.Vec2:
     pool = VecContainer.create_pool(10)

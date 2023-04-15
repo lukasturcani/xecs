@@ -49,6 +49,10 @@ class Float32:
         self,
         other: Float32 | npt.NDArray[np.float32] | float,
     ) -> Float32: ...
+    def __isub__(
+        self,
+        other: Float32 | npt.NDArray[np.float32] | float,
+    ) -> Float32: ...
 
 class Float64:
     @staticmethod
@@ -68,6 +72,10 @@ class Float64:
     ) -> None: ...
     def __len__(self) -> int: ...
     def __iadd__(
+        self,
+        other: Float64 | npt.NDArray[np.float64] | float,
+    ) -> Float64: ...
+    def __isub__(
         self,
         other: Float64 | npt.NDArray[np.float64] | float,
     ) -> Float64: ...
