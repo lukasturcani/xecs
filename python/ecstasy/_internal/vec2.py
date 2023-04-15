@@ -1,5 +1,8 @@
 import typing
 
+import numpy as np
+import numpy.typing as npt
+
 from ecstasy._internal.struct import Struct
 from ecstasy.ecstasy import Float32
 
@@ -12,3 +15,6 @@ class Vec2(Struct):
         self.x += other.x
         self.y += other.y
         return self
+
+    def numpy(self) -> npt.NDArray[np.float32]:
+        return np.array([self.x.numpy(), self.y.numpy()], dtype=np.float32)
