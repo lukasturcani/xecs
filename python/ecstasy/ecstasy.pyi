@@ -58,7 +58,11 @@ class _Array(typing.Generic[_NumpyT, _UnitT]):
         self,
         other: typing.Self | npt.NDArray[_NumpyT] | float,
     ) -> typing.Self: ...
-    def __idiv__(
+    def __itruediv__(
+        self,
+        other: typing.Self | npt.NDArray[_NumpyT] | float,
+    ) -> typing.Self: ...
+    def __ifloordiv__(
         self,
         other: typing.Self | npt.NDArray[_NumpyT] | float,
     ) -> typing.Self: ...
