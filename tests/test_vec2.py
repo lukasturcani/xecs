@@ -49,6 +49,23 @@ def test_isub_numpy(vec1: ecs.Vec2) -> None:
     assert np.all(np.equal(vec1.numpy(), np.zeros((2, 10), dtype=np.float32)))
 
 
+def test_imul_vec2(vec1: ecs.Vec2, vec2: ecs.Vec2) -> None:
+    vec1 *= vec2
+    assert np.all(np.equal(vec1.numpy(), vec2.numpy() ** 2))
+
+
+def test_imul_float(vec1: ecs.Vec2) -> None:
+    vec1 *= 2.0
+    expected = np.array([np.arange(10), np.arange(10)], dtype=np.float32) * 2
+    assert np.all(np.equal(vec1.numpy(), expected))
+
+
+def test_imul_numpy(vec1: ecs.Vec2) -> None:
+    vec1 *= np.arange(10, dtype=np.float32)
+    expected = np.array([np.arange(10), np.arange(10)], dtype=np.float32) ** 2
+    assert np.all(np.equal(vec1.numpy(), expected))
+
+
 @pytest.fixture
 def vec1() -> ecs.Vec2:
     pool = VecContainer.create_pool(10)
