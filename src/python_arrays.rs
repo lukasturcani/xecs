@@ -293,6 +293,38 @@ macro_rules! python_array {
                     }
                     Ok(())
                 }
+
+                pub fn __itruediv__(&mut self, other: Value) -> PyResult<()> {
+                    let mut self_array = self.array.write().map_err(cannot_write)?;
+                    let self_indices = self.indices.0.read().map_err(cannot_read)?;
+
+                    match other {
+                        Value::One(item) => {
+                            self_indices.iter().for_each(|&index| unsafe {
+                                *self_array.get_unchecked_mut(index as usize) /= item;
+                            });
+                        }
+                        Value::Many(other) => {
+                            let other_array = other.array.read().map_err(cannot_read)?;
+                            let other_indices = other.indices.0.read().map_err(cannot_read)?;
+                            self_indices.iter().zip(other_indices.iter()).for_each(
+                                |(&self_index, &other_index)| unsafe {
+                                    *self_array.get_unchecked_mut(self_index as usize) /=
+                                        other_array.get_unchecked(other_index as usize);
+                                },
+                            );
+                        }
+                        Value::ManyArray(other) => {
+                            self_indices
+                                .iter()
+                                .zip(other.readonly().as_array())
+                                .for_each(|(&self_index, &item)| unsafe {
+                                    *self_array.get_unchecked_mut(self_index as usize) /= item;
+                                });
+                        }
+                    }
+                    Ok(())
+                }
             }
         }
     };

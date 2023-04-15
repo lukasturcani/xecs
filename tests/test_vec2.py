@@ -66,6 +66,26 @@ def test_imul_numpy(vec1: ecs.Vec2) -> None:
     assert np.all(np.equal(vec1.numpy(), expected))
 
 
+def test_idiv_vec2(vec1: ecs.Vec2, vec2: ecs.Vec2) -> None:
+    # Add one to prevent division by zero.
+    vec1 += 1
+    vec2 += 1
+    vec1 /= vec2
+    assert np.all(np.equal(vec1.numpy(), np.ones((2, 10), dtype=np.float32)))
+
+
+def test_idiv_float(vec1: ecs.Vec2) -> None:
+    vec1 /= 2.0
+    expected = np.array([np.arange(10), np.arange(10)], dtype=np.float32) * 0.5
+    assert np.all(np.equal(vec1.numpy(), expected))
+
+
+def test_idiv_numpy(vec1: ecs.Vec2) -> None:
+    vec1 += 1
+    vec1 /= np.arange(10, dtype=np.float32) + 1
+    assert np.all(np.equal(vec1.numpy(), np.ones((2, 10), dtype=np.float32)))
+
+
 @pytest.fixture
 def vec1() -> ecs.Vec2:
     pool = VecContainer.create_pool(10)

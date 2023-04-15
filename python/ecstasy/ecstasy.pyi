@@ -58,6 +58,10 @@ class _Array(typing.Generic[_NumpyT, _UnitT]):
         self,
         other: typing.Self | npt.NDArray[_NumpyT] | float,
     ) -> typing.Self: ...
+    def __idiv__(
+        self,
+        other: typing.Self | npt.NDArray[_NumpyT] | float,
+    ) -> typing.Self: ...
 
 class Float32(_Array[np.float32, float]):
     @staticmethod
