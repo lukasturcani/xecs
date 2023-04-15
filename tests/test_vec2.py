@@ -23,7 +23,14 @@ def test_iadd_vec2(vec1: ecs.Vec2, vec2: ecs.Vec2) -> None:
 
 def test_iadd_float(vec1: ecs.Vec2) -> None:
     vec1 += 1.0
-    assert np.all(np.equal(vec1.numpy(), np.arange(10) + 1))
+    expected = np.array([np.arange(10), np.arange(10)], dtype=np.float32) + 1
+    assert np.all(np.equal(vec1.numpy(), expected))
+
+
+def test_iadd_numpy(vec1: ecs.Vec2) -> None:
+    vec1 += np.arange(10, dtype=np.float32)
+    expected = np.array([np.arange(10), np.arange(10)], dtype=np.float32) * 2
+    assert np.all(np.equal(vec1.numpy(), expected))
 
 
 @pytest.fixture

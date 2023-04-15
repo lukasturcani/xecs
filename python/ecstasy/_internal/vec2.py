@@ -11,8 +11,11 @@ class Vec2(Struct):
     x: Float32
     y: Float32
 
-    def __iadd__(self, other: typing.Self | float) -> typing.Self:
-        if isinstance(other, int | float):
+    def __iadd__(
+        self,
+        other: typing.Self | npt.NDArray[np.float32] | float,
+    ) -> typing.Self:
+        if isinstance(other, int | float | np.ndarray):
             self.x += other
             self.y += other
         else:

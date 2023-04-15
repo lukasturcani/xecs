@@ -204,7 +204,11 @@ macro_rules! python_array {
                     let self_indices = self.indices.0.read().map_err(cannot_read)?;
 
                     match other {
-                        Value::One(item) => {}
+                        Value::One(item) => {
+                            self_indices.iter().for_each(|&index| unsafe {
+                                *self_array.get_unchecked_mut(index as usize) += item;
+                            });
+                        }
                         Value::Many(other) => {
                             let other_array = other.array.read().map_err(cannot_read)?;
                             let other_indices = other.indices.0.read().map_err(cannot_read)?;
@@ -215,7 +219,14 @@ macro_rules! python_array {
                                 },
                             );
                         }
-                        Value::ManyArray(items) => {}
+                        Value::ManyArray(other) => {
+                            self_indices
+                                .iter()
+                                .zip(other.readonly().as_array())
+                                .for_each(|(&self_index, &item)| unsafe {
+                                    *self_array.get_unchecked_mut(self_index as usize) += item;
+                                });
+                        }
                     }
                     Ok(())
                 }
