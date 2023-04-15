@@ -14,7 +14,8 @@ macro_rules! python_array {
             #[derive(FromPyObject)]
             pub enum Value<'a> {
                 One($type),
-                Many(&'a PyArray1<$type>),
+                Many(PyRef<'a, $name>),
+                ManyArray(&'a PyArray1<$type>),
             }
 
             #[pyclass]
@@ -111,7 +112,7 @@ macro_rules! python_array {
                             let slice_indices = slice.indices(indices.len() as i64)?;
                             for (index, &item) in (slice_indices.start..slice_indices.stop)
                                 .step_by(slice_indices.step as usize)
-                                .zip(items.readonly().as_array())
+                                .zip(items.array.read().map_err(cannot_read)?.iter())
                             {
                                 unsafe {
                                     *array.get_unchecked_mut(
@@ -125,7 +126,7 @@ macro_rules! python_array {
                                 .readonly()
                                 .as_array()
                                 .iter()
-                                .zip(items.readonly().as_array())
+                                .zip(items.array.read().map_err(cannot_read)?.iter())
                             {
                                 let array_index =
                                     *indices.get(index as usize).ok_or_else(bad_index)?;
@@ -135,6 +136,48 @@ macro_rules! python_array {
                             }
                         }
                         (Key::ArrayMask(mask), Value::Many(items)) => {
+                            for (&keep, &index, &item) in izip!(
+                                mask.readonly().as_array().iter(),
+                                indices.iter(),
+                                items.array.read().map_err(cannot_read)?.iter()
+                            ) {
+                                if keep {
+                                    unsafe {
+                                        *array.get_unchecked_mut(
+                                            *indices.get_unchecked(index as usize) as usize,
+                                        ) = item;
+                                    }
+                                }
+                            }
+                        }
+                        (Key::Slice(slice), Value::ManyArray(items)) => {
+                            let slice_indices = slice.indices(indices.len() as i64)?;
+                            for (index, &item) in (slice_indices.start..slice_indices.stop)
+                                .step_by(slice_indices.step as usize)
+                                .zip(items.readonly().as_array())
+                            {
+                                unsafe {
+                                    *array.get_unchecked_mut(
+                                        *indices.get_unchecked(index as usize) as usize,
+                                    ) = item;
+                                };
+                            }
+                        }
+                        (Key::ArrayIndices(array_indices), Value::ManyArray(items)) => {
+                            for (&index, &item) in array_indices
+                                .readonly()
+                                .as_array()
+                                .iter()
+                                .zip(items.readonly().as_array())
+                            {
+                                let array_index =
+                                    *indices.get(index as usize).ok_or_else(bad_index)?;
+                                unsafe {
+                                    *array.get_unchecked_mut(array_index as usize) = item;
+                                }
+                            }
+                        }
+                        (Key::ArrayMask(mask), Value::ManyArray(items)) => {
                             for (&keep, &index, &item) in izip!(
                                 mask.readonly().as_array().iter(),
                                 indices.iter(),
@@ -156,17 +199,24 @@ macro_rules! python_array {
                     self.indices.__len__()
                 }
 
-                pub fn __iadd__(&mut self, other: &Self) -> PyResult<()> {
+                pub fn __iadd__(&mut self, other: Value) -> PyResult<()> {
                     let mut self_array = self.array.write().map_err(cannot_write)?;
                     let self_indices = self.indices.0.read().map_err(cannot_read)?;
-                    let other_array = other.array.read().map_err(cannot_read)?;
-                    let other_indices = other.indices.0.read().map_err(cannot_read)?;
-                    self_indices.iter().zip(other_indices.iter()).for_each(
-                        |(&self_index, &other_index)| unsafe {
-                            *self_array.get_unchecked_mut(self_index as usize) +=
-                                other_array.get_unchecked(other_index as usize);
-                        },
-                    );
+
+                    match other {
+                        Value::One(item) => {}
+                        Value::Many(other) => {
+                            let other_array = other.array.read().map_err(cannot_read)?;
+                            let other_indices = other.indices.0.read().map_err(cannot_read)?;
+                            self_indices.iter().zip(other_indices.iter()).for_each(
+                                |(&self_index, &other_index)| unsafe {
+                                    *self_array.get_unchecked_mut(self_index as usize) +=
+                                        other_array.get_unchecked(other_index as usize);
+                                },
+                            );
+                        }
+                        Value::ManyArray(items) => {}
+                    }
                     Ok(())
                 }
             }

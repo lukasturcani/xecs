@@ -42,13 +42,10 @@ class Float32:
     def __setitem__(
         self,
         key: Key,
-        value: float
-        | tuple[float, ...]
-        | list[float]
-        | npt.NDArray[np.float32],
+        value: float | Float32 | npt.NDArray[np.float32],
     ) -> None: ...
     def __len__(self) -> int: ...
-    def __iadd__(self, other: Float32) -> Float32: ...
+    def __iadd__(self, other: Float32 | float) -> Float32: ...
 
 class Float64:
     @staticmethod
@@ -64,10 +61,7 @@ class Float64:
     def __setitem__(
         self,
         key: Key,
-        value: float
-        | tuple[float, ...]
-        | list[float]
-        | npt.NDArray[np.float64],
+        value: float | Float64 | npt.NDArray[np.float64],
     ) -> None: ...
     def __len__(self) -> int: ...
-    def __iadd__(self, other: Float64) -> Float64: ...
+    def __iadd__(self, other: Float64 | float) -> Float64: ...
