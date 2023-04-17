@@ -31,9 +31,8 @@ class ArrayViewIndices:
     def __getitem__(self, key: Key) -> ArrayViewIndices: ...
 
 _NumpyT = typing.TypeVar("_NumpyT", np.float32, np.float64)
-_UnitT = typing.TypeVar("_UnitT", int, float, bool)
 
-class _Array(typing.Generic[_NumpyT, _UnitT]):
+class _Array(typing.Generic[_NumpyT]):
     def numpy(self) -> npt.NDArray[_NumpyT]: ...
     def p_new_view_with_indices(
         self,
@@ -70,14 +69,18 @@ class _Array(typing.Generic[_NumpyT, _UnitT]):
         self,
         other: typing.Self | npt.NDArray[_NumpyT] | float,
     ) -> typing.Self: ...
+    def __ipow__(
+        self,
+        other: typing.Self | npt.NDArray[_NumpyT] | float,
+    ) -> typing.Self: ...
 
-class Float32(_Array[np.float32, float]):
+class Float32(_Array[np.float32]):
     @staticmethod
     def from_numpy(array: npt.NDArray[np.float32]) -> Float32: ...
     @staticmethod
     def p_with_indices(indices: ArrayViewIndices) -> Float32: ...
 
-class Float64(_Array[np.float64, float]):
+class Float64(_Array[np.float64]):
     @staticmethod
     def from_numpy(array: npt.NDArray[np.float64]) -> Float64: ...
     @staticmethod

@@ -83,5 +83,17 @@ class Vec2(Struct):
             self.y %= other.y
         return self
 
+    def __ipow__(
+        self,
+        other: typing.Self | npt.NDArray[np.float32] | float,
+    ) -> typing.Self:
+        if isinstance(other, int | float | np.ndarray):
+            self.x **= other
+            self.y **= other
+        else:
+            self.x **= other.x
+            self.y **= other.y
+        return self
+
     def numpy(self) -> npt.NDArray[np.float32]:
         return np.array([self.x.numpy(), self.y.numpy()], dtype=np.float32)

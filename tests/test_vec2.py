@@ -1,5 +1,9 @@
+import operator
+import typing
+
 import ecstasy as ecs
 import numpy as np
+import numpy.typing as npt
 import pytest
 
 
@@ -16,129 +20,75 @@ def test_numpy(vec1: ecs.Vec2) -> None:
     )
 
 
-def test_iadd_vec2(vec1: ecs.Vec2, vec2: ecs.Vec2) -> None:
-    vec1 += vec2
-    assert np.all(np.equal(vec1.numpy(), vec2.numpy() * 2))
+@pytest.fixture(
+    params=(
+        operator.iadd,
+        operator.isub,
+        operator.imul,
+        operator.itruediv,
+        operator.ifloordiv,
+        operator.imod,
+        operator.ipow,
+    )
+)
+def math_operator(request: pytest.FixtureRequest) -> typing.Any:
+    return request.param
 
 
-def test_iadd_float(vec1: ecs.Vec2) -> None:
-    vec1 += 1.0
-    expected = np.array([np.arange(10), np.arange(10)], dtype=np.float32) + 1
-    assert np.all(np.equal(vec1.numpy(), expected))
+def test_operators_vec2(
+    vec1: ecs.Vec2,
+    vec2: ecs.Vec2,
+    math_operator: typing.Any,
+) -> None:
+    array1 = vec1.numpy()
+    array2 = vec2.numpy()
+    expected = math_operator(array1, array2)
+    result = math_operator(vec1, vec2)
+    assert np.all(np.equal(result.numpy(), expected))
 
 
-def test_iadd_numpy(vec1: ecs.Vec2) -> None:
-    vec1 += np.arange(10, dtype=np.float32)
-    expected = np.array([np.arange(10), np.arange(10)], dtype=np.float32) * 2
-    assert np.all(np.equal(vec1.numpy(), expected))
+def test_operators_float(
+    vec1: ecs.Vec2,
+    math_operator: typing.Any,
+) -> None:
+    array1 = vec1.numpy()
+    expected = math_operator(array1, 3)
+    result = math_operator(vec1, 3)
+    assert np.all(np.equal(result.numpy(), expected))
 
 
-def test_isub_vec2(vec1: ecs.Vec2, vec2: ecs.Vec2) -> None:
-    vec1 -= vec2
-    assert np.all(np.equal(vec1.numpy(), np.zeros((2, 10), dtype=np.float32)))
-
-
-def test_isub_float(vec1: ecs.Vec2) -> None:
-    vec1 -= 1.0
-    expected = np.array([np.arange(10), np.arange(10)], dtype=np.float32) - 1
-    assert np.all(np.equal(vec1.numpy(), expected))
-
-
-def test_isub_numpy(vec1: ecs.Vec2) -> None:
-    vec1 -= np.arange(10, dtype=np.float32)
-    assert np.all(np.equal(vec1.numpy(), np.zeros((2, 10), dtype=np.float32)))
-
-
-def test_imul_vec2(vec1: ecs.Vec2, vec2: ecs.Vec2) -> None:
-    vec1 *= vec2
-    assert np.all(np.equal(vec1.numpy(), vec2.numpy() ** 2))
-
-
-def test_imul_float(vec1: ecs.Vec2) -> None:
-    vec1 *= 2.0
-    expected = np.array([np.arange(10), np.arange(10)], dtype=np.float32) * 2
-    assert np.all(np.equal(vec1.numpy(), expected))
-
-
-def test_imul_numpy(vec1: ecs.Vec2) -> None:
-    vec1 *= np.arange(10, dtype=np.float32)
-    expected = np.array([np.arange(10), np.arange(10)], dtype=np.float32) ** 2
-    assert np.all(np.equal(vec1.numpy(), expected))
-
-
-def test_itruediv_vec2(vec1: ecs.Vec2, vec2: ecs.Vec2) -> None:
-    # Add one to prevent division by zero.
-    vec1 += 1
-    vec2 += 1
-    vec1 /= vec2
-    assert np.all(np.equal(vec1.numpy(), np.ones((2, 10), dtype=np.float32)))
-
-
-def test_itruediv_float(vec1: ecs.Vec2) -> None:
-    vec1 /= 2.0
-    expected = np.array([np.arange(10), np.arange(10)], dtype=np.float32) * 0.5
-    assert np.all(np.equal(vec1.numpy(), expected))
-
-
-def test_itruediv_numpy(vec1: ecs.Vec2) -> None:
-    vec1 += 1
-    vec1 //= np.arange(10, dtype=np.float32) + 1
-    assert np.all(np.equal(vec1.numpy(), np.ones((2, 10), dtype=np.float32)))
-
-
-def test_ifloordiv_vec2(vec1: ecs.Vec2, vec2: ecs.Vec2) -> None:
-    # Add one to prevent division by zero.
-    vec1 += 1
-    vec2 += 1
-    vec1 //= vec2
-    assert np.all(np.equal(vec1.numpy(), np.ones((2, 10), dtype=np.float32)))
-
-
-def test_ifloordiv_float(vec1: ecs.Vec2) -> None:
-    vec1 //= 2.0
-    expected = np.array([np.arange(10), np.arange(10)], dtype=np.float32) // 2
-    assert np.all(np.equal(vec1.numpy(), expected))
-
-
-def test_ifloordiv_numpy(vec1: ecs.Vec2) -> None:
-    vec1 += 1
-    vec1 //= np.arange(10, dtype=np.float32) + 1
-    assert np.all(np.equal(vec1.numpy(), np.ones((2, 10), dtype=np.float32)))
-
-
-def test_imod_vec2(vec1: ecs.Vec2, vec2: ecs.Vec2) -> None:
-    # Add one to prevent division by zero.
-    vec1 += 1
-    vec2 += 1
-    vec1 %= vec2
-    assert np.all(np.equal(vec1.numpy(), np.zeros((2, 10), dtype=np.float32)))
-
-
-def test_imod_float(vec1: ecs.Vec2) -> None:
-    vec1 %= 2.0
-    expected = np.array([np.arange(10), np.arange(10)], dtype=np.float32) % 2
-    assert np.all(np.equal(vec1.numpy(), expected))
-
-
-def test_imod_numpy(vec1: ecs.Vec2) -> None:
-    vec1 += 1
-    vec1 %= np.arange(10, dtype=np.float32) + 1
-    assert np.all(np.equal(vec1.numpy(), np.zeros((2, 10), dtype=np.float32)))
+def test_operators_array(
+    vec1: ecs.Vec2,
+    array: npt.NDArray[np.float32],
+    math_operator: typing.Any,
+) -> None:
+    array1 = vec1.numpy()
+    expected = math_operator(array1, array)
+    result = math_operator(vec1, array)
+    assert np.all(np.equal(result.numpy(), expected))
 
 
 @pytest.fixture
 def vec1() -> ecs.Vec2:
+    generator = np.random.default_rng(55)
     pool = VecContainer.create_pool(10)
     pool.p_spawn(10)
-    pool.p_component.vec.x[:] = np.arange(10, dtype=np.float32)
-    pool.p_component.vec.y[:] = np.arange(10, dtype=np.float32)
+    pool.p_component.vec.x[:] = generator.random(10, dtype=np.float32)
+    pool.p_component.vec.y[:] = generator.random(10, dtype=np.float32)
     return pool.p_component.vec
 
 
 @pytest.fixture
 def vec2() -> ecs.Vec2:
+    generator = np.random.default_rng(56)
     pool = VecContainer.create_pool(10)
     pool.p_spawn(10)
-    pool.p_component.vec.x[:] = np.arange(10, dtype=np.float32)
-    pool.p_component.vec.y[:] = np.arange(10, dtype=np.float32)
+    pool.p_component.vec.x[:] = generator.random(10, dtype=np.float32)
+    pool.p_component.vec.y[:] = generator.random(10, dtype=np.float32)
     return pool.p_component.vec
+
+
+@pytest.fixture
+def array() -> npt.NDArray[np.float32]:
+    generator = np.random.default_rng(57)
+    return generator.random(10, dtype=np.float32)
