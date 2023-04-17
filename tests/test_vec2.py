@@ -12,10 +12,15 @@ class VecContainer(ecs.Component):
 
 
 def test_numpy(vec1: ecs.Vec2) -> None:
+    generator = np.random.default_rng(54)
+    xs = generator.random(10, dtype=np.float32)
+    ys = generator.random(10, dtype=np.float32)
+    vec1.x[:] = xs
+    vec1.y[:] = ys
     assert np.all(
         np.equal(
             vec1.numpy(),
-            np.array([np.arange(10), np.arange(10)], dtype=np.float32),
+            np.array([xs, ys], dtype=np.float32),
         ),
     )
 
