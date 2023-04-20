@@ -145,10 +145,3 @@ def test_iadd() -> None:
     second = ecs.Float32.from_numpy(np.arange(10, dtype=np.float32))
     first += second
     assert np.all(np.equal(first.numpy(), second.numpy() * 2))
-
-
-def test_iadd2() -> None:
-    first = ecs.Float32.from_numpy(np.arange(10, dtype=np.float32))
-    second = ecs.Float32.from_numpy(np.arange(10, dtype=np.float32))
-    first += second
-    assert np.all(np.equal(first.numpy(), second.numpy() * 2))

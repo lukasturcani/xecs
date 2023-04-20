@@ -14,20 +14,19 @@ struct Array<T> {
 
 #[derive(FromPyObject)]
 pub enum FloatIAddValue<'a> {
-    // OneFloat32(f32),
-    // OneFloat64(f64),
-    // OneI8(i8),
-    ArrayFloat32(PyRef<'a, Float32>),
-    ArrayFloat64(PyRef<'a, Float64>),
-    ArrayInt8(PyRef<'a, Int8>),
-    ArrayInt16(PyRef<'a, Int16>),
+    I64(i64),
+    F64(f64),
+    Float32(PyRef<'a, Float32>),
+    Float64(PyRef<'a, Float64>),
+    Int8(PyRef<'a, Int8>),
+    Int16(PyRef<'a, Int16>),
 }
 
 #[derive(FromPyObject)]
 pub enum IntIAddValue<'a> {
-    OneI8(i8),
-    ArrayInt8(PyRef<'a, Int8>),
-    ArrayInt16(PyRef<'a, Int16>),
+    I64(i64),
+    Int8(PyRef<'a, Int8>),
+    Int16(PyRef<'a, Int16>),
 }
 
 impl<T> Array<T>
@@ -84,7 +83,21 @@ macro_rules! float_array {
                 let mut self_array = self.array.write().map_err(cannot_write)?;
                 let self_indices = self.indices.0.read().map_err(cannot_read)?;
                 match other {
-                    FloatIAddValue::ArrayFloat32(other) => {
+                    FloatIAddValue::I64(other_value) => {
+                        for &self_index in self_indices.iter() {
+                            let self_value =
+                                unsafe { self_array.get_unchecked_mut(self_index as usize) };
+                            *self_value += *other_value as $type;
+                        }
+                    }
+                    FloatIAddValue::F64(other_value) => {
+                        for &self_index in self_indices.iter() {
+                            let self_value =
+                                unsafe { self_array.get_unchecked_mut(self_index as usize) };
+                            *self_value += *other_value as $type;
+                        }
+                    }
+                    FloatIAddValue::Float32(other) => {
                         let other_array = other.0.array.read().map_err(cannot_write)?;
                         let other_indices = other.0.indices.0.read().map_err(cannot_read)?;
                         for (&self_index, &other_index) in
@@ -97,7 +110,7 @@ macro_rules! float_array {
                             *self_value += *other_value as $type;
                         }
                     }
-                    FloatIAddValue::ArrayFloat64(other) => {
+                    FloatIAddValue::Float64(other) => {
                         let other_array = other.0.array.read().map_err(cannot_write)?;
                         let other_indices = other.0.indices.0.read().map_err(cannot_read)?;
                         for (&self_index, &other_index) in
@@ -110,7 +123,7 @@ macro_rules! float_array {
                             *self_value += *other_value as $type;
                         }
                     }
-                    FloatIAddValue::ArrayInt8(other) => {
+                    FloatIAddValue::Int8(other) => {
                         let other_array = other.0.array.read().map_err(cannot_write)?;
                         let other_indices = other.0.indices.0.read().map_err(cannot_read)?;
                         for (&self_index, &other_index) in
@@ -123,7 +136,7 @@ macro_rules! float_array {
                             *self_value += *other_value as $type;
                         }
                     }
-                    FloatIAddValue::ArrayInt16(other) => {
+                    FloatIAddValue::Int16(other) => {
                         let other_array = other.0.array.read().map_err(cannot_write)?;
                         let other_indices = other.0.indices.0.read().map_err(cannot_read)?;
                         for (&self_index, &other_index) in
@@ -150,14 +163,14 @@ macro_rules! int_array {
                 let mut self_array = self.array.write().map_err(cannot_write)?;
                 let self_indices = self.indices.0.read().map_err(cannot_read)?;
                 match other {
-                    IntIAddValue::OneI8(other_value) => {
+                    IntIAddValue::I64(other_value) => {
                         for &self_index in self_indices.iter() {
                             let self_value =
                                 unsafe { self_array.get_unchecked_mut(self_index as usize) };
                             *self_value += *other_value as $type;
                         }
                     }
-                    IntIAddValue::ArrayInt8(other) => {
+                    IntIAddValue::Int8(other) => {
                         let other_array = other.0.array.read().map_err(cannot_write)?;
                         let other_indices = other.0.indices.0.read().map_err(cannot_read)?;
                         for (&self_index, &other_index) in
@@ -170,7 +183,7 @@ macro_rules! int_array {
                             *self_value += *other_value as $type;
                         }
                     }
-                    IntIAddValue::ArrayInt16(other) => {
+                    IntIAddValue::Int16(other) => {
                         let other_array = other.0.array.read().map_err(cannot_write)?;
                         let other_indices = other.0.indices.0.read().map_err(cannot_read)?;
                         for (&self_index, &other_index) in
