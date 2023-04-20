@@ -20,7 +20,6 @@ mod set;
 fn ecstasy(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<python_arrays::Float32>()?;
     m.add_class::<python_arrays::Float64>()?;
-    // m.add_class::<python_arrays::float64::Float64>()?;
     m.add_class::<app::RustApp>()?;
     m.add_class::<array_view_indices::ArrayViewIndices>()?;
     m.add_class::<array_view_indices::MultipleArrayViewIndices>()?;

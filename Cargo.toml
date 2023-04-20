@@ -12,4 +12,3 @@ crate-type = ["cdylib"]
 pyo3 = "0.18.1"
 numpy = "0.18"
 itertools = "0.10"
-num = "0.4.0"
