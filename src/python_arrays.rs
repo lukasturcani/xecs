@@ -13,27 +13,31 @@ struct Array<T> {
 }
 
 #[derive(FromPyObject)]
-pub enum FloatIAddValue<'a> {
+pub enum FloatMathRhsValue<'a> {
     I64(i64),
     F64(f64),
     Float32(PyRef<'a, Float32>),
     Float64(PyRef<'a, Float64>),
     Int8(PyRef<'a, Int8>),
     Int16(PyRef<'a, Int16>),
+    Int32(PyRef<'a, Int32>),
+    Int64(PyRef<'a, Int64>),
 }
 
 #[derive(FromPyObject)]
-pub enum IntIAddValue<'a> {
+pub enum IntMathRhsValue<'a> {
     I64(i64),
     Int8(PyRef<'a, Int8>),
     Int16(PyRef<'a, Int16>),
+    Int32(PyRef<'a, Int32>),
+    Int64(PyRef<'a, Int64>),
 }
 
 impl<T> Array<T>
 where
     T: numpy::Element,
 {
-    pub fn from_numpy(array: &PyArray1<T>) -> PyResult<Self> {
+    pub fn p_from_numpy(array: &PyArray1<T>) -> PyResult<Self> {
         Ok(Self {
             array: Arc::new(RwLock::new(array.to_vec()?)),
             indices: ArrayViewIndices(Arc::new(RwLock::new(
@@ -76,78 +80,56 @@ where
     }
 }
 
+macro_rules! add_arrays {
+    ($self_array:ident, $self_indices:ident, $other:ident, $type:ty) => {
+        let other_array = $other.0.array.read().map_err(cannot_write)?;
+        let other_indices = $other.0.indices.0.read().map_err(cannot_read)?;
+        for (&self_index, &other_index) in $self_indices.iter().zip(other_indices.iter()) {
+            let self_value = unsafe { $self_array.get_unchecked_mut(self_index as usize) };
+            let other_value = unsafe { other_array.get_unchecked(other_index as usize) };
+            *self_value += *other_value as $type;
+        }
+    };
+}
+
 macro_rules! float_array {
     (impl Array<$type:ty>) => {
         impl Array<$type> {
-            pub fn __iadd__(&mut self, other: &FloatIAddValue) -> PyResult<()> {
+            pub fn __iadd__(&mut self, other: &FloatMathRhsValue) -> PyResult<()> {
                 let mut self_array = self.array.write().map_err(cannot_write)?;
                 let self_indices = self.indices.0.read().map_err(cannot_read)?;
                 match other {
-                    FloatIAddValue::I64(other_value) => {
+                    FloatMathRhsValue::I64(other_value) => {
                         for &self_index in self_indices.iter() {
                             let self_value =
                                 unsafe { self_array.get_unchecked_mut(self_index as usize) };
                             *self_value += *other_value as $type;
                         }
                     }
-                    FloatIAddValue::F64(other_value) => {
+                    FloatMathRhsValue::F64(other_value) => {
                         for &self_index in self_indices.iter() {
                             let self_value =
                                 unsafe { self_array.get_unchecked_mut(self_index as usize) };
                             *self_value += *other_value as $type;
                         }
                     }
-                    FloatIAddValue::Float32(other) => {
-                        let other_array = other.0.array.read().map_err(cannot_write)?;
-                        let other_indices = other.0.indices.0.read().map_err(cannot_read)?;
-                        for (&self_index, &other_index) in
-                            self_indices.iter().zip(other_indices.iter())
-                        {
-                            let self_value =
-                                unsafe { self_array.get_unchecked_mut(self_index as usize) };
-                            let other_value =
-                                unsafe { other_array.get_unchecked(other_index as usize) };
-                            *self_value += *other_value as $type;
-                        }
+                    FloatMathRhsValue::Float32(other) => {
+                        add_arrays!(self_array, self_indices, other, $type);
                     }
-                    FloatIAddValue::Float64(other) => {
-                        let other_array = other.0.array.read().map_err(cannot_write)?;
-                        let other_indices = other.0.indices.0.read().map_err(cannot_read)?;
-                        for (&self_index, &other_index) in
-                            self_indices.iter().zip(other_indices.iter())
-                        {
-                            let self_value =
-                                unsafe { self_array.get_unchecked_mut(self_index as usize) };
-                            let other_value =
-                                unsafe { other_array.get_unchecked(other_index as usize) };
-                            *self_value += *other_value as $type;
-                        }
+                    FloatMathRhsValue::Float64(other) => {
+                        add_arrays!(self_array, self_indices, other, $type);
                     }
-                    FloatIAddValue::Int8(other) => {
-                        let other_array = other.0.array.read().map_err(cannot_write)?;
-                        let other_indices = other.0.indices.0.read().map_err(cannot_read)?;
-                        for (&self_index, &other_index) in
-                            self_indices.iter().zip(other_indices.iter())
-                        {
-                            let self_value =
-                                unsafe { self_array.get_unchecked_mut(self_index as usize) };
-                            let other_value =
-                                unsafe { other_array.get_unchecked(other_index as usize) };
-                            *self_value += *other_value as $type;
-                        }
+                    FloatMathRhsValue::Int8(other) => {
+                        add_arrays!(self_array, self_indices, other, $type);
                     }
-                    FloatIAddValue::Int16(other) => {
-                        let other_array = other.0.array.read().map_err(cannot_write)?;
-                        let other_indices = other.0.indices.0.read().map_err(cannot_read)?;
-                        for (&self_index, &other_index) in
-                            self_indices.iter().zip(other_indices.iter())
-                        {
-                            let self_value =
-                                unsafe { self_array.get_unchecked_mut(self_index as usize) };
-                            let other_value =
-                                unsafe { other_array.get_unchecked(other_index as usize) };
-                            *self_value += *other_value as $type;
-                        }
+                    FloatMathRhsValue::Int16(other) => {
+                        add_arrays!(self_array, self_indices, other, $type);
+                    }
+                    FloatMathRhsValue::Int32(other) => {
+                        add_arrays!(self_array, self_indices, other, $type);
+                    }
+                    FloatMathRhsValue::Int64(other) => {
+                        add_arrays!(self_array, self_indices, other, $type);
                     }
                 }
                 Ok(())
@@ -159,42 +141,28 @@ macro_rules! float_array {
 macro_rules! int_array {
     (impl Array<$type:ty>) => {
         impl Array<$type> {
-            pub fn __iadd__(&mut self, other: &IntIAddValue) -> PyResult<()> {
+            pub fn __iadd__(&mut self, other: &IntMathRhsValue) -> PyResult<()> {
                 let mut self_array = self.array.write().map_err(cannot_write)?;
                 let self_indices = self.indices.0.read().map_err(cannot_read)?;
                 match other {
-                    IntIAddValue::I64(other_value) => {
+                    IntMathRhsValue::I64(other_value) => {
                         for &self_index in self_indices.iter() {
                             let self_value =
                                 unsafe { self_array.get_unchecked_mut(self_index as usize) };
                             *self_value += *other_value as $type;
                         }
                     }
-                    IntIAddValue::Int8(other) => {
-                        let other_array = other.0.array.read().map_err(cannot_write)?;
-                        let other_indices = other.0.indices.0.read().map_err(cannot_read)?;
-                        for (&self_index, &other_index) in
-                            self_indices.iter().zip(other_indices.iter())
-                        {
-                            let self_value =
-                                unsafe { self_array.get_unchecked_mut(self_index as usize) };
-                            let other_value =
-                                unsafe { other_array.get_unchecked(other_index as usize) };
-                            *self_value += *other_value as $type;
-                        }
+                    IntMathRhsValue::Int8(other) => {
+                        add_arrays!(self_array, self_indices, other, $type);
                     }
-                    IntIAddValue::Int16(other) => {
-                        let other_array = other.0.array.read().map_err(cannot_write)?;
-                        let other_indices = other.0.indices.0.read().map_err(cannot_read)?;
-                        for (&self_index, &other_index) in
-                            self_indices.iter().zip(other_indices.iter())
-                        {
-                            let self_value =
-                                unsafe { self_array.get_unchecked_mut(self_index as usize) };
-                            let other_value =
-                                unsafe { other_array.get_unchecked(other_index as usize) };
-                            *self_value += *other_value as $type;
-                        }
+                    IntMathRhsValue::Int16(other) => {
+                        add_arrays!(self_array, self_indices, other, $type);
+                    }
+                    IntMathRhsValue::Int32(other) => {
+                        add_arrays!(self_array, self_indices, other, $type);
+                    }
+                    IntMathRhsValue::Int64(other) => {
+                        add_arrays!(self_array, self_indices, other, $type);
                     }
                 }
                 Ok(())
@@ -207,6 +175,8 @@ float_array! { impl Array<f32> }
 float_array! { impl Array<f64> }
 int_array! { impl Array<i8> }
 int_array! { impl Array<i16> }
+int_array! { impl Array<i32> }
+int_array! { impl Array<i64> }
 
 macro_rules! python_array {
     (pub mod $mod_name:ident { struct $name:ident($type:ty) }) => {
@@ -653,13 +623,13 @@ macro_rules! python_float_array {
                 Array::p_with_indices(indices, 0.0).map(Self)
             }
             #[staticmethod]
-            pub fn from_numpy(array: &PyArray1<$type>) -> PyResult<Self> {
-                Array::from_numpy(array).map(Self)
+            pub fn p_from_numpy(array: &PyArray1<$type>) -> PyResult<Self> {
+                Array::p_from_numpy(array).map(Self)
             }
             pub fn numpy(&self, py: Python) -> PyResult<Py<PyArray1<$type>>> {
                 self.0.numpy(py)
             }
-            pub fn __iadd__(&mut self, other: FloatIAddValue) -> PyResult<()> {
+            pub fn __iadd__(&mut self, other: FloatMathRhsValue) -> PyResult<()> {
                 self.0.__iadd__(&other)
             }
         }
@@ -680,13 +650,13 @@ macro_rules! python_int_array {
                 Array::p_with_indices(indices, 0).map(Self)
             }
             #[staticmethod]
-            pub fn from_numpy(array: &PyArray1<$type>) -> PyResult<Self> {
-                Array::from_numpy(array).map(Self)
+            pub fn p_from_numpy(array: &PyArray1<$type>) -> PyResult<Self> {
+                Array::p_from_numpy(array).map(Self)
             }
             pub fn numpy(&self, py: Python) -> PyResult<Py<PyArray1<$type>>> {
                 self.0.numpy(py)
             }
-            pub fn __iadd__(&mut self, other: IntIAddValue) -> PyResult<()> {
+            pub fn __iadd__(&mut self, other: IntMathRhsValue) -> PyResult<()> {
                 self.0.__iadd__(&other)
             }
         }
@@ -707,6 +677,14 @@ python_int_array! {
 
 python_int_array! {
     pub struct Int16(i16)
+}
+
+python_int_array! {
+    pub struct Int32(i32)
+}
+
+python_int_array! {
+    pub struct Int64(i64)
 }
 
 trait Power {
