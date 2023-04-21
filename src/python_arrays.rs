@@ -613,7 +613,7 @@ macro_rules! int_array {
                 int_binary_op!(self.array, self.indices, other, $type, <$type>::mul);
                 Ok(())
             }
-            pub fn __itrudediv__(&mut self, other: IntOpRhsValue) -> PyResult<()> {
+            pub fn __itruediv__(&mut self, other: IntOpRhsValue) -> PyResult<()> {
                 int_binary_op!(self.array, self.indices, other, $type, <$type>::div);
                 Ok(())
             }
@@ -677,6 +677,25 @@ macro_rules! python_float_array {
             pub fn __iadd__(&mut self, other: FloatOpRhsValue) -> PyResult<()> {
                 self.0.__iadd__(other)
             }
+            pub fn __isub__(&mut self, other: FloatOpRhsValue) -> PyResult<()> {
+                self.0.__isub__(other)
+            }
+            pub fn __imul__(&mut self, other: FloatOpRhsValue) -> PyResult<()> {
+                self.0.__imul__(other)
+            }
+            pub fn __itruediv__(&mut self, other: FloatOpRhsValue) -> PyResult<()> {
+                self.0.__itruediv__(other)
+            }
+            pub fn __ifloordiv__(&mut self, other: FloatOpRhsValue) -> PyResult<()> {
+                self.0.__ifloordiv__(other)
+            }
+            pub fn __imod__(&mut self, other: FloatOpRhsValue) -> PyResult<()> {
+                self.0.__imod__(other)
+            }
+            #[args(modulo = "None")]
+            pub fn __ipow__(&mut self, other: FloatOpRhsValue, _modulo: &PyAny) -> PyResult<()> {
+                self.0.__ipow__(other)
+            }
         }
     };
 }
@@ -706,6 +725,25 @@ macro_rules! python_int_array {
             }
             pub fn __iadd__(&mut self, other: IntOpRhsValue) -> PyResult<()> {
                 self.0.__iadd__(other)
+            }
+            pub fn __isub__(&mut self, other: IntOpRhsValue) -> PyResult<()> {
+                self.0.__isub__(other)
+            }
+            pub fn __imul__(&mut self, other: IntOpRhsValue) -> PyResult<()> {
+                self.0.__imul__(other)
+            }
+            pub fn __itruediv__(&mut self, other: IntOpRhsValue) -> PyResult<()> {
+                self.0.__itruediv__(other)
+            }
+            pub fn __ifloordiv__(&mut self, other: IntOpRhsValue) -> PyResult<()> {
+                self.0.__ifloordiv__(other)
+            }
+            pub fn __imod__(&mut self, other: IntOpRhsValue) -> PyResult<()> {
+                self.0.__imod__(other)
+            }
+            #[args(modulo = "None")]
+            pub fn __ipow__(&mut self, other: IntOpRhsValue, _modulo: &PyAny) -> PyResult<()> {
+                self.0.__ipow__(other)
             }
         }
     };

@@ -35,13 +35,12 @@ NumpyInt: typing.TypeAlias = (
 
 
 def test_getitem_does_not_return_a_copy(array: Array) -> None:
-    mask = array < 5
-    assert np.sum(array.numpy()) == 0
+    assert np.all(np.equal(array.numpy(), [0, 1, 2, 3, 4]))
 
+    mask = array < 3
     sub_array = array[mask]
     sub_array[sub_array < 2] = 100
-    assert np.sum(array.numpy()) == 3
-    assert np.sum(array.numpy()[[0, 10, 50]]) == 3
+    assert np.all(np.equal(array.numpy(), [100, 100, 2, 3, 4]))
 
 
 def test_float_array_setitem(
@@ -115,8 +114,8 @@ def test_int_array_type_checking() -> None:
 
 @pytest.fixture(
     params=(
-        lambda: ecs.Float32.p_from_numpy(np.arange(10, dtype=np.float32)),
-        lambda: ecs.Float64.p_from_numpy(np.arange(10, dtype=np.float64)),
+        lambda: ecs.Float32.p_from_numpy(np.arange(5, dtype=np.float32)),
+        lambda: ecs.Float64.p_from_numpy(np.arange(5, dtype=np.float64)),
     ),
     ids=(
         "Float32",
@@ -129,14 +128,14 @@ def float_array(request: pytest.FixtureRequest) -> FloatArray:
 
 @pytest.fixture(
     params=(
-        lambda: ecs.Int8.p_from_numpy(np.arange(10, dtype=np.int8)),
-        lambda: ecs.Int16.p_from_numpy(np.arange(10, dtype=np.int16)),
-        lambda: ecs.Int32.p_from_numpy(np.arange(10, dtype=np.int32)),
-        lambda: ecs.Int64.p_from_numpy(np.arange(10, dtype=np.int64)),
-        lambda: ecs.UInt8.p_from_numpy(np.arange(10, dtype=np.uint8)),
-        lambda: ecs.UInt16.p_from_numpy(np.arange(10, dtype=np.uint16)),
-        lambda: ecs.UInt32.p_from_numpy(np.arange(10, dtype=np.uint32)),
-        lambda: ecs.UInt64.p_from_numpy(np.arange(10, dtype=np.uint64)),
+        lambda: ecs.Int8.p_from_numpy(np.arange(5, dtype=np.int8)),
+        lambda: ecs.Int16.p_from_numpy(np.arange(5, dtype=np.int16)),
+        lambda: ecs.Int32.p_from_numpy(np.arange(5, dtype=np.int32)),
+        lambda: ecs.Int64.p_from_numpy(np.arange(5, dtype=np.int64)),
+        lambda: ecs.UInt8.p_from_numpy(np.arange(5, dtype=np.uint8)),
+        lambda: ecs.UInt16.p_from_numpy(np.arange(5, dtype=np.uint16)),
+        lambda: ecs.UInt32.p_from_numpy(np.arange(5, dtype=np.uint32)),
+        lambda: ecs.UInt64.p_from_numpy(np.arange(5, dtype=np.uint64)),
     ),
     ids=(
         "Int8",
