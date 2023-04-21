@@ -1,7 +1,6 @@
 use crate::error_handlers::{bad_index, cannot_read, cannot_write};
 use crate::getitem_key::Key;
 use crate::index::Index;
-use crate::mask::Mask;
 use pyo3::exceptions::PyRuntimeError;
 use pyo3::prelude::*;
 use std::sync::{Arc, RwLock};
@@ -55,23 +54,5 @@ impl ArrayViewIndices {
     }
     pub fn __len__(&self) -> PyResult<usize> {
         Ok(self.0.read().map_err(cannot_read)?.len())
-    }
-
-    pub fn __getitem__(&self, mask: &Mask) -> PyResult<Self> {
-        let indices = self.0.read().map_err(cannot_read)?;
-        let new_indices = {
-            // Ideally the capacity if new_indices would be the number of
-            // true values in mask. However, because that would mean we count
-            // them first, we allocate for the worst-case scenario instead -- we
-            // assume all values in the mask are true.
-            let mut new_indices = Vec::with_capacity(mask.len());
-            for (&keep, &index) in mask.iter().zip(indices.iter()) {
-                if keep {
-                    new_indices.push(index);
-                }
-            }
-            new_indices
-        };
-        Ok(Self(Arc::new(RwLock::new(new_indices))))
     }
 }

@@ -9,7 +9,6 @@ mod error_handlers;
 mod getitem_key;
 mod index;
 mod map;
-mod mask;
 mod python_arrays;
 mod query;
 mod query_id;

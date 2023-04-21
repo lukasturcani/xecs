@@ -1,7 +1,6 @@
 use crate::array_view_indices::ArrayViewIndices;
 use crate::error_handlers::{bad_index, cannot_read, cannot_write};
 use crate::getitem_key::Key;
-use crate::mask::Mask;
 use itertools::izip;
 use numpy::PyArray1;
 use pyo3::prelude::*;
@@ -59,13 +58,6 @@ where
         Ok(PyArray1::from_vec(py, vec.clone()).into_py(py))
     }
 
-    pub fn p_new_view_with_indices(&self, indices: &ArrayViewIndices) -> Self {
-        Self {
-            array: Arc::clone(&self.array),
-            indices: ArrayViewIndices(Arc::clone(&indices.0)),
-        }
-    }
-
     pub fn p_with_indices(indices: &ArrayViewIndices, default: T) -> PyResult<Self> {
         Ok(Self {
             array: Arc::new(RwLock::new(vec![
@@ -80,11 +72,11 @@ where
         })
     }
 
-    pub fn __getitem__(&self, mask: &Mask) -> PyResult<Self> {
-        Ok(Self {
+    pub fn __getitem__(&self, key: &ArrayViewIndices) -> Self {
+        Self {
             array: Arc::clone(&self.array),
-            indices: self.indices.__getitem__(mask)?,
-        })
+            indices: ArrayViewIndices(Arc::clone(&key.0)),
+        }
     }
     pub fn __len__(&self) -> PyResult<usize> {
         self.indices.__len__()
@@ -95,7 +87,7 @@ macro_rules! value_op {
     ($self_array:ident, $self_indices:ident, $other_value:ident, $type:ty, $op:tt) => {
         for &self_index in $self_indices.iter() {
             let self_value = unsafe { $self_array.get_unchecked_mut(self_index as usize) };
-            *self_value $op *$other_value as $type;
+            *self_value $op $other_value as $type;
         }
     };
 }
@@ -160,19 +152,60 @@ macro_rules! float_math_op {
 macro_rules! float_array {
     (impl Array<$type:ty>) => {
         impl Array<$type> {
-            pub fn __setitem__(&mut self, key: Key, value: &FloatMathRhsValue) -> PyResult<()> {
+            pub fn __setitem__(&mut self, key: &ArrayViewIndices, value: FloatMathRhsValue) -> PyResult<()> {
+                let mut self_array = self.array.write().map_err(cannot_write)?;
+                let self_indices = key.0.read().map_err(cannot_read)?;
+                match value {
+                    FloatMathRhsValue::I64(other_value) => {
+                        value_op!(self_array, self_indices, other_value, $type, =);
+                    }
+                    FloatMathRhsValue::F64(other_value) => {
+                        value_op!(self_array, self_indices, other_value, $type, =);
+                    }
+                    FloatMathRhsValue::Float32(other) => {
+                        array_op!(self_array, self_indices, other, $type,=);
+                    }
+                    FloatMathRhsValue::Float64(other) => {
+                        array_op!(self_array, self_indices, other, $type, =);
+                    }
+                    FloatMathRhsValue::Int8(other) => {
+                        array_op!(self_array, self_indices, other, $type, =);
+                    }
+                    FloatMathRhsValue::Int16(other) => {
+                        array_op!(self_array, self_indices, other, $type, =);
+                    }
+                    FloatMathRhsValue::Int32(other) => {
+                        array_op!(self_array, self_indices, other, $type, =);
+                    }
+                    FloatMathRhsValue::Int64(other) => {
+                        array_op!(self_array, self_indices, other, $type, =);
+                    }
+                    FloatMathRhsValue::UInt8(other) => {
+                        array_op!(self_array, self_indices, other, $type, =);
+                    }
+                    FloatMathRhsValue::UInt16(other) => {
+                        array_op!(self_array, self_indices, other, $type, =);
+                    }
+                    FloatMathRhsValue::UInt32(other) => {
+                        array_op!(self_array, self_indices, other, $type, =);
+                    }
+                FloatMathRhsValue::UInt64(other) => {
+                        array_op!(self_array, self_indices, other, $type, =);
+                    }
+                }
                 Ok(())
             }
 
-            pub fn __iadd__(&mut self, other: &FloatMathRhsValue) -> PyResult<()> {
+            pub fn __iadd__(&mut self, other: FloatMathRhsValue) -> PyResult<()> {
                 float_math_op!(self, other, $type, +=);
                 Ok(())
             }
 
-            pub fn __isub__(&mut self, other: &FloatMathRhsValue) -> PyResult<()> {
+            pub fn __isub__(&mut self, other: FloatMathRhsValue) -> PyResult<()> {
                 float_math_op!(self, other, $type, -=);
                 Ok(())
             }
+
         }
     };
 }
@@ -216,7 +249,7 @@ macro_rules! int_math_op {
 macro_rules! int_array {
     (impl Array<$type:ty>) => {
         impl Array<$type> {
-            pub fn __iadd__(&mut self, other: &IntMathRhsValue) -> PyResult<()> {
+            pub fn __iadd__(&mut self, other: IntMathRhsValue) -> PyResult<()> {
                 int_math_op!(self, other, $type, +=);
                 Ok(())
             }
@@ -270,13 +303,6 @@ macro_rules! python_array {
                     Ok(PyArray1::from_vec(py, vec.clone()).into_py(py))
                 }
 
-                pub fn p_new_view_with_indices(&self, indices: &ArrayViewIndices) -> Self {
-                    Self {
-                        array: Arc::clone(&self.array),
-                        indices: ArrayViewIndices(Arc::clone(&indices.0)),
-                    }
-                }
-
                 #[staticmethod]
                 pub fn p_with_indices(indices: &ArrayViewIndices) -> PyResult<Self> {
                     Ok(Self {
@@ -292,11 +318,11 @@ macro_rules! python_array {
                     })
                 }
 
-                pub fn __getitem__(&self, key: Key) -> PyResult<Self> {
-                    Ok(Self {
+                pub fn __getitem__(&self, key: &ArrayViewIndices) -> Self {
+                    Self {
                         array: Arc::clone(&self.array),
-                        indices: self.indices.__getitem__(key)?,
-                    })
+                        indices: Arc::clone(key),
+                    }
                 }
 
                 pub fn __setitem__(&mut self, key: Key, value: Value) -> PyResult<()> {
@@ -672,9 +698,6 @@ macro_rules! python_float_array {
         pub struct $name(Array<$type>);
         #[pymethods]
         impl $name {
-            pub fn p_new_view_with_indices(&self, indices: &ArrayViewIndices) -> Self {
-                Self(self.0.p_new_view_with_indices(indices))
-            }
             #[staticmethod]
             pub fn p_with_indices(indices: &ArrayViewIndices) -> PyResult<Self> {
                 Array::p_with_indices(indices, 0.0).map(Self)
@@ -689,8 +712,18 @@ macro_rules! python_float_array {
             pub fn __len__(&self) -> PyResult<usize> {
                 self.0.__len__()
             }
+            pub fn __getitem__(&self, key: &ArrayViewIndices) -> Self {
+                Self(self.0.__getitem__(key))
+            }
+            pub fn __setitem__(
+                &mut self,
+                key: &ArrayViewIndices,
+                value: FloatMathRhsValue,
+            ) -> PyResult<()> {
+                self.0.__setitem__(key, value)
+            }
             pub fn __iadd__(&mut self, other: FloatMathRhsValue) -> PyResult<()> {
-                self.0.__iadd__(&other)
+                self.0.__iadd__(other)
             }
         }
     };
@@ -702,9 +735,6 @@ macro_rules! python_int_array {
         pub struct $name(Array<$type>);
         #[pymethods]
         impl $name {
-            pub fn p_new_view_with_indices(&self, indices: &ArrayViewIndices) -> Self {
-                Self(self.0.p_new_view_with_indices(indices))
-            }
             #[staticmethod]
             pub fn p_with_indices(indices: &ArrayViewIndices) -> PyResult<Self> {
                 Array::p_with_indices(indices, 0).map(Self)
@@ -716,11 +746,14 @@ macro_rules! python_int_array {
             pub fn numpy(&self, py: Python) -> PyResult<Py<PyArray1<$type>>> {
                 self.0.numpy(py)
             }
+            pub fn __getitem__(&self, key: &ArrayViewIndices) -> Self {
+                Self(self.0.__getitem__(key))
+            }
             pub fn __len__(&self) -> PyResult<usize> {
                 self.0.__len__()
             }
             pub fn __iadd__(&mut self, other: IntMathRhsValue) -> PyResult<()> {
-                self.0.__iadd__(&other)
+                self.0.__iadd__(other)
             }
         }
     };
