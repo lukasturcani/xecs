@@ -39,6 +39,7 @@ def test_getitem_does_not_return_a_copy(array: Array) -> None:
 
     mask = array < 3
     sub_array = array[mask]
+    assert len(sub_array) == 3
     sub_array[sub_array < 2] = 100
     assert np.all(np.equal(array.numpy(), [100, 100, 2, 3, 4]))
 
