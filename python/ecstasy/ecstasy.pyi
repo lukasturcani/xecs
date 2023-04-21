@@ -93,6 +93,10 @@ class _FloatArray(typing.Generic[_NumpyFloatT]):
         self,
         other: float | _Array | npt.NDArray[_NumpyFloat | _NumpyInt],
     ) -> typing.Self: ...
+    def __lt__(
+        self,
+        other: float | _Array | npt.NDArray[_NumpyFloat | _NumpyInt],
+    ) -> ArrayViewIndices: ...
 
 class _IntArray(typing.Generic[_NumpyIntT]):
     def numpy(self) -> npt.NDArray[_NumpyIntT]: ...
@@ -131,6 +135,10 @@ class _IntArray(typing.Generic[_NumpyIntT]):
         self,
         other: int | _IntArray | npt.NDArray[_NumpyInt],
     ) -> typing.Self: ...
+    def __lt__(
+        self,
+        other: float | _Array | npt.NDArray[_NumpyFloat | _NumpyInt],
+    ) -> ArrayViewIndices: ...
 
 class Float32(_FloatArray[np.float32]):
     @staticmethod

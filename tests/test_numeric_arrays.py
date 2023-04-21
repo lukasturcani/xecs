@@ -2,6 +2,7 @@ import typing
 
 import ecstasy as ecs
 import numpy as np
+import numpy.typing as npt
 import pytest
 from pytest_lazyfixture import lazy_fixture
 
@@ -20,39 +21,33 @@ IntArray: typing.TypeAlias = (
 
 Array: typing.TypeAlias = FloatArray | IntArray
 
+NumpyFloat: typing.TypeAlias = np.float32 | np.float64
+NumpyInt: typing.TypeAlias = (
+    np.int8
+    | np.int16
+    | np.int32
+    | np.int64
+    | np.uint8
+    | np.uint16
+    | np.uint32
+    | np.uint64
+)
+
 
 def test_getitem_does_not_return_a_copy(array: Array) -> None:
+    mask = array < 5
     assert np.sum(array.numpy()) == 0
 
-    sub_array = array[indices([0, 10, 50])]
-    sub_array[:] = 1
+    sub_array = array[mask]
+    sub_array[sub_array < 2] = 100
     assert np.sum(array.numpy()) == 3
     assert np.sum(array.numpy()[[0, 10, 50]]) == 3
 
 
-def test_assigning_with_array_of_indices_does_not_return_a_copy() -> None:
-    array = ecs.Float64.from_numpy(np.zeros(100, dtype=np.float64))
-    assert np.sum(array.numpy()) == 0
-    array[indices([0, 10, 50])] = 1.0
-    assert np.sum(array.numpy()) == 3
-    assert np.sum(array.numpy()[[0, 10, 50]]) == 3
-
-
-def test_assigning_with_boolean_mask_does_not_return_a_copy() -> None:
-    array = ecs.Float64.from_numpy(np.zeros(5, dtype=np.float64))
-    assert np.sum(array.numpy()) == 0
-    array[mask([True, False, True, False, True])] = 1.0
-    assert np.sum(array.numpy()) == 3
-    assert np.sum(array.numpy()[[0, 2, 4]]) == 3
-
-    array[:] = np.arange(len(array.numpy()), dtype=np.float64)
-    assert np.sum(array.numpy()) == 1 + 2 + 3 + 4
-    array[array.numpy() < 3] = 100.0
-    assert np.sum(array.numpy()) == 300 + 3 + 4
-
-
-def test_assigning_with_slice_does_not_return_a_copy() -> None:
-    array = ecs.Float64.from_numpy(np.zeros(100, dtype=np.float64))
+def test_float_array_setitem(
+    float_array: FloatArray,
+    float_setitem_rhs: float | Array | npt.NDArray[NumpyFloat | NumpyInt],
+) -> None:
     assert np.sum(array.numpy()) == 0
     array[5:8] = 1.0
     assert np.sum(array.numpy()) == 3
@@ -62,8 +57,7 @@ def test_assigning_with_slice_does_not_return_a_copy() -> None:
     assert np.sum(array.numpy()[5:8]) == 6
 
 
-def test_mulitple_complex_indices_reach_correct_elements() -> None:
-    array = ecs.Float64.from_numpy(np.zeros(10, dtype=np.float64))
+def test_mulitple_masks_reach_correct_elements(array: Array) -> None:
     array = array[indices([7, 8, 9])]
     array = array[indices([1, 2])]
     array[:] = 1.0
@@ -71,8 +65,7 @@ def test_mulitple_complex_indices_reach_correct_elements() -> None:
     assert np.sum(array.numpy()[[8, 9]]) == 2.0
 
 
-def test_length_of_sub_array_is_accurate() -> None:
-    array = ecs.Float64.from_numpy(np.zeros(10, dtype=np.float64))
+def test_length_of_sub_array_is_accurate(array: Array) -> None:
     assert len(array) == 10
     sub_array = array[indices([5, 8, 9])]
     assert len(sub_array) == 3
