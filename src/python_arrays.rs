@@ -1,6 +1,5 @@
 use crate::array_view_indices::ArrayViewIndices;
-use crate::error_handlers::{bad_index, cannot_read, cannot_write};
-use itertools::izip;
+use crate::error_handlers::{cannot_read, cannot_write};
 use numpy::PyArray1;
 use pyo3::prelude::*;
 use std::sync::{Arc, RwLock};
@@ -231,6 +230,10 @@ macro_rules! float_array {
                 float_binary_op!(self.array, self.indices, other, $type, /=);
                 Ok(())
             }
+            pub fn __imod__(&mut self, other: FloatOpRhsValue) -> PyResult<()> {
+                float_binary_op!(self.array, self.indices, other, $type, %=);
+                Ok(())
+            }
 
         }
     };
@@ -317,6 +320,10 @@ macro_rules! int_array {
             }
             pub fn __itrudediv__(&mut self, other: IntOpRhsValue) -> PyResult<()> {
                 int_binary_op!(self.array, self.indices, other, $type, /=);
+                Ok(())
+            }
+            pub fn __imod__(&mut self, other: IntOpRhsValue) -> PyResult<()> {
+                int_binary_op!(self.array, self.indices, other, $type, %=);
                 Ok(())
             }
         }
@@ -439,27 +446,4 @@ python_int_array! {
 
 python_int_array! {
     pub struct UInt64(u64)
-}
-
-trait Power {
-    type Other;
-    fn power(self, other: Self::Other);
-}
-
-impl Power for &mut f64 {
-    type Other = f64;
-    fn power(self, other: Self::Other) {
-        // TODO: Check to if special casing integers to use powi improves
-        // performance.
-        *self = self.powf(other);
-    }
-}
-
-impl Power for &mut f32 {
-    type Other = f32;
-    fn power(self, other: Self::Other) {
-        // TODO: Check to if special casing integers to use powi improves
-        // performance.
-        *self = self.powf(other);
-    }
 }

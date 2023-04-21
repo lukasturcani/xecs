@@ -1,5 +1,4 @@
-use crate::error_handlers::{bad_index, cannot_read, cannot_write};
-use crate::getitem_key::Key;
+use crate::error_handlers::{cannot_read, cannot_write};
 use crate::index::Index;
 use pyo3::exceptions::PyRuntimeError;
 use pyo3::prelude::*;
