@@ -1,6 +1,7 @@
 use crate::array_view_indices::ArrayViewIndices;
 use crate::error_handlers::{cannot_read, cannot_write};
 use numpy::PyArray1;
+use pyo3::basic::CompareOp;
 use pyo3::prelude::*;
 use std::cmp::PartialOrd;
 use std::ops::{Add, Div, Mul, Rem, Sub};
@@ -526,6 +527,21 @@ macro_rules! float_array {
             pub fn __lt__(&self, other: FloatOpRhsValue) -> PyResult<ArrayViewIndices> {
                 cmp!(self.array, self.indices, other, $type, <$type>::lt)
             }
+            pub fn __le__(&self, other: FloatOpRhsValue) -> PyResult<ArrayViewIndices> {
+                cmp!(self.array, self.indices, other, $type, <$type>::le)
+            }
+            pub fn __gt__(&self, other: FloatOpRhsValue) -> PyResult<ArrayViewIndices> {
+                cmp!(self.array, self.indices, other, $type, <$type>::gt)
+            }
+            pub fn __ge__(&self, other: FloatOpRhsValue) -> PyResult<ArrayViewIndices> {
+                cmp!(self.array, self.indices, other, $type, <$type>::ge)
+            }
+            pub fn __eq__(&self, other: FloatOpRhsValue) -> PyResult<ArrayViewIndices> {
+                cmp!(self.array, self.indices, other, $type, <$type>::eq)
+            }
+            pub fn __ne__(&self, other: FloatOpRhsValue) -> PyResult<ArrayViewIndices> {
+                cmp!(self.array, self.indices, other, $type, <$type>::ne)
+            }
         }
     };
 }
@@ -695,6 +711,20 @@ macro_rules! python_float_array {
             #[args(modulo = "None")]
             pub fn __ipow__(&mut self, other: FloatOpRhsValue, _modulo: &PyAny) -> PyResult<()> {
                 self.0.__ipow__(other)
+            }
+            pub fn __richcmp__(
+                &mut self,
+                other: FloatOpRhsValue,
+                op: CompareOp,
+            ) -> PyResult<ArrayViewIndices> {
+                match op {
+                    CompareOp::Lt => self.0.__lt__(other),
+                    CompareOp::Le => self.0.__le__(other),
+                    CompareOp::Gt => self.0.__gt__(other),
+                    CompareOp::Ge => self.0.__ge__(other),
+                    CompareOp::Eq => self.0.__eq__(other),
+                    CompareOp::Ne => self.0.__ne__(other),
+                }
             }
         }
     };
