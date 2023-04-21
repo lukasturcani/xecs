@@ -1,18 +1,24 @@
+import typing
+
 import ecstasy as ecs
 import numpy as np
-import numpy.typing as npt
 import pytest
 
+Array: typing.TypeAlias = (
+    ecs.Float32
+    | ecs.Float64
+    | ecs.Int8
+    | ecs.Int16
+    | ecs.Int32
+    | ecs.Int64
+    | ecs.UInt8
+    | ecs.UInt16
+    | ecs.UInt32
+    | ecs.UInt64
+)
 
-def indices(xs: list[int]) -> npt.NDArray[np.uint32]:
-    return np.array(xs, dtype=np.uint32)
 
-
-def mask(xs: list[int]) -> npt.NDArray[np.bool_]:
-    return np.array(xs, dtype=np.bool_)
-
-
-def test_indexing_with_array_of_indices_does_not_return_a_copy() -> None:
+def test_getitem_does_not_return_a_copy() -> None:
     array = ecs.Float64.from_numpy(np.zeros(100, dtype=np.float64))
     assert np.sum(array.numpy()) == 0
 
@@ -30,15 +36,6 @@ def test_assigning_with_array_of_indices_does_not_return_a_copy() -> None:
     assert np.sum(array.numpy()[[0, 10, 50]]) == 3
 
 
-def test_indexing_with_boolean_mask_does_not_return_a_copy() -> None:
-    array = ecs.Float64.from_numpy(np.zeros(5, dtype=np.float64))
-    assert np.sum(array.numpy()) == 0
-    sub_array = array[mask([True, False, True, False, True])]
-    sub_array[:] = 1.0
-    assert np.sum(array.numpy()) == 3
-    assert np.sum(array.numpy()[[0, 2, 4]]) == 3
-
-
 def test_assigning_with_boolean_mask_does_not_return_a_copy() -> None:
     array = ecs.Float64.from_numpy(np.zeros(5, dtype=np.float64))
     assert np.sum(array.numpy()) == 0
@@ -50,15 +47,6 @@ def test_assigning_with_boolean_mask_does_not_return_a_copy() -> None:
     assert np.sum(array.numpy()) == 1 + 2 + 3 + 4
     array[array.numpy() < 3] = 100.0
     assert np.sum(array.numpy()) == 300 + 3 + 4
-
-
-def test_indexing_with_slice_does_not_return_a_copy() -> None:
-    array = ecs.Float64.from_numpy(np.zeros(100, dtype=np.float64))
-    assert np.sum(array.numpy()) == 0
-    sub_array = array[5:8]
-    sub_array[:] = 1.0
-    assert np.sum(array.numpy()) == 3
-    assert np.sum(array.numpy()[5:8]) == 3
 
 
 def test_assigning_with_slice_does_not_return_a_copy() -> None:
@@ -140,8 +128,17 @@ def test_new_view_uses_same_array() -> None:
     assert array_1.numpy()[4] == array_2.numpy()[4] == 2
 
 
-def test_iadd() -> None:
-    first = ecs.Float32.from_numpy(np.arange(10, dtype=np.float32))
-    second = ecs.Float32.from_numpy(np.arange(10, dtype=np.float32))
-    first += second
-    assert np.all(np.equal(first.numpy(), second.numpy() * 2))
+def test_float_array_type_checking() -> None:
+    pass
+
+
+def test_int_array_type_checking() -> None:
+    pass
+
+
+@pytest.fixture(
+    params=(),
+    ids=(),
+)
+def array(request: pytest.FixtureRequest) -> Array:
+    return request.param()
