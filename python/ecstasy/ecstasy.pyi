@@ -95,41 +95,41 @@ class _FloatArray(typing.Generic[_NumpyFloatT]):
     ) -> typing.Self: ...
 
 class _IntArray(typing.Generic[_NumpyIntT]):
-    def numpy(self) -> npt.NDArray[_NumpyFloatT]: ...
+    def numpy(self) -> npt.NDArray[_NumpyIntT]: ...
     def __getitem__(self, key: ArrayViewIndices) -> typing.Self: ...
     def __setitem__(
         self,
         key: ArrayViewIndices,
-        value: float | _Array | npt.NDArray[_NumpyFloat | _NumpyInt],
+        value: int | _IntArray | npt.NDArray[_NumpyInt],
     ) -> None: ...
     def __len__(self) -> int: ...
     def __iadd__(
         self,
-        other: float | _IntArray | npt.NDArray[_NumpyInt],
+        other: int | _IntArray | npt.NDArray[_NumpyInt],
     ) -> typing.Self: ...
     def __isub__(
         self,
-        other: float | _IntArray | npt.NDArray[_NumpyInt],
+        other: int | _IntArray | npt.NDArray[_NumpyInt],
     ) -> typing.Self: ...
     def __imul__(
         self,
-        other: float | _IntArray | npt.NDArray[_NumpyInt],
+        other: int | _IntArray | npt.NDArray[_NumpyInt],
     ) -> typing.Self: ...
     def __itruediv__(
         self,
-        other: float | _IntArray | npt.NDArray[_NumpyInt],
+        other: int | _IntArray | npt.NDArray[_NumpyInt],
     ) -> typing.Self: ...
     def __ifloordiv__(
         self,
-        other: float | _IntArray | npt.NDArray[_NumpyInt],
+        other: int | _IntArray | npt.NDArray[_NumpyInt],
     ) -> typing.Self: ...
     def __imod__(
         self,
-        other: float | _IntArray | npt.NDArray[_NumpyInt],
+        other: int | _IntArray | npt.NDArray[_NumpyInt],
     ) -> typing.Self: ...
     def __ipow__(
         self,
-        other: float | _IntArray | npt.NDArray[_NumpyInt],
+        other: int | _IntArray | npt.NDArray[_NumpyInt],
     ) -> typing.Self: ...
 
 class Float32(_FloatArray[np.float32]):
