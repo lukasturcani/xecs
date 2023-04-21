@@ -2,6 +2,7 @@ use crate::array_view_indices::ArrayViewIndices;
 use crate::error_handlers::{cannot_read, cannot_write};
 use numpy::PyArray1;
 use pyo3::prelude::*;
+use std::ops::{Add, Div, Mul, Rem, Sub};
 use std::sync::{Arc, RwLock};
 
 struct Array<T> {
@@ -100,37 +101,40 @@ where
 }
 
 macro_rules! value_op {
-    ($self_array:ident, $self_indices:ident, $other_value:ident, $type:ty, $op:tt) => {
+    ($self_array:ident, $self_indices:ident, $other_value:ident, $type:ty, $op:expr) => {
         for &self_index in $self_indices.iter() {
             let self_value = unsafe { $self_array.get_unchecked_mut(self_index as usize) };
-            *self_value $op $other_value as $type;
+            *self_value = $op(*self_value, $other_value as $type);
         }
     };
 }
 
 macro_rules! array_op {
-    ($self_array:ident, $self_indices:ident, $other:ident, $type:ty, $op:tt) => {
+    ($self_array:ident, $self_indices:ident, $other:ident, $type:ty, $op:expr) => {
         let other_array = $other.0.array.read().map_err(cannot_write)?;
         let other_indices = $other.0.indices.0.read().map_err(cannot_read)?;
         for (&self_index, &other_index) in $self_indices.iter().zip(other_indices.iter()) {
             let self_value = unsafe { $self_array.get_unchecked_mut(self_index as usize) };
             let other_value = unsafe { other_array.get_unchecked(other_index as usize) };
-            *self_value $op *other_value as $type;
+            *self_value = $op(*self_value, *other_value as $type);
         }
     };
 }
 
 macro_rules! py_array_op {
-    ($self_array:ident, $self_indices:ident, $other:ident, $type:ty, $op:tt) => {
-        for (&self_index, &other_value) in $self_indices.iter().zip($other.readonly().as_array().iter()) {
+    ($self_array:ident, $self_indices:ident, $other:ident, $type:ty, $op:expr) => {
+        for (&self_index, &other_value) in $self_indices
+            .iter()
+            .zip($other.readonly().as_array().iter())
+        {
             let self_value = unsafe { $self_array.get_unchecked_mut(self_index as usize) };
-            *self_value $op other_value as $type;
+            *self_value = $op(*self_value, other_value as $type);
         }
     };
 }
 
 macro_rules! float_binary_op {
-    ($self_array:expr, $self_indices:expr, $other:ident, $type:ty, $op:tt) => {
+    ($self_array:expr, $self_indices:expr, $other:ident, $type:ty, $op:expr) => {
         let mut self_array = $self_array.write().map_err(cannot_write)?;
         let self_indices = $self_indices.0.read().map_err(cannot_read)?;
         match $other {
@@ -207,40 +211,47 @@ macro_rules! float_binary_op {
 macro_rules! float_array {
     (impl Array<$type:ty>) => {
         impl Array<$type> {
-            pub fn __setitem__(&mut self, key: &ArrayViewIndices, value: FloatOpRhsValue) -> PyResult<()> {
-                float_binary_op!(self.array, key, value, $type, =);
+            pub fn __setitem__(
+                &mut self,
+                key: &ArrayViewIndices,
+                value: FloatOpRhsValue,
+            ) -> PyResult<()> {
+                float_binary_op!(self.array, key, value, $type, |_, b| b);
                 Ok(())
             }
 
             pub fn __iadd__(&mut self, other: FloatOpRhsValue) -> PyResult<()> {
-                float_binary_op!(self.array, self.indices, other, $type, +=);
+                float_binary_op!(self.array, self.indices, other, $type, <$type>::add);
                 Ok(())
             }
 
             pub fn __isub__(&mut self, other: FloatOpRhsValue) -> PyResult<()> {
-                float_binary_op!(self.array, self.indices, other, $type, -=);
+                float_binary_op!(self.array, self.indices, other, $type, <$type>::sub);
                 Ok(())
             }
 
             pub fn __imul__(&mut self, other: FloatOpRhsValue) -> PyResult<()> {
-                float_binary_op!(self.array, self.indices, other, $type, *=);
+                float_binary_op!(self.array, self.indices, other, $type, <$type>::mul);
                 Ok(())
             }
             pub fn __itruediv__(&mut self, other: FloatOpRhsValue) -> PyResult<()> {
-                float_binary_op!(self.array, self.indices, other, $type, /=);
+                float_binary_op!(self.array, self.indices, other, $type, <$type>::div);
+                Ok(())
+            }
+            pub fn __ifloordiv__(&mut self, other: FloatOpRhsValue) -> PyResult<()> {
+                float_binary_op!(self.array, self.indices, other, $type, <$type>::div_euclid);
                 Ok(())
             }
             pub fn __imod__(&mut self, other: FloatOpRhsValue) -> PyResult<()> {
-                float_binary_op!(self.array, self.indices, other, $type, %=);
+                float_binary_op!(self.array, self.indices, other, $type, <$type>::rem);
                 Ok(())
             }
-
         }
     };
 }
 
 macro_rules! int_binary_op {
-    ($self_array:expr, $self_indices:expr, $other:ident, $type:ty, $op:tt) => {
+    ($self_array:expr, $self_indices:expr, $other:ident, $type:ty, $op:expr) => {
         let mut self_array = $self_array.write().map_err(cannot_write)?;
         let self_indices = $self_indices.0.read().map_err(cannot_read)?;
         match $other {
@@ -302,28 +313,36 @@ macro_rules! int_binary_op {
 macro_rules! int_array {
     (impl Array<$type:ty>) => {
         impl Array<$type> {
-            pub fn __setitem__(&mut self, key: &ArrayViewIndices, value: IntOpRhsValue) -> PyResult<()> {
-                int_binary_op!(self.array, key, value, $type, =);
+            pub fn __setitem__(
+                &mut self,
+                key: &ArrayViewIndices,
+                value: IntOpRhsValue,
+            ) -> PyResult<()> {
+                int_binary_op!(self.array, key, value, $type, |_, b| b);
                 Ok(())
             }
             pub fn __iadd__(&mut self, other: IntOpRhsValue) -> PyResult<()> {
-                int_binary_op!(self.array, self.indices, other, $type, +=);
+                int_binary_op!(self.array, self.indices, other, $type, <$type>::add);
                 Ok(())
             }
             pub fn __isub__(&mut self, other: IntOpRhsValue) -> PyResult<()> {
-                int_binary_op!(self.array, self.indices, other, $type, -=);
+                int_binary_op!(self.array, self.indices, other, $type, <$type>::sub);
                 Ok(())
             }
             pub fn __imul__(&mut self, other: IntOpRhsValue) -> PyResult<()> {
-                int_binary_op!(self.array, self.indices, other, $type, *=);
+                int_binary_op!(self.array, self.indices, other, $type, <$type>::mul);
                 Ok(())
             }
             pub fn __itrudediv__(&mut self, other: IntOpRhsValue) -> PyResult<()> {
-                int_binary_op!(self.array, self.indices, other, $type, /=);
+                int_binary_op!(self.array, self.indices, other, $type, <$type>::div);
+                Ok(())
+            }
+            pub fn __ifloordiv__(&mut self, other: IntOpRhsValue) -> PyResult<()> {
+                int_binary_op!(self.array, self.indices, other, $type, <$type>::div_euclid);
                 Ok(())
             }
             pub fn __imod__(&mut self, other: IntOpRhsValue) -> PyResult<()> {
-                int_binary_op!(self.array, self.indices, other, $type, %=);
+                int_binary_op!(self.array, self.indices, other, $type, <$type>::rem);
                 Ok(())
             }
         }
