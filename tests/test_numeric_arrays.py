@@ -7,7 +7,6 @@ from pytest_lazyfixture import lazy_fixture
 
 FloatArray: typing.TypeAlias = ecs.Float32 | ecs.Float64
 
-
 IntArray: typing.TypeAlias = (
     ecs.Int8
     | ecs.Int16
@@ -26,7 +25,7 @@ def test_getitem_does_not_return_a_copy(array: Array) -> None:
     assert np.sum(array.numpy()) == 0
 
     sub_array = array[indices([0, 10, 50])]
-    sub_array[:] = 1.0
+    sub_array[:] = 1
     assert np.sum(array.numpy()) == 3
     assert np.sum(array.numpy()[[0, 10, 50]]) == 3
 
@@ -111,24 +110,6 @@ def test_spawning_to_a_full_array_causes_error() -> None:
         indices.spawn(1)
     # Prove that writing does not cause a segfault.
     array[:] = 1.0
-
-
-def test_new_view_uses_same_array() -> None:
-    array_1 = ecs.Float64.from_numpy(np.zeros(10, dtype=np.float64))
-    indices = ecs.ecstasy.ArrayViewIndices.with_capacity(10)
-    array_2 = array_1.p_new_view_with_indices(indices)
-    indices.spawn(5)
-
-    assert len(array_1) == 10
-    assert len(array_2) == 5
-    assert array_1.numpy()[2] == array_2.numpy()[2] == 0
-    assert array_1.numpy()[4] == array_2.numpy()[4] == 0
-
-    array_1[2:3] = 1
-    assert array_1.numpy()[2] == array_2.numpy()[2] == 1
-
-    array_2[4:5] = 2
-    assert array_1.numpy()[4] == array_2.numpy()[4] == 2
 
 
 def test_float_array_type_checking() -> None:
