@@ -86,6 +86,9 @@ where
             indices: self.indices.__getitem__(mask)?,
         })
     }
+    pub fn __len__(&self) -> PyResult<usize> {
+        self.indices.__len__()
+    }
 }
 
 macro_rules! value_op {
@@ -683,6 +686,9 @@ macro_rules! python_float_array {
             pub fn numpy(&self, py: Python) -> PyResult<Py<PyArray1<$type>>> {
                 self.0.numpy(py)
             }
+            pub fn __len__(&self) -> PyResult<usize> {
+                self.0.__len__()
+            }
             pub fn __iadd__(&mut self, other: FloatMathRhsValue) -> PyResult<()> {
                 self.0.__iadd__(&other)
             }
@@ -709,6 +715,9 @@ macro_rules! python_int_array {
             }
             pub fn numpy(&self, py: Python) -> PyResult<Py<PyArray1<$type>>> {
                 self.0.numpy(py)
+            }
+            pub fn __len__(&self) -> PyResult<usize> {
+                self.0.__len__()
             }
             pub fn __iadd__(&mut self, other: IntMathRhsValue) -> PyResult<()> {
                 self.0.__iadd__(&other)
