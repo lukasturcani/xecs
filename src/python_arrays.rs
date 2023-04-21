@@ -12,7 +12,7 @@ struct Array<T> {
 }
 
 #[derive(FromPyObject)]
-pub enum FloatMathRhsValue<'a> {
+pub enum FloatOpRhsValue<'a> {
     I64(i64),
     F64(f64),
     Float32(PyRef<'a, Float32>),
@@ -28,7 +28,7 @@ pub enum FloatMathRhsValue<'a> {
 }
 
 #[derive(FromPyObject)]
-pub enum IntMathRhsValue<'a> {
+pub enum IntOpRhsValue<'a> {
     I64(i64),
     Int8(PyRef<'a, Int8>),
     Int16(PyRef<'a, Int16>),
@@ -104,46 +104,46 @@ macro_rules! array_op {
     };
 }
 
-macro_rules! float_math_op {
-    ($self:ident, $other:ident, $type:ty, $op:tt) => {
-        let mut self_array = $self.array.write().map_err(cannot_write)?;
-        let self_indices = $self.indices.0.read().map_err(cannot_read)?;
+macro_rules! float_binary_op {
+    ($self_array:expr, $self_indices:expr, $other:ident, $type:ty, $op:tt) => {
+        let mut self_array = $self_array.write().map_err(cannot_write)?;
+        let self_indices = $self_indices.0.read().map_err(cannot_read)?;
         match $other {
-            FloatMathRhsValue::I64(other_value) => {
+            FloatOpRhsValue::I64(other_value) => {
                 value_op!(self_array, self_indices, other_value, $type, $op);
             }
-            FloatMathRhsValue::F64(other_value) => {
+            FloatOpRhsValue::F64(other_value) => {
                 value_op!(self_array, self_indices, other_value, $type, $op);
             }
-            FloatMathRhsValue::Float32(other) => {
-                array_op!(self_array, self_indices, other, $type, $op);
+            FloatOpRhsValue::Float32(other_array) => {
+                array_op!(self_array, self_indices, other_array, $type, $op);
             }
-            FloatMathRhsValue::Float64(other) => {
-                array_op!(self_array, self_indices, other, $type, $op);
+            FloatOpRhsValue::Float64(other_array) => {
+                array_op!(self_array, self_indices, other_array, $type, $op);
             }
-            FloatMathRhsValue::Int8(other) => {
-                array_op!(self_array, self_indices, other, $type, $op);
+            FloatOpRhsValue::Int8(other_array) => {
+                array_op!(self_array, self_indices, other_array, $type, $op);
             }
-            FloatMathRhsValue::Int16(other) => {
-                array_op!(self_array, self_indices, other, $type, $op);
+            FloatOpRhsValue::Int16(other_array) => {
+                array_op!(self_array, self_indices, other_array, $type, $op);
             }
-            FloatMathRhsValue::Int32(other) => {
-                array_op!(self_array, self_indices, other, $type, $op);
+            FloatOpRhsValue::Int32(other_array) => {
+                array_op!(self_array, self_indices, other_array, $type, $op);
             }
-            FloatMathRhsValue::Int64(other) => {
-                array_op!(self_array, self_indices, other, $type, $op);
+            FloatOpRhsValue::Int64(other_array) => {
+                array_op!(self_array, self_indices, other_array, $type, $op);
             }
-            FloatMathRhsValue::UInt8(other) => {
-                array_op!(self_array, self_indices, other, $type, $op);
+            FloatOpRhsValue::UInt8(other_array) => {
+                array_op!(self_array, self_indices, other_array, $type, $op);
             }
-            FloatMathRhsValue::UInt16(other) => {
-                array_op!(self_array, self_indices, other, $type, $op);
+            FloatOpRhsValue::UInt16(other_array) => {
+                array_op!(self_array, self_indices, other_array, $type, $op);
             }
-            FloatMathRhsValue::UInt32(other) => {
-                array_op!(self_array, self_indices, other, $type, $op);
+            FloatOpRhsValue::UInt32(other_array) => {
+                array_op!(self_array, self_indices, other_array, $type, $op);
             }
-            FloatMathRhsValue::UInt64(other) => {
-                array_op!(self_array, self_indices, other, $type, $op);
+            FloatOpRhsValue::UInt64(other_array) => {
+                array_op!(self_array, self_indices, other_array, $type, $op);
             }
         }
     };
@@ -152,57 +152,18 @@ macro_rules! float_math_op {
 macro_rules! float_array {
     (impl Array<$type:ty>) => {
         impl Array<$type> {
-            pub fn __setitem__(&mut self, key: &ArrayViewIndices, value: FloatMathRhsValue) -> PyResult<()> {
-                let mut self_array = self.array.write().map_err(cannot_write)?;
-                let self_indices = key.0.read().map_err(cannot_read)?;
-                match value {
-                    FloatMathRhsValue::I64(other_value) => {
-                        value_op!(self_array, self_indices, other_value, $type, =);
-                    }
-                    FloatMathRhsValue::F64(other_value) => {
-                        value_op!(self_array, self_indices, other_value, $type, =);
-                    }
-                    FloatMathRhsValue::Float32(other) => {
-                        array_op!(self_array, self_indices, other, $type,=);
-                    }
-                    FloatMathRhsValue::Float64(other) => {
-                        array_op!(self_array, self_indices, other, $type, =);
-                    }
-                    FloatMathRhsValue::Int8(other) => {
-                        array_op!(self_array, self_indices, other, $type, =);
-                    }
-                    FloatMathRhsValue::Int16(other) => {
-                        array_op!(self_array, self_indices, other, $type, =);
-                    }
-                    FloatMathRhsValue::Int32(other) => {
-                        array_op!(self_array, self_indices, other, $type, =);
-                    }
-                    FloatMathRhsValue::Int64(other) => {
-                        array_op!(self_array, self_indices, other, $type, =);
-                    }
-                    FloatMathRhsValue::UInt8(other) => {
-                        array_op!(self_array, self_indices, other, $type, =);
-                    }
-                    FloatMathRhsValue::UInt16(other) => {
-                        array_op!(self_array, self_indices, other, $type, =);
-                    }
-                    FloatMathRhsValue::UInt32(other) => {
-                        array_op!(self_array, self_indices, other, $type, =);
-                    }
-                FloatMathRhsValue::UInt64(other) => {
-                        array_op!(self_array, self_indices, other, $type, =);
-                    }
-                }
+            pub fn __setitem__(&mut self, key: &ArrayViewIndices, value: FloatOpRhsValue) -> PyResult<()> {
+                float_binary_op!(self.array, key, value, $type, =);
                 Ok(())
             }
 
-            pub fn __iadd__(&mut self, other: FloatMathRhsValue) -> PyResult<()> {
-                float_math_op!(self, other, $type, +=);
+            pub fn __iadd__(&mut self, other: FloatOpRhsValue) -> PyResult<()> {
+                float_binary_op!(self.array, self.indices, other, $type, +=);
                 Ok(())
             }
 
-            pub fn __isub__(&mut self, other: FloatMathRhsValue) -> PyResult<()> {
-                float_math_op!(self, other, $type, -=);
+            pub fn __isub__(&mut self, other: FloatOpRhsValue) -> PyResult<()> {
+                float_binary_op!(self.array, self.indices, other, $type, -=);
                 Ok(())
             }
 
@@ -210,36 +171,36 @@ macro_rules! float_array {
     };
 }
 
-macro_rules! int_math_op {
+macro_rules! int_binary_op {
     ($self:ident, $other:ident, $type:ty, $op:tt) => {
         let mut self_array = $self.array.write().map_err(cannot_write)?;
         let self_indices = $self.indices.0.read().map_err(cannot_read)?;
         match $other {
-            IntMathRhsValue::I64(other_value) => {
+            IntOpRhsValue::I64(other_value) => {
                 value_op!(self_array, self_indices, other_value, $type, $op);
             }
-            IntMathRhsValue::Int8(other) => {
+            IntOpRhsValue::Int8(other) => {
                 array_op!(self_array, self_indices, other, $type, $op);
             }
-            IntMathRhsValue::Int16(other) => {
+            IntOpRhsValue::Int16(other) => {
                 array_op!(self_array, self_indices, other, $type, $op);
             }
-            IntMathRhsValue::Int32(other) => {
+            IntOpRhsValue::Int32(other) => {
                 array_op!(self_array, self_indices, other, $type, $op);
             }
-            IntMathRhsValue::Int64(other) => {
+            IntOpRhsValue::Int64(other) => {
                 array_op!(self_array, self_indices, other, $type, $op);
             }
-            IntMathRhsValue::UInt8(other) => {
+            IntOpRhsValue::UInt8(other) => {
                 array_op!(self_array, self_indices, other, $type, $op);
             }
-            IntMathRhsValue::UInt16(other) => {
+            IntOpRhsValue::UInt16(other) => {
                 array_op!(self_array, self_indices, other, $type, $op);
             }
-            IntMathRhsValue::UInt32(other) => {
+            IntOpRhsValue::UInt32(other) => {
                 array_op!(self_array, self_indices, other, $type, $op);
             }
-            IntMathRhsValue::UInt64(other) => {
+            IntOpRhsValue::UInt64(other) => {
                 array_op!(self_array, self_indices, other, $type, $op);
             }
         }
@@ -249,8 +210,8 @@ macro_rules! int_math_op {
 macro_rules! int_array {
     (impl Array<$type:ty>) => {
         impl Array<$type> {
-            pub fn __iadd__(&mut self, other: IntMathRhsValue) -> PyResult<()> {
-                int_math_op!(self, other, $type, +=);
+            pub fn __iadd__(&mut self, other: IntOpRhsValue) -> PyResult<()> {
+                int_binary_op!(self, other, $type, +=);
                 Ok(())
             }
         }
@@ -718,11 +679,11 @@ macro_rules! python_float_array {
             pub fn __setitem__(
                 &mut self,
                 key: &ArrayViewIndices,
-                value: FloatMathRhsValue,
+                value: FloatOpRhsValue,
             ) -> PyResult<()> {
                 self.0.__setitem__(key, value)
             }
-            pub fn __iadd__(&mut self, other: FloatMathRhsValue) -> PyResult<()> {
+            pub fn __iadd__(&mut self, other: FloatOpRhsValue) -> PyResult<()> {
                 self.0.__iadd__(other)
             }
         }
@@ -752,7 +713,7 @@ macro_rules! python_int_array {
             pub fn __len__(&self) -> PyResult<usize> {
                 self.0.__len__()
             }
-            pub fn __iadd__(&mut self, other: IntMathRhsValue) -> PyResult<()> {
+            pub fn __iadd__(&mut self, other: IntOpRhsValue) -> PyResult<()> {
                 self.0.__iadd__(other)
             }
         }
