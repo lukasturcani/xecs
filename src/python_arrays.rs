@@ -113,6 +113,17 @@ macro_rules! value_cmp {
     };
 }
 
+macro_rules! value_cmp_cast_both {
+    ($self_array:ident, $self_indices:ident, $other_value:ident, $out_indices:expr, $type:ty, $op:expr) => {
+        for &self_index in $self_indices.iter() {
+            let self_value = unsafe { $self_array.get_unchecked(self_index as usize) };
+            if $op(&(*self_value as $type), &($other_value as $type)) {
+                $out_indices.push(self_index)
+            }
+        }
+    };
+}
+
 macro_rules! array_cmp {
     ($self_array:ident, $self_indices:ident, $other:ident, $out_indices:expr, $type:ty, $op:expr) => {
         let other_array = $other.0.array.read().map_err(cannot_read)?;
@@ -121,6 +132,20 @@ macro_rules! array_cmp {
             let self_value = unsafe { $self_array.get_unchecked(self_index as usize) };
             let other_value = unsafe { other_array.get_unchecked(other_index as usize) };
             if $op(self_value, &(*other_value as $type)) {
+                $out_indices.push(self_index)
+            }
+        }
+    };
+}
+
+macro_rules! array_cmp_cast_both {
+    ($self_array:ident, $self_indices:ident, $other:ident, $out_indices:expr, $type:ty, $op:expr) => {
+        let other_array = $other.0.array.read().map_err(cannot_read)?;
+        let other_indices = $other.0.indices.0.read().map_err(cannot_read)?;
+        for (&self_index, &other_index) in $self_indices.iter().zip(other_indices.iter()) {
+            let self_value = unsafe { $self_array.get_unchecked(self_index as usize) };
+            let other_value = unsafe { other_array.get_unchecked(other_index as usize) };
+            if $op(&(*self_value as $type), &(*other_value as $type)) {
                 $out_indices.push(self_index)
             }
         }
@@ -141,7 +166,21 @@ macro_rules! py_array_cmp {
     };
 }
 
-macro_rules! cmp {
+macro_rules! py_array_cmp_cast_both {
+    ($self_array:ident, $self_indices:ident, $other:ident, $out_indices:expr, $type:ty, $op:expr) => {
+        for (&self_index, &other_value) in $self_indices
+            .iter()
+            .zip($other.readonly().as_array().iter())
+        {
+            let self_value = unsafe { $self_array.get_unchecked(self_index as usize) };
+            if $op(&(*self_value as $type), &(other_value as $type)) {
+                $out_indices.push(self_index)
+            }
+        }
+    };
+}
+
+macro_rules! float_array_cmp {
     ($self_array:expr, $self_indices:expr, $other:ident, $type:ty, $op:expr) => {{
         let self_array = $self_array.read().map_err(cannot_read)?;
         let self_indices = $self_indices.0.read().map_err(cannot_read)?;
@@ -274,6 +313,184 @@ macro_rules! cmp {
                 }
                 FloatOpRhsValue::PyArrayF64(py_array) => {
                     py_array_cmp!(self_array, self_indices, py_array, out_indices, $type, $op);
+                }
+                FloatOpRhsValue::PyArrayI8(py_array) => {
+                    py_array_cmp!(self_array, self_indices, py_array, out_indices, $type, $op);
+                }
+                FloatOpRhsValue::PyArrayI16(py_array) => {
+                    py_array_cmp!(self_array, self_indices, py_array, out_indices, $type, $op);
+                }
+                FloatOpRhsValue::PyArrayI32(py_array) => {
+                    py_array_cmp!(self_array, self_indices, py_array, out_indices, $type, $op);
+                }
+                FloatOpRhsValue::PyArrayI64(py_array) => {
+                    py_array_cmp!(self_array, self_indices, py_array, out_indices, $type, $op);
+                }
+                FloatOpRhsValue::PyArrayU8(py_array) => {
+                    py_array_cmp!(self_array, self_indices, py_array, out_indices, $type, $op);
+                }
+                FloatOpRhsValue::PyArrayU16(py_array) => {
+                    py_array_cmp!(self_array, self_indices, py_array, out_indices, $type, $op);
+                }
+                FloatOpRhsValue::PyArrayU32(py_array) => {
+                    py_array_cmp!(self_array, self_indices, py_array, out_indices, $type, $op);
+                }
+                FloatOpRhsValue::PyArrayU64(py_array) => {
+                    py_array_cmp!(self_array, self_indices, py_array, out_indices, $type, $op);
+                }
+            }
+        }
+        Ok(indices)
+    }};
+}
+
+macro_rules! int_array_cmp {
+    ($self_array:expr, $self_indices:expr, $other:ident, $type:ty, $op:expr, $f32_op:expr, $f64_op:expr) => {{
+        let self_array = $self_array.read().map_err(cannot_read)?;
+        let self_indices = $self_indices.0.read().map_err(cannot_read)?;
+        let indices = ArrayViewIndices::with_capacity(self_indices.len());
+        {
+            let mut out_indices = indices.0.write().map_err(cannot_write)?;
+            match $other {
+                FloatOpRhsValue::I64(other_value) => {
+                    value_cmp!(
+                        self_array,
+                        self_indices,
+                        other_value,
+                        out_indices,
+                        $type,
+                        $op
+                    );
+                }
+                FloatOpRhsValue::F64(other_value) => {
+                    value_cmp_cast_both!(
+                        self_array,
+                        self_indices,
+                        other_value,
+                        out_indices,
+                        f64,
+                        $f64_op
+                    );
+                }
+                FloatOpRhsValue::Float32(other_array) => {
+                    array_cmp_cast_both!(
+                        self_array,
+                        self_indices,
+                        other_array,
+                        out_indices,
+                        f32,
+                        $f32_op
+                    );
+                }
+                FloatOpRhsValue::Float64(other_array) => {
+                    array_cmp_cast_both!(
+                        self_array,
+                        self_indices,
+                        other_array,
+                        out_indices,
+                        f64,
+                        $f64_op
+                    );
+                }
+                FloatOpRhsValue::Int8(other_array) => {
+                    array_cmp!(
+                        self_array,
+                        self_indices,
+                        other_array,
+                        out_indices,
+                        $type,
+                        $op
+                    );
+                }
+                FloatOpRhsValue::Int16(other_array) => {
+                    array_cmp!(
+                        self_array,
+                        self_indices,
+                        other_array,
+                        out_indices,
+                        $type,
+                        $op
+                    );
+                }
+                FloatOpRhsValue::Int32(other_array) => {
+                    array_cmp!(
+                        self_array,
+                        self_indices,
+                        other_array,
+                        out_indices,
+                        $type,
+                        $op
+                    );
+                }
+                FloatOpRhsValue::Int64(other_array) => {
+                    array_cmp!(
+                        self_array,
+                        self_indices,
+                        other_array,
+                        out_indices,
+                        $type,
+                        $op
+                    );
+                }
+                FloatOpRhsValue::UInt8(other_array) => {
+                    array_cmp!(
+                        self_array,
+                        self_indices,
+                        other_array,
+                        out_indices,
+                        $type,
+                        $op
+                    );
+                }
+                FloatOpRhsValue::UInt16(other_array) => {
+                    array_cmp!(
+                        self_array,
+                        self_indices,
+                        other_array,
+                        out_indices,
+                        $type,
+                        $op
+                    );
+                }
+                FloatOpRhsValue::UInt32(other_array) => {
+                    array_cmp!(
+                        self_array,
+                        self_indices,
+                        other_array,
+                        out_indices,
+                        $type,
+                        $op
+                    );
+                }
+                FloatOpRhsValue::UInt64(other_array) => {
+                    array_cmp!(
+                        self_array,
+                        self_indices,
+                        other_array,
+                        out_indices,
+                        $type,
+                        $op
+                    );
+                }
+                FloatOpRhsValue::PyArrayF32(py_array) => {
+                    py_array_cmp_cast_both!(
+                        self_array,
+                        self_indices,
+                        py_array,
+                        out_indices,
+                        f32,
+                        $f32_op
+                    );
+                }
+                FloatOpRhsValue::PyArrayF64(py_array) => {
+                    py_array_cmp_cast_both!(
+                        self_array,
+                        self_indices,
+                        py_array,
+                        out_indices,
+                        f64,
+                        $f64_op
+                    );
                 }
                 FloatOpRhsValue::PyArrayI8(py_array) => {
                     py_array_cmp!(self_array, self_indices, py_array, out_indices, $type, $op);
@@ -525,22 +742,22 @@ macro_rules! float_array {
                 Ok(())
             }
             pub fn __lt__(&self, other: FloatOpRhsValue) -> PyResult<ArrayViewIndices> {
-                cmp!(self.array, self.indices, other, $type, <$type>::lt)
+                float_array_cmp!(self.array, self.indices, other, $type, <$type>::lt)
             }
             pub fn __le__(&self, other: FloatOpRhsValue) -> PyResult<ArrayViewIndices> {
-                cmp!(self.array, self.indices, other, $type, <$type>::le)
+                float_array_cmp!(self.array, self.indices, other, $type, <$type>::le)
             }
             pub fn __gt__(&self, other: FloatOpRhsValue) -> PyResult<ArrayViewIndices> {
-                cmp!(self.array, self.indices, other, $type, <$type>::gt)
+                float_array_cmp!(self.array, self.indices, other, $type, <$type>::gt)
             }
             pub fn __ge__(&self, other: FloatOpRhsValue) -> PyResult<ArrayViewIndices> {
-                cmp!(self.array, self.indices, other, $type, <$type>::ge)
+                float_array_cmp!(self.array, self.indices, other, $type, <$type>::ge)
             }
             pub fn __eq__(&self, other: FloatOpRhsValue) -> PyResult<ArrayViewIndices> {
-                cmp!(self.array, self.indices, other, $type, <$type>::eq)
+                float_array_cmp!(self.array, self.indices, other, $type, <$type>::eq)
             }
             pub fn __ne__(&self, other: FloatOpRhsValue) -> PyResult<ArrayViewIndices> {
-                cmp!(self.array, self.indices, other, $type, <$type>::ne)
+                float_array_cmp!(self.array, self.indices, other, $type, <$type>::ne)
             }
         }
     };
@@ -644,6 +861,72 @@ macro_rules! int_array {
             pub fn __ipow__(&mut self, other: IntOpRhsValue) -> PyResult<()> {
                 int_binary_op!(self.array, self.indices, other, u32, <$type>::pow);
                 Ok(())
+            }
+            pub fn __lt__(&self, other: FloatOpRhsValue) -> PyResult<ArrayViewIndices> {
+                int_array_cmp!(
+                    self.array,
+                    self.indices,
+                    other,
+                    $type,
+                    <$type>::lt,
+                    <f32>::lt,
+                    <f64>::lt
+                )
+            }
+            pub fn __le__(&self, other: FloatOpRhsValue) -> PyResult<ArrayViewIndices> {
+                int_array_cmp!(
+                    self.array,
+                    self.indices,
+                    other,
+                    $type,
+                    <$type>::le,
+                    <f32>::le,
+                    <f64>::le
+                )
+            }
+            pub fn __gt__(&self, other: FloatOpRhsValue) -> PyResult<ArrayViewIndices> {
+                int_array_cmp!(
+                    self.array,
+                    self.indices,
+                    other,
+                    $type,
+                    <$type>::gt,
+                    <f32>::gt,
+                    <f64>::gt
+                )
+            }
+            pub fn __ge__(&self, other: FloatOpRhsValue) -> PyResult<ArrayViewIndices> {
+                int_array_cmp!(
+                    self.array,
+                    self.indices,
+                    other,
+                    $type,
+                    <$type>::ge,
+                    <f32>::ge,
+                    <f64>::ge
+                )
+            }
+            pub fn __eq__(&self, other: FloatOpRhsValue) -> PyResult<ArrayViewIndices> {
+                int_array_cmp!(
+                    self.array,
+                    self.indices,
+                    other,
+                    $type,
+                    <$type>::eq,
+                    <f32>::eq,
+                    <f64>::eq
+                )
+            }
+            pub fn __ne__(&self, other: FloatOpRhsValue) -> PyResult<ArrayViewIndices> {
+                int_array_cmp!(
+                    self.array,
+                    self.indices,
+                    other,
+                    $type,
+                    <$type>::ne,
+                    <f32>::ne,
+                    <f64>::ne
+                )
             }
         }
     };
@@ -750,6 +1033,13 @@ macro_rules! python_int_array {
             pub fn __getitem__(&self, key: &ArrayViewIndices) -> Self {
                 Self(self.0.__getitem__(key))
             }
+            pub fn __setitem__(
+                &mut self,
+                key: &ArrayViewIndices,
+                value: IntOpRhsValue,
+            ) -> PyResult<()> {
+                self.0.__setitem__(key, value)
+            }
             pub fn __len__(&self) -> PyResult<usize> {
                 self.0.__len__()
             }
@@ -774,6 +1064,20 @@ macro_rules! python_int_array {
             #[args(modulo = "None")]
             pub fn __ipow__(&mut self, other: IntOpRhsValue, _modulo: &PyAny) -> PyResult<()> {
                 self.0.__ipow__(other)
+            }
+            pub fn __richcmp__(
+                &mut self,
+                other: FloatOpRhsValue,
+                op: CompareOp,
+            ) -> PyResult<ArrayViewIndices> {
+                match op {
+                    CompareOp::Lt => self.0.__lt__(other),
+                    CompareOp::Le => self.0.__le__(other),
+                    CompareOp::Gt => self.0.__gt__(other),
+                    CompareOp::Ge => self.0.__ge__(other),
+                    CompareOp::Eq => self.0.__eq__(other),
+                    CompareOp::Ne => self.0.__ne__(other),
+                }
             }
         }
     };
