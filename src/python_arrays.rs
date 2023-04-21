@@ -246,6 +246,79 @@ macro_rules! float_array {
                 float_binary_op!(self.array, self.indices, other, $type, <$type>::rem);
                 Ok(())
             }
+            pub fn __ipow__(&mut self, other: FloatOpRhsValue) -> PyResult<()> {
+                let mut self_array = self.array.write().map_err(cannot_write)?;
+                let self_indices = self.indices.0.read().map_err(cannot_read)?;
+                match other {
+                    FloatOpRhsValue::I64(other_value) => {
+                        value_op!(self_array, self_indices, other_value, i32, <$type>::powi);
+                    }
+                    FloatOpRhsValue::F64(other_value) => {
+                        value_op!(self_array, self_indices, other_value, $type, <$type>::powf);
+                    }
+                    FloatOpRhsValue::Float32(other_array) => {
+                        array_op!(self_array, self_indices, other_array, $type, <$type>::powf);
+                    }
+                    FloatOpRhsValue::Float64(other_array) => {
+                        array_op!(self_array, self_indices, other_array, $type, <$type>::powf);
+                    }
+                    FloatOpRhsValue::Int8(other_array) => {
+                        array_op!(self_array, self_indices, other_array, i32, <$type>::powi);
+                    }
+                    FloatOpRhsValue::Int16(other_array) => {
+                        array_op!(self_array, self_indices, other_array, i32, <$type>::powi);
+                    }
+                    FloatOpRhsValue::Int32(other_array) => {
+                        array_op!(self_array, self_indices, other_array, i32, <$type>::powi);
+                    }
+                    FloatOpRhsValue::Int64(other_array) => {
+                        array_op!(self_array, self_indices, other_array, i32, <$type>::powi);
+                    }
+                    FloatOpRhsValue::UInt8(other_array) => {
+                        array_op!(self_array, self_indices, other_array, i32, <$type>::powi);
+                    }
+                    FloatOpRhsValue::UInt16(other_array) => {
+                        array_op!(self_array, self_indices, other_array, i32, <$type>::powi);
+                    }
+                    FloatOpRhsValue::UInt32(other_array) => {
+                        array_op!(self_array, self_indices, other_array, i32, <$type>::powi);
+                    }
+                    FloatOpRhsValue::UInt64(other_array) => {
+                        array_op!(self_array, self_indices, other_array, i32, <$type>::powi);
+                    }
+                    FloatOpRhsValue::PyArrayF32(py_array) => {
+                        py_array_op!(self_array, self_indices, py_array, $type, <$type>::powf);
+                    }
+                    FloatOpRhsValue::PyArrayF64(py_array) => {
+                        py_array_op!(self_array, self_indices, py_array, $type, <$type>::powf);
+                    }
+                    FloatOpRhsValue::PyArrayI8(py_array) => {
+                        py_array_op!(self_array, self_indices, py_array, i32, <$type>::powi);
+                    }
+                    FloatOpRhsValue::PyArrayI16(py_array) => {
+                        py_array_op!(self_array, self_indices, py_array, i32, <$type>::powi);
+                    }
+                    FloatOpRhsValue::PyArrayI32(py_array) => {
+                        py_array_op!(self_array, self_indices, py_array, i32, <$type>::powi);
+                    }
+                    FloatOpRhsValue::PyArrayI64(py_array) => {
+                        py_array_op!(self_array, self_indices, py_array, i32, <$type>::powi);
+                    }
+                    FloatOpRhsValue::PyArrayU8(py_array) => {
+                        py_array_op!(self_array, self_indices, py_array, i32, <$type>::powi);
+                    }
+                    FloatOpRhsValue::PyArrayU16(py_array) => {
+                        py_array_op!(self_array, self_indices, py_array, i32, <$type>::powi);
+                    }
+                    FloatOpRhsValue::PyArrayU32(py_array) => {
+                        py_array_op!(self_array, self_indices, py_array, i32, <$type>::powi);
+                    }
+                    FloatOpRhsValue::PyArrayU64(py_array) => {
+                        py_array_op!(self_array, self_indices, py_array, i32, <$type>::powi);
+                    }
+                }
+                Ok(())
+            }
         }
     };
 }
@@ -343,6 +416,10 @@ macro_rules! int_array {
             }
             pub fn __imod__(&mut self, other: IntOpRhsValue) -> PyResult<()> {
                 int_binary_op!(self.array, self.indices, other, $type, <$type>::rem);
+                Ok(())
+            }
+            pub fn __ipow__(&mut self, other: IntOpRhsValue) -> PyResult<()> {
+                int_binary_op!(self.array, self.indices, other, u32, <$type>::pow);
                 Ok(())
             }
         }
