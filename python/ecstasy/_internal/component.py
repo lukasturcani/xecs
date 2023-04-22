@@ -1,7 +1,7 @@
 import inspect
 import typing
 
-from ecstasy._internal.rust_type_aliases import ComponentId
+from ecstasy._internal.rust_type_aliases import ComponentId, GetItemKey
 from ecstasy.ecstasy import ArrayViewIndices
 
 ComponentT = typing.TypeVar("ComponentT", bound="Component")
@@ -37,16 +37,32 @@ class Component:
             )
         return ComponentPool(component, capacity)
 
-    def __getitem__(self, key: ArrayViewIndices) -> typing.Self:
+    def __getitem__(self, key: GetItemKey) -> typing.Self:
         cls = self.__class__
         component = cls()
-        component.p_indices = key
+        component.p_indices = self.p_indices[key]
         for attr_name in inspect.get_annotations(cls):
             attr_value = getattr(self, attr_name)
             setattr(
                 component,
                 attr_name,
-                attr_value[key],
+                attr_value.p_new_view_with_indices(component.p_indices),
+            )
+        return component
+
+    def p_new_view_with_indices(
+        self,
+        indices: ArrayViewIndices,
+    ) -> typing.Self:
+        cls = self.__class__
+        component = cls()
+        component.p_indices = indices
+        for attr_name in inspect.get_annotations(cls):
+            attr_value = getattr(self, attr_name)
+            setattr(
+                component,
+                attr_name,
+                attr_value.p_new_view_with_indices(indices),
             )
         return component
 

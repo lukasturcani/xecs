@@ -4,22 +4,8 @@ import ecstasy as ecs
 import numpy as np
 import numpy.typing as npt
 import pytest
-from pytest_lazyfixture import lazy_fixture
 
-FloatArray: typing.TypeAlias = ecs.Float32 | ecs.Float64
-
-IntArray: typing.TypeAlias = (
-    ecs.Int8
-    | ecs.Int16
-    | ecs.Int32
-    | ecs.Int64
-    | ecs.UInt8
-    | ecs.UInt16
-    | ecs.UInt32
-    | ecs.UInt64
-)
-
-Array: typing.TypeAlias = FloatArray | IntArray
+from tests.types import Array, FloatArray
 
 NumpyFloat: typing.TypeAlias = np.float32 | np.float64
 NumpyInt: typing.TypeAlias = (
@@ -32,16 +18,6 @@ NumpyInt: typing.TypeAlias = (
     | np.uint32
     | np.uint64
 )
-
-
-def test_getitem_does_not_return_a_copy(array: Array) -> None:
-    assert np.all(np.equal(array.numpy(), [0, 1, 2, 3, 4]))
-
-    mask = array < 3
-    sub_array = array[mask]
-    assert len(sub_array) == 3
-    sub_array[sub_array < 2] = 100
-    assert np.all(np.equal(array.numpy(), [100, 100, 2, 3, 4]))
 
 
 def test_float_array_setitem(
@@ -105,59 +81,27 @@ def test_spawning_to_a_full_array_causes_error() -> None:
     array[:] = 1.0
 
 
+def test_new_view_uses_same_array() -> None:
+    array_1 = ecs.Float64.from_numpy(np.zeros(10, dtype=np.float64))
+    indices = ecs.ecstasy.ArrayViewIndices.with_capacity(10)
+    array_2 = array_1.p_new_view_with_indices(indices)
+    indices.spawn(5)
+
+    assert len(array_1) == 10
+    assert len(array_2) == 5
+    assert array_1.numpy()[2] == array_2.numpy()[2] == 0
+    assert array_1.numpy()[4] == array_2.numpy()[4] == 0
+
+    array_1[2:3] = 1
+    assert array_1.numpy()[2] == array_2.numpy()[2] == 1
+
+    array_2[4:5] = 2
+    assert array_1.numpy()[4] == array_2.numpy()[4] == 2
+
+
 def test_float_array_type_checking() -> None:
     pass
 
 
 def test_int_array_type_checking() -> None:
     pass
-
-
-@pytest.fixture(
-    params=(
-        lambda: ecs.Float32.p_from_numpy(np.arange(5, dtype=np.float32)),
-        lambda: ecs.Float64.p_from_numpy(np.arange(5, dtype=np.float64)),
-    ),
-    ids=(
-        "Float32",
-        "Float64",
-    ),
-)
-def float_array(request: pytest.FixtureRequest) -> FloatArray:
-    return request.param()
-
-
-@pytest.fixture(
-    params=(
-        lambda: ecs.Int8.p_from_numpy(np.arange(5, dtype=np.int8)),
-        lambda: ecs.Int16.p_from_numpy(np.arange(5, dtype=np.int16)),
-        lambda: ecs.Int32.p_from_numpy(np.arange(5, dtype=np.int32)),
-        lambda: ecs.Int64.p_from_numpy(np.arange(5, dtype=np.int64)),
-        lambda: ecs.UInt8.p_from_numpy(np.arange(5, dtype=np.uint8)),
-        lambda: ecs.UInt16.p_from_numpy(np.arange(5, dtype=np.uint16)),
-        lambda: ecs.UInt32.p_from_numpy(np.arange(5, dtype=np.uint32)),
-        lambda: ecs.UInt64.p_from_numpy(np.arange(5, dtype=np.uint64)),
-    ),
-    ids=(
-        "Int8",
-        "Int16",
-        "Int32",
-        "Int64",
-        "UInt8",
-        "UInt16",
-        "UInt32",
-        "UInt64",
-    ),
-)
-def int_array(request: pytest.FixtureRequest) -> IntArray:
-    return request.param()
-
-
-@pytest.fixture(
-    params=(
-        lazy_fixture("float_array"),
-        lazy_fixture("int_array"),
-    ),
-)
-def array(request: pytest.FixtureRequest) -> Array:
-    return request.param

@@ -3,7 +3,11 @@ import typing
 import numpy as np
 import numpy.typing as npt
 
-from ecstasy._internal.rust_type_aliases import ComponentId, QueryId
+from ecstasy._internal.rust_type_aliases import (
+    ComponentId,
+    GetItemKey,
+    QueryId,
+)
 
 class MultipleArrayInidices:
     def next(self) -> ArrayViewIndices | None: ...
@@ -28,6 +32,7 @@ class ArrayViewIndices:
     def with_capacity(capacity: int) -> ArrayViewIndices: ...
     def spawn(self, num: int) -> None: ...
     def __len__(self) -> int: ...
+    def __getitem__(self, key: GetItemKey) -> ArrayViewIndices: ...
 
 _NumpyFloatT = typing.TypeVar("_NumpyFloatT", np.float32, np.float64)
 _NumpyIntT = typing.TypeVar(

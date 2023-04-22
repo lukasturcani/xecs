@@ -955,6 +955,9 @@ macro_rules! python_float_array {
             pub fn p_from_numpy(array: &PyArray1<$type>) -> PyResult<Self> {
                 Array::p_from_numpy(array).map(Self)
             }
+            pub fn p_new_view_with_indices(&self, indices: &ArrayViewIndices) -> Self {
+                Self(self.0.p_new_view_with_indices(indices))
+            }
             pub fn numpy(&self, py: Python) -> PyResult<Py<PyArray1<$type>>> {
                 self.0.numpy(py)
             }
@@ -1020,6 +1023,9 @@ macro_rules! python_int_array {
             #[staticmethod]
             pub fn p_from_numpy(array: &PyArray1<$type>) -> PyResult<Self> {
                 Array::p_from_numpy(array).map(Self)
+            }
+            pub fn p_new_view_with_indices(&self, indices: &ArrayViewIndices) -> Self {
+                Self(self.0.p_new_view_with_indices(indices))
             }
             pub fn numpy(&self, py: Python) -> PyResult<Py<PyArray1<$type>>> {
                 self.0.numpy(py)
