@@ -3,7 +3,7 @@ use crate::python_arrays::{
 };
 use crate::readable_array;
 use crate::readable_array::ReadableArray;
-use numpy::{Ix1, PyArray1, PyReadonlyArray1};
+use numpy::{PyArray1, PyReadonlyArray1};
 use pyo3::prelude::*;
 
 #[derive(FromPyObject)]
@@ -106,62 +106,24 @@ enum ReadFloatOpRhsValue<'lock> {
 impl<'lock> ReadFloatOpRhsValue<'lock> {
     fn iter_f64(&self) -> IterF64<'_> {
         match self {
-            ReadFloatOpRhsValue::F64(value) => IterF64::F64(*value),
-            ReadFloatOpRhsValue::Float32(array) => IterF64::Float32(array.iter()),
-            ReadFloatOpRhsValue::Float64(array) => IterF64::Float64(array.iter()),
-            ReadFloatOpRhsValue::Int8(array) => IterF64::Int8(array.iter()),
-            ReadFloatOpRhsValue::Int16(array) => IterF64::Int16(array.iter()),
-            ReadFloatOpRhsValue::Int32(array) => IterF64::Int32(array.iter()),
-            ReadFloatOpRhsValue::Int64(array) => IterF64::Int64(array.iter()),
-            ReadFloatOpRhsValue::UInt8(array) => IterF64::UInt8(array.iter()),
-            ReadFloatOpRhsValue::UInt16(array) => IterF64::UInt16(array.iter()),
-            ReadFloatOpRhsValue::UInt32(array) => IterF64::UInt32(array.iter()),
-            ReadFloatOpRhsValue::UInt64(array) => IterF64::UInt64(array.iter()),
-            // ReadFloatOpRhsValue::PyArrayF32(array) => IterF64::PyArrayF32(array.as_array().iter()),
-            _ => panic!("sup"),
+            ReadFloatOpRhsValue::F64(value) => IterF64::Value(value),
+            ReadFloatOpRhsValue::Float32(array) => IterF64::Array(array.iter()),
+            _ => panic!(""),
         }
     }
 }
 
 enum IterF64<'a> {
-    F64(f64),
-    Float32(readable_array::Iter<'a, f32>),
-    Float64(readable_array::Iter<'a, f64>),
-    Int8(readable_array::Iter<'a, i8>),
-    Int16(readable_array::Iter<'a, i16>),
-    Int32(readable_array::Iter<'a, i32>),
-    Int64(readable_array::Iter<'a, i64>),
-    UInt8(readable_array::Iter<'a, u8>),
-    UInt16(readable_array::Iter<'a, u16>),
-    UInt32(readable_array::Iter<'a, u32>),
-    UInt64(readable_array::Iter<'a, u64>),
-    // PyArrayF32(numpy::ndarray::iter::Iter<'a, f32, Ix1>),
-    // PyArrayF64(PyReadonlyArray1<'lock, f64>),
-    // PyArrayI8(PyReadonlyArray1<'lock, i8>),
-    // PyArrayI16(PyReadonlyArray1<'lock, i16>),
-    // PyArrayI32(PyReadonlyArray1<'lock, i32>),
-    // PyArrayI64(PyReadonlyArray1<'lock, i64>),
-    // PyArrayU8(PyReadonlyArray1<'lock, u8>),
-    // PyArrayU16(PyReadonlyArray1<'lock, u16>),
-    // PyArrayU32(PyReadonlyArray1<'lock, u32>),
-    // PyArrayU64(PyReadonlyArray1<'lock, u64>),
+    Value(&'a f64),
+    Array(readable_array::Iter<'a, f64>),
 }
 
 impl<'a> Iterator for IterF64<'a> {
-    type Item = f64;
+    type Item = &'a f64;
     fn next(&mut self) -> Option<Self::Item> {
         match self {
-            IterF64::F64(value) => Some(*value),
-            IterF64::Float32(iter) => iter.next().map(|x| *x as f64),
-            IterF64::Float64(iter) => iter.next().map(|x| *x),
-            IterF64::Int8(iter) => iter.next().map(|x| *x as f64),
-            IterF64::Int16(iter) => iter.next().map(|x| *x as f64),
-            IterF64::Int32(iter) => iter.next().map(|x| *x as f64),
-            IterF64::Int64(iter) => iter.next().map(|x| *x as f64),
-            IterF64::UInt8(iter) => iter.next().map(|x| *x as f64),
-            IterF64::UInt16(iter) => iter.next().map(|x| *x as f64),
-            IterF64::UInt32(iter) => iter.next().map(|x| *x as f64),
-            IterF64::UInt64(iter) => iter.next().map(|x| *x as f64),
+            IterF64::Value(value) => Some(value),
+            IterF64::Array(iter) => iter.next(),
         }
     }
 }
