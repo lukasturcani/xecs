@@ -6,12 +6,14 @@ mod component_id;
 mod component_pool;
 mod entity_id;
 mod error_handlers;
+mod float_op_rhs_value;
 mod getitem_key;
 mod index;
 mod map;
 mod python_arrays;
 mod query;
 mod query_id;
+mod readable_array;
 mod set;
 
 /// A Python module implemented in Rust.

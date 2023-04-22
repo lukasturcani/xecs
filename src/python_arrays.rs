@@ -1,6 +1,8 @@
 use crate::array_view_indices::ArrayViewIndices;
 use crate::error_handlers::{cannot_read, cannot_write};
+use crate::float_op_rhs_value::FloatOpRhsValue;
 use crate::getitem_key::GetItemKey;
+use crate::readable_array::ReadableArray;
 use numpy::PyArray1;
 use pyo3::basic::CompareOp;
 use pyo3::prelude::*;
@@ -11,32 +13,6 @@ use std::sync::{Arc, RwLock};
 struct Array<T> {
     array: Arc<RwLock<Vec<T>>>,
     indices: ArrayViewIndices,
-}
-
-#[derive(FromPyObject)]
-pub enum FloatOpRhsValue<'a> {
-    I64(i64),
-    F64(f64),
-    Float32(PyRef<'a, Float32>),
-    Float64(PyRef<'a, Float64>),
-    Int8(PyRef<'a, Int8>),
-    Int16(PyRef<'a, Int16>),
-    Int32(PyRef<'a, Int32>),
-    Int64(PyRef<'a, Int64>),
-    UInt8(PyRef<'a, UInt8>),
-    UInt16(PyRef<'a, UInt16>),
-    UInt32(PyRef<'a, UInt32>),
-    UInt64(PyRef<'a, UInt64>),
-    PyArrayF32(&'a PyArray1<f32>),
-    PyArrayF64(&'a PyArray1<f64>),
-    PyArrayI8(&'a PyArray1<i8>),
-    PyArrayI16(&'a PyArray1<i16>),
-    PyArrayI32(&'a PyArray1<i32>),
-    PyArrayI64(&'a PyArray1<i64>),
-    PyArrayU8(&'a PyArray1<u8>),
-    PyArrayU16(&'a PyArray1<u16>),
-    PyArrayU32(&'a PyArray1<u32>),
-    PyArrayU64(&'a PyArray1<u64>),
 }
 
 #[derive(FromPyObject)]
@@ -105,6 +81,12 @@ where
     }
     pub fn __len__(&self) -> PyResult<usize> {
         self.indices.__len__()
+    }
+    pub fn read(&self) -> PyResult<ReadableArray<T>> {
+        Ok(ReadableArray::new(
+            self.array.read().map_err(cannot_read)?,
+            self.indices.0.read().map_err(cannot_read)?,
+        ))
     }
 }
 
@@ -194,16 +176,6 @@ macro_rules! float_array_cmp {
         {
             let mut out_indices = indices.0.write().map_err(cannot_write)?;
             match $other {
-                FloatOpRhsValue::I64(other_value) => {
-                    value_cmp!(
-                        self_array,
-                        self_indices,
-                        other_value,
-                        out_indices,
-                        $type,
-                        $op
-                    );
-                }
                 FloatOpRhsValue::F64(other_value) => {
                     value_cmp!(
                         self_array,
@@ -358,16 +330,6 @@ macro_rules! int_array_cmp {
         {
             let mut out_indices = indices.0.write().map_err(cannot_write)?;
             match $other {
-                FloatOpRhsValue::I64(other_value) => {
-                    value_cmp!(
-                        self_array,
-                        self_indices,
-                        other_value,
-                        out_indices,
-                        $type,
-                        $op
-                    );
-                }
                 FloatOpRhsValue::F64(other_value) => {
                     value_cmp_cast_both!(
                         self_array,
@@ -566,9 +528,6 @@ macro_rules! float_binary_op {
         let mut self_array = $self_array.write().map_err(cannot_write)?;
         let self_indices = $self_indices.0.read().map_err(cannot_read)?;
         match $other {
-            FloatOpRhsValue::I64(other_value) => {
-                value_op!(self_array, self_indices, other_value, $type, $op);
-            }
             FloatOpRhsValue::F64(other_value) => {
                 value_op!(self_array, self_indices, other_value, $type, $op);
             }
@@ -674,9 +633,6 @@ macro_rules! float_array {
                 let mut self_array = self.array.write().map_err(cannot_write)?;
                 let self_indices = self.indices.0.read().map_err(cannot_read)?;
                 match other {
-                    FloatOpRhsValue::I64(other_value) => {
-                        value_op!(self_array, self_indices, other_value, i32, <$type>::powi);
-                    }
                     FloatOpRhsValue::F64(other_value) => {
                         value_op!(self_array, self_indices, other_value, $type, <$type>::powf);
                     }
