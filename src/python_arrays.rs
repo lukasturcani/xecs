@@ -636,6 +636,117 @@ macro_rules! float_binary_op {
     };
 }
 
+macro_rules! value_zip_mut {
+    ($self_array:expr, $self_indices:expr, $other_value:expr, $($fn:tt)*) => {
+        let f = $($fn)*;
+        for &self_index in $self_indices.iter() {
+            let self_value = unsafe { $self_array.get_unchecked_mut(self_index as usize) };
+            f(self_value, &$other_value)
+        }
+    }
+}
+
+macro_rules! array_zip_mut {
+    ($self_array:expr, $self_indices:expr, $other:expr, $type:ty, $($fn:tt)*) => {
+        let f = $($fn)*;
+        let other_array = $other.0.array.read().map_err(cannot_write)?;
+        let other_indices = $other.0.indices.0.read().map_err(cannot_read)?;
+        for (&self_index, &other_index) in $self_indices.iter().zip(other_indices.iter()) {
+            let self_value = unsafe { $self_array.get_unchecked_mut(self_index as usize) };
+            let other_value = unsafe { other_array.get_unchecked(other_index as usize) };
+            f(self_value, &(*other_value as $type))
+        }
+    };
+}
+
+macro_rules! py_array_zip_mut {
+    ($self_array:expr, $self_indices:expr, $other:expr, $type:ty, $($fn:tt)*) => {
+        let f = $($fn)*;
+        for (&self_index, &other_value) in $self_indices
+            .iter()
+            .zip($other.readonly().as_array().iter())
+        {
+            let self_value = unsafe { $self_array.get_unchecked_mut(self_index as usize) };
+            f(self_value, &(other_value as $type))
+        }
+    };
+}
+
+macro_rules! zip_mut {
+    ($self:expr, $other:expr, $type: ty, $($fn:tt)*) => {
+        let mut self_array = $self.array.write().map_err(cannot_write)?;
+        let self_indices = $self.indices.0.read().map_err(cannot_read)?;
+        match $other {
+            FloatOpRhsValue::I64(other_value) => {
+                value_zip_mut!(self_array, self_indices, other_value as $type, $($fn)*);
+            }
+            FloatOpRhsValue::F64(other_value) => {
+                value_zip_mut!(self_array, self_indices, other_value as $type, $($fn)*);
+            }
+            FloatOpRhsValue::Float32(other_array) => {
+                array_zip_mut!(self_array, self_indices, other_array, $type, $($fn)*);
+            }
+            FloatOpRhsValue::Float64(other_array) => {
+                array_zip_mut!(self_array, self_indices, other_array, $type, $($fn)*);
+            }
+            FloatOpRhsValue::Int8(other_array) => {
+                array_zip_mut!(self_array, self_indices, other_array, $type, $($fn)*);
+            }
+            FloatOpRhsValue::Int16(other_array) => {
+                array_zip_mut!(self_array, self_indices, other_array, $type, $($fn)*);
+            }
+            FloatOpRhsValue::Int32(other_array) => {
+                array_zip_mut!(self_array, self_indices, other_array, $type, $($fn)*);
+            }
+            FloatOpRhsValue::Int64(other_array) => {
+                array_zip_mut!(self_array, self_indices, other_array, $type, $($fn)*);
+            }
+            FloatOpRhsValue::UInt8(other_array) => {
+                array_zip_mut!(self_array, self_indices, other_array, $type, $($fn)*);
+            }
+            FloatOpRhsValue::UInt16(other_array) => {
+                array_zip_mut!(self_array, self_indices, other_array, $type, $($fn)*);
+            }
+            FloatOpRhsValue::UInt32(other_array) => {
+                array_zip_mut!(self_array, self_indices, other_array, $type, $($fn)*);
+            }
+            FloatOpRhsValue::UInt64(other_array) => {
+                array_zip_mut!(self_array, self_indices, other_array, $type, $($fn)*);
+            }
+            FloatOpRhsValue::PyArrayF32(py_array) => {
+                py_array_zip_mut!(self_array, self_indices, py_array, $type, $($fn)*);
+            }
+            FloatOpRhsValue::PyArrayF64(py_array) => {
+                py_array_zip_mut!(self_array, self_indices, py_array, $type, $($fn)*);
+            }
+            FloatOpRhsValue::PyArrayI8(py_array) => {
+                py_array_zip_mut!(self_array, self_indices, py_array, $type, $($fn)*);
+            }
+            FloatOpRhsValue::PyArrayI16(py_array) => {
+                py_array_zip_mut!(self_array, self_indices, py_array, $type, $($fn)*);
+            }
+            FloatOpRhsValue::PyArrayI32(py_array) => {
+                py_array_zip_mut!(self_array, self_indices, py_array, $type, $($fn)*);
+            }
+            FloatOpRhsValue::PyArrayI64(py_array) => {
+                py_array_zip_mut!(self_array, self_indices, py_array, $type, $($fn)*);
+            }
+            FloatOpRhsValue::PyArrayU8(py_array) => {
+                py_array_zip_mut!(self_array, self_indices, py_array, $type, $($fn)*);
+            }
+            FloatOpRhsValue::PyArrayU16(py_array) => {
+                py_array_zip_mut!(self_array, self_indices, py_array, $type, $($fn)*);
+            }
+            FloatOpRhsValue::PyArrayU32(py_array) => {
+                py_array_zip_mut!(self_array, self_indices, py_array, $type, $($fn)*);
+            }
+            FloatOpRhsValue::PyArrayU64(py_array) => {
+                py_array_zip_mut!(self_array, self_indices, py_array, $type, $($fn)*);
+            }
+        }
+    };
+}
+
 macro_rules! float_array {
     (impl Array<$type:ty>) => {
         impl Array<$type> {
@@ -645,29 +756,31 @@ macro_rules! float_array {
             // }
 
             pub fn __iadd__(&mut self, other: FloatOpRhsValue) -> PyResult<()> {
-                float_binary_op!(self.array, self.indices, other, $type, <$type>::add);
+                zip_mut!(self, other, $type, |a: &mut $type, b: &$type| { *a += b });
                 Ok(())
             }
 
             pub fn __isub__(&mut self, other: FloatOpRhsValue) -> PyResult<()> {
-                float_binary_op!(self.array, self.indices, other, $type, <$type>::sub);
+                zip_mut!(self, other, $type, |a: &mut $type, b: &$type| { *a -= b });
                 Ok(())
             }
 
             pub fn __imul__(&mut self, other: FloatOpRhsValue) -> PyResult<()> {
-                float_binary_op!(self.array, self.indices, other, $type, <$type>::mul);
+                zip_mut!(self, other, $type, |a: &mut $type, b: &$type| { *a *= b });
                 Ok(())
             }
             pub fn __itruediv__(&mut self, other: FloatOpRhsValue) -> PyResult<()> {
-                float_binary_op!(self.array, self.indices, other, $type, <$type>::div);
+                zip_mut!(self, other, $type, |a: &mut $type, b: &$type| { *a /= b });
                 Ok(())
             }
             pub fn __ifloordiv__(&mut self, other: FloatOpRhsValue) -> PyResult<()> {
-                float_binary_op!(self.array, self.indices, other, $type, <$type>::div_euclid);
+                zip_mut!(self, other, $type, |a: &mut $type, b: &$type| {
+                    *a = a.div_euclid(*b)
+                });
                 Ok(())
             }
             pub fn __imod__(&mut self, other: FloatOpRhsValue) -> PyResult<()> {
-                float_binary_op!(self.array, self.indices, other, $type, <$type>::rem);
+                zip_mut!(self, other, $type, |a: &mut $type, b: &$type| { *a %= b });
                 Ok(())
             }
             pub fn __ipow__(&mut self, other: FloatOpRhsValue) -> PyResult<()> {
