@@ -48,7 +48,7 @@ def test_float_array_setitem(
     float_array: FloatArray,
     float_setitem_rhs: float | Array | npt.NDArray[NumpyFloat | NumpyInt],
 ) -> None:
-    assert np.sum(array.numpy()) == 0
+    assert np.all(np.equal(float_array.numpy(), [0, 1, 2, 3, 4]))
     array[5:8] = 1.0
     assert np.sum(array.numpy()) == 3
     assert np.sum(array.numpy()[5:8]) == 3
@@ -57,12 +57,12 @@ def test_float_array_setitem(
     assert np.sum(array.numpy()[5:8]) == 6
 
 
-def test_mulitple_masks_reach_correct_elements(array: Array) -> None:
-    array = array[indices([7, 8, 9])]
-    array = array[indices([1, 2])]
-    array[:] = 1.0
-    assert np.sum(array.numpy()) == 2.0
-    assert np.sum(array.numpy()[[8, 9]]) == 2.0
+def test_multiple_masks_reach_correct_elements(array: Array) -> None:
+    assert np.all(np.equal(array.numpy(), [0, 1, 2, 3, 4]))
+    sub_array = array[array < 3]
+    sub_array = sub_array[sub_array > 1]
+    sub_array[:] = 100
+    assert np.all(np.equal(array.numpy(), [0, 1, 100, 3, 4]))
 
 
 def test_length_of_sub_array_is_accurate(array: Array) -> None:

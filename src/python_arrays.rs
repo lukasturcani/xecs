@@ -1,5 +1,6 @@
 use crate::array_view_indices::ArrayViewIndices;
 use crate::error_handlers::{cannot_read, cannot_write};
+use crate::getitem_key::GetItemKey;
 use numpy::PyArray1;
 use pyo3::basic::CompareOp;
 use pyo3::prelude::*;
@@ -90,12 +91,17 @@ where
             indices: ArrayViewIndices(Arc::clone(&indices.0)),
         })
     }
-
-    pub fn __getitem__(&self, key: &ArrayViewIndices) -> Self {
+    pub fn p_new_view_with_indices(&self, indices: &ArrayViewIndices) -> Self {
         Self {
             array: Arc::clone(&self.array),
-            indices: ArrayViewIndices(Arc::clone(&key.0)),
+            indices: ArrayViewIndices(Arc::clone(&indices.0)),
         }
+    }
+    pub fn __getitem__(&self, key: GetItemKey) -> PyResult<Self> {
+        Ok(Self {
+            array: Arc::clone(&self.array),
+            indices: self.indices.__getitem__(key)?,
+        })
     }
     pub fn __len__(&self) -> PyResult<usize> {
         self.indices.__len__()
@@ -633,14 +639,10 @@ macro_rules! float_binary_op {
 macro_rules! float_array {
     (impl Array<$type:ty>) => {
         impl Array<$type> {
-            pub fn __setitem__(
-                &mut self,
-                key: &ArrayViewIndices,
-                value: FloatOpRhsValue,
-            ) -> PyResult<()> {
-                float_binary_op!(self.array, key, value, $type, |_, b| b);
-                Ok(())
-            }
+            // pub fn __setitem__(&mut self, key: GetItemKey, value: FloatOpRhsValue) -> PyResult<()> {
+            //     float_binary_op!(self.array, key, value, $type, |_, b| b);
+            //     Ok(())
+            // }
 
             pub fn __iadd__(&mut self, other: FloatOpRhsValue) -> PyResult<()> {
                 float_binary_op!(self.array, self.indices, other, $type, <$type>::add);
@@ -826,14 +828,10 @@ macro_rules! int_binary_op {
 macro_rules! int_array {
     (impl Array<$type:ty>) => {
         impl Array<$type> {
-            pub fn __setitem__(
-                &mut self,
-                key: &ArrayViewIndices,
-                value: IntOpRhsValue,
-            ) -> PyResult<()> {
-                int_binary_op!(self.array, key, value, $type, |_, b| b);
-                Ok(())
-            }
+            // pub fn __setitem__(&mut self, key: GetItemKey, value: IntOpRhsValue) -> PyResult<()> {
+            //     int_binary_op!(self.array, key, value, $type, |_, b| b);
+            //     Ok(())
+            // }
             pub fn __iadd__(&mut self, other: IntOpRhsValue) -> PyResult<()> {
                 int_binary_op!(self.array, self.indices, other, $type, <$type>::add);
                 Ok(())
@@ -963,16 +961,12 @@ macro_rules! python_float_array {
             pub fn __len__(&self) -> PyResult<usize> {
                 self.0.__len__()
             }
-            pub fn __getitem__(&self, key: &ArrayViewIndices) -> Self {
-                Self(self.0.__getitem__(key))
+            pub fn __getitem__(&self, key: GetItemKey) -> PyResult<Self> {
+                self.0.__getitem__(key).map(Self)
             }
-            pub fn __setitem__(
-                &mut self,
-                key: &ArrayViewIndices,
-                value: FloatOpRhsValue,
-            ) -> PyResult<()> {
-                self.0.__setitem__(key, value)
-            }
+            // pub fn __setitem__(&mut self, key: GetItemKey, value: FloatOpRhsValue) -> PyResult<()> {
+            //     self.0.__setitem__(key, value)
+            // }
             pub fn __iadd__(&mut self, other: FloatOpRhsValue) -> PyResult<()> {
                 self.0.__iadd__(other)
             }
@@ -1030,16 +1024,12 @@ macro_rules! python_int_array {
             pub fn numpy(&self, py: Python) -> PyResult<Py<PyArray1<$type>>> {
                 self.0.numpy(py)
             }
-            pub fn __getitem__(&self, key: &ArrayViewIndices) -> Self {
-                Self(self.0.__getitem__(key))
+            pub fn __getitem__(&self, key: GetItemKey) -> PyResult<Self> {
+                self.0.__getitem__(key).map(Self)
             }
-            pub fn __setitem__(
-                &mut self,
-                key: &ArrayViewIndices,
-                value: IntOpRhsValue,
-            ) -> PyResult<()> {
-                self.0.__setitem__(key, value)
-            }
+            // pub fn __setitem__(&mut self, key: GetItemKey, value: IntOpRhsValue) -> PyResult<()> {
+            //     self.0.__setitem__(key, value)
+            // }
             pub fn __len__(&self) -> PyResult<usize> {
                 self.0.__len__()
             }
