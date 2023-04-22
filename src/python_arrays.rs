@@ -963,6 +963,11 @@ macro_rules! python_float_array {
                 }
             }
         }
+        impl $name {
+            pub fn read(&self) -> PyResult<ReadableArray<$type>> {
+                self.0.read()
+            }
+        }
     };
 }
 
@@ -1030,6 +1035,11 @@ macro_rules! python_int_array {
                     CompareOp::Eq => self.0.__eq__(other),
                     CompareOp::Ne => self.0.__ne__(other),
                 }
+            }
+        }
+        impl $name {
+            pub fn read(&self) -> PyResult<ReadableArray<$type>> {
+                self.0.read()
             }
         }
     };
