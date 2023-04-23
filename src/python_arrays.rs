@@ -748,6 +748,17 @@ macro_rules! float_array {
     };
 }
 
+macro_rules! int_iop {
+    ($self:expr, $other:expr, $type:ty, $op:tt) => {
+        {
+            int_rhs_zip_mut!($self, $other, $type, |_, a: &mut $type, b: &$type| {
+                *a $op b
+            });
+            Ok(())
+        }
+    }
+}
+
 macro_rules! int_array {
     (impl Array<$type:ty>) => {
         impl Array<$type> {
@@ -756,28 +767,16 @@ macro_rules! int_array {
             //     Ok(())
             // }
             pub fn __iadd__(&mut self, other: IntOpRhsValue) -> PyResult<()> {
-                int_rhs_zip_mut!(self, other, $type, |_, a: &mut $type, b: &$type| {
-                    *a += b
-                });
-                Ok(())
+                int_iop!(self, other, $type, +=)
             }
             pub fn __isub__(&mut self, other: IntOpRhsValue) -> PyResult<()> {
-                int_rhs_zip_mut!(self, other, $type, |_, a: &mut $type, b: &$type| {
-                    *a -= b
-                });
-                Ok(())
+                int_iop!(self, other, $type, -=)
             }
             pub fn __imul__(&mut self, other: IntOpRhsValue) -> PyResult<()> {
-                int_rhs_zip_mut!(self, other, $type, |_, a: &mut $type, b: &$type| {
-                    *a *= b
-                });
-                Ok(())
+                int_iop!(self, other, $type, *=)
             }
             pub fn __itruediv__(&mut self, other: IntOpRhsValue) -> PyResult<()> {
-                int_rhs_zip_mut!(self, other, $type, |_, a: &mut $type, b: &$type| {
-                    *a /= b
-                });
-                Ok(())
+                int_iop!(self, other, $type, /=)
             }
             pub fn __ifloordiv__(&mut self, other: IntOpRhsValue) -> PyResult<()> {
                 int_rhs_zip_mut!(self, other, $type, |_, a: &mut $type, b: &$type| {
@@ -786,10 +785,7 @@ macro_rules! int_array {
                 Ok(())
             }
             pub fn __imod__(&mut self, other: IntOpRhsValue) -> PyResult<()> {
-                int_rhs_zip_mut!(self, other, $type, |_, a: &mut $type, b: &$type| {
-                    *a %= b
-                });
-                Ok(())
+                int_iop!(self, other, $type, %=)
             }
             pub fn __ipow__(&mut self, other: IntOpRhsValue) -> PyResult<()> {
                 int_rhs_zip_mut!(self, other, $type, |_, a: &mut $type, b: &$type| {
