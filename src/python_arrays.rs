@@ -1,5 +1,5 @@
 use crate::array_view_indices::ArrayViewIndices;
-use crate::error_handlers::{cannot_read, cannot_write};
+use crate::error_handlers::{bad_index, cannot_read, cannot_write};
 use crate::getitem_key::GetItemKey;
 use numpy::PyArray1;
 use pyo3::basic::CompareOp;
@@ -619,10 +619,49 @@ macro_rules! float_iop {
 macro_rules! float_array {
     (impl Array<$type:ty>) => {
         impl Array<$type> {
-            // pub fn __setitem__(&mut self, key: GetItemKey, value: FloatOpRhsValue) -> PyResult<()> {
-            //     float_binary_op!(self.array, key, value, $type, |_, b| b);
-            //     Ok(())
-            // }
+            pub fn __setitem__(&mut self, key: GetItemKey, value: FloatOpRhsValue) -> PyResult<()> {
+                let array = self.array.write().map_err(cannot_write)?;
+                let indices = self.indices.0.read().map_err(cannot_read)?;
+                match key {
+                    GetItemKey::Slice(slice) => {
+                        let slice_indices = slice.indices(indices.len() as i64)?;
+                        for (index, new_value) in
+                            (slice_indices.start..slice_indices.stop).step_by(slice_indices.step as usize).zip(value.iter())
+                        {
+                            let array_index = unsafe { indices.get_unchecked(index as usize) };
+                            let value = array.get_unchecked_mut(*array_index as usize);
+                            *value = new_value;
+                        }
+                    }
+                    GetItemKey::PyArrayIndices(array_indices_) => {
+                        let array_indices = array_indices_.readonly();
+                        let array_indices = array_indices.as_array();
+                        for &index in array_indices {
+                            new_indices.push(*indices.get(index as usize).ok_or_else(bad_index)?);
+                        }
+                    }
+                    GetItemKey::PyArrayMask(mask) => {
+                        for (&keep, &index) in mask.readonly().as_array().iter().zip(indices.iter()) {
+                            if keep {
+                                new_indices.push(index);
+                            }
+                        }
+                    }
+                    GetItemKey::VectorIndices(vector_indices) => {
+                        for index in vector_indices {
+                            new_indices.push(*indices.get(index).ok_or_else(bad_index)?);
+                        }
+                    }
+                    GetItemKey::VectorMask(mask) => {
+                        for (keep, &index) in mask.into_iter().zip(indices.iter()) {
+                            if keep {
+                                new_indices.push(index);
+                            }
+                        }
+                    }
+                };
+                Ok(())
+            }
 
             pub fn __iadd__(&mut self, other: FloatOpRhsValue) -> PyResult<()> {
                 float_iop!(self, other, $type, +=)
