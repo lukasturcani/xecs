@@ -616,6 +616,124 @@ macro_rules! float_iop {
     }
 }
 
+macro_rules! setitem_slice_value {
+    ($array:expr, $indices:expr, $slice:expr, $rhs:expr, $type:ty) => {
+        let slice_indices = $slice.indices($indices.len() as i64)?;
+        for index in (slice_indices.start..slice_indices.stop).step_by(slice_indices.step as usize)
+        {
+            let array_index = unsafe { $indices.get_unchecked(index as usize) };
+            let value = unsafe { $array.get_unchecked_mut(*array_index as usize) };
+            *value = $rhs as $type;
+        }
+    };
+}
+
+macro_rules! setitem_indices_value {
+    ($array:expr, $indices:expr, $array_indices:expr, $rhs:expr, $type:ty) => {
+        for &index in $array_indices {
+            let array_index = $indices.get(index as usize).ok_or_else(bad_index)?;
+            let value = unsafe { $array.get_unchecked_mut(*array_index as usize) };
+            *value = $rhs as $type;
+        }
+    };
+}
+
+macro_rules! setitem_mask_value {
+    ($array:expr, $indices:expr, $mask:expr, $rhs:expr, $type:ty) => {
+        for (&write, &index) in $mask.iter().zip($indices.iter()) {
+            if write {
+                let value = unsafe { $array.get_unchecked_mut(index as usize) };
+                *value = $rhs as $type;
+            }
+        }
+    };
+}
+
+macro_rules! setitem_slice_array {
+    ($array:expr, $indices:expr, $slice:expr, $rhs:expr, $type:ty) => {
+        let other_array = $rhs.0.array.read().map_err(cannot_read)?;
+        let other_indices = $rhs.0.indices.0.read().map_err(cannot_read)?;
+        let slice_indices = $slice.indices($indices.len() as i64)?;
+        for (index, &other_index) in (slice_indices.start..slice_indices.stop)
+            .step_by(slice_indices.step as usize)
+            .zip(other_indices.iter())
+        {
+            let array_index = unsafe { $indices.get_unchecked(index as usize) };
+            let self_value = unsafe { $array.get_unchecked_mut(*array_index as usize) };
+            let other_value = unsafe { other_array.get_unchecked(other_index as usize) };
+            *self_value = *other_value as $type;
+        }
+    };
+}
+
+macro_rules! setitem_indices_array {
+    ($array:expr, $indices:expr, $array_indices:expr, $rhs:expr, $type:ty) => {
+        let other_array = $rhs.0.array.read().map_err(cannot_read)?;
+        let other_indices = $rhs.0.indices.0.read().map_err(cannot_read)?;
+        for (&index, &other_index) in $array_indices.iter().zip(other_indices.iter()) {
+            let array_index = $indices.get(index as usize).ok_or_else(bad_index)?;
+            let self_value = unsafe { $array.get_unchecked_mut(*array_index as usize) };
+            let other_value = unsafe { other_array.get_unchecked(other_index as usize) };
+            *self_value = *other_value as $type;
+        }
+    };
+}
+
+macro_rules! setitem_mask_array {
+    ($array:expr, $indices:expr, $mask:expr, $rhs:expr, $type:ty) => {
+        let other_array = $rhs.0.array.read().map_err(cannot_read)?;
+        let other_indices = $rhs.0.indices.0.read().map_err(cannot_read)?;
+        let mut other_indices = other_indices.iter();
+        for (&write, &self_index) in $mask.iter().zip($indices.iter()) {
+            if write {
+                let self_value = unsafe { $array.get_unchecked_mut(self_index as usize) };
+                let other_value =
+                    unsafe { other_array.get_unchecked(*other_indices.next().unwrap() as usize) };
+                *self_value = *other_value as $type;
+            }
+        }
+    };
+}
+
+macro_rules! setitem_slice_py_array {
+    ($array:expr, $indices:expr, $slice:expr, $rhs:expr, $type:ty) => {
+        let slice_indices = $slice.indices($indices.len() as i64)?;
+        for (index, &other_value) in (slice_indices.start..slice_indices.stop)
+            .step_by(slice_indices.step as usize)
+            .zip($rhs.readonly().as_array().iter())
+        {
+            let array_index = unsafe { $indices.get_unchecked(index as usize) };
+            let self_value = unsafe { $array.get_unchecked_mut(*array_index as usize) };
+            *self_value = other_value as $type;
+        }
+    };
+}
+
+macro_rules! setitem_indices_py_array {
+    ($array:expr, $indices:expr, $array_indices:expr, $rhs:expr, $type:ty) => {
+        for (&index, &other_value) in $array_indices.iter().zip($rhs.readonly().as_array().iter()) {
+            let array_index = $indices.get(index as usize).ok_or_else(bad_index)?;
+            let self_value = unsafe { $array.get_unchecked_mut(*array_index as usize) };
+            *self_value = other_value as $type;
+        }
+    };
+}
+
+macro_rules! setitem_mask_py_array {
+    ($array:expr, $indices:expr, $mask:expr, $rhs:expr, $type:ty) => {
+        let other_values = $rhs.readonly();
+        let other_values = other_values.as_array();
+        let mut other_values = other_values.iter();
+        for (&write, &self_index) in $mask.iter().zip($indices.iter()) {
+            if write {
+                let self_value = unsafe { $array.get_unchecked_mut(self_index as usize) };
+                let other_value = other_values.next().unwrap();
+                *self_value = *other_value as $type;
+            }
+        }
+    };
+}
+
 macro_rules! float_array {
     (impl Array<$type:ty>) => {
         impl Array<$type> {
@@ -624,47 +742,336 @@ macro_rules! float_array {
                 let indices = self.indices.0.read().map_err(cannot_read)?;
                 match (key, value) {
                     (GetItemKey::Slice(slice), FloatOpRhsValue::I64(rhs)) => {
-                        let slice_indices = slice.indices(indices.len() as i64)?;
-                        for index in
-                            (slice_indices.start..slice_indices.stop).step_by(slice_indices.step as usize)
-                        {
-                            let array_index = unsafe { indices.get_unchecked(index as usize) };
-                            let value = unsafe { array.get_unchecked_mut(*array_index as usize) };
-                            *value = rhs as $type;
-                        }
+                        setitem_slice_value!(array, indices, slice, rhs, $type);
                     }
-                    (GetItemKey::PyArrayIndices(array_indices_), FloatOpRhsValue::I64(rhs)) => {
-                        let array_indices = array_indices_.readonly();
-                        let array_indices = array_indices.as_array();
-                        for &index in array_indices {
-                            let array_index = indices.get(index as usize).ok_or_else(bad_index)?;
-                            let value = unsafe { array.get_unchecked_mut(*array_index as usize) };
-                            *value = rhs as $type;
-                        }
+                    (GetItemKey::PyArrayIndices(array_indices), FloatOpRhsValue::I64(rhs)) => {
+                        setitem_indices_value!(array, indices, array_indices.readonly().as_array(), rhs, $type);
                     }
                     (GetItemKey::PyArrayMask(mask), FloatOpRhsValue::I64(rhs)) => {
-                        for (&write, &index) in mask.readonly().as_array().iter().zip(indices.iter()) {
-                            if write {
-                                let value = unsafe { array.get_unchecked_mut(index as usize) };
-                                *value = rhs as $type;
-                            }
-                        }
+                        setitem_mask_value!(array, indices, mask.readonly().as_array(), rhs, $type);
                     }
                     (GetItemKey::VectorIndices(vector_indices), FloatOpRhsValue::I64(rhs)) => {
-                        for index in vector_indices {
-                            let array_index = indices.get(index).ok_or_else(bad_index)?;
-                            let value = unsafe { array.get_unchecked_mut(*array_index as usize) };
-                            *value = rhs as $type;
-                        }
+                        setitem_indices_value!(array, indices, vector_indices.iter(), rhs, $type);
                     }
                     (GetItemKey::VectorMask(mask), FloatOpRhsValue::I64(rhs)) => {
-                        for (keep, &index) in mask.into_iter().zip(indices.iter()) {
-                            if keep {
-                                let value = unsafe { array.get_unchecked_mut(index as usize) };
-                                *value = rhs as $type;
-                            }
-                        }
+                        setitem_mask_value!(array, indices, mask, rhs, $type);
                     }
+                    (GetItemKey::Slice(slice), FloatOpRhsValue::F64(rhs)) => {
+                        setitem_slice_value!(array, indices, slice, rhs, $type);
+                    }
+                    (GetItemKey::PyArrayIndices(array_indices), FloatOpRhsValue::F64(rhs)) => {
+                        setitem_indices_value!(array, indices, array_indices.readonly().as_array(), rhs, $type);
+                    }
+                    (GetItemKey::PyArrayMask(mask), FloatOpRhsValue::F64(rhs)) => {
+                        setitem_mask_value!(array, indices, mask.readonly().as_array(), rhs, $type);
+                    }
+                    (GetItemKey::VectorIndices(vector_indices), FloatOpRhsValue::F64(rhs)) => {
+                        setitem_indices_value!(array, indices, vector_indices.iter(), rhs, $type);
+                    }
+                    (GetItemKey::VectorMask(mask), FloatOpRhsValue::F64(rhs)) => {
+                        setitem_mask_value!(array, indices, mask, rhs, $type);
+                    }
+                    (GetItemKey::Slice(slice), FloatOpRhsValue::Float32(rhs)) => {
+                        setitem_slice_array!(array, indices, slice, rhs, $type);
+                    }
+                    (GetItemKey::PyArrayIndices(array_indices), FloatOpRhsValue::Float32(rhs)) => {
+                        setitem_indices_array!(array, indices, array_indices.readonly().as_array(), rhs, $type);
+                    }
+                    (GetItemKey::PyArrayMask(mask), FloatOpRhsValue::Float32(rhs)) => {
+                        setitem_mask_array!(array, indices, mask.readonly().as_array(), rhs, $type);
+                    }
+                    (GetItemKey::VectorIndices(vector_indices), FloatOpRhsValue::Float32(rhs)) => {
+                        setitem_indices_array!(array, indices, vector_indices, rhs, $type);
+                    }
+                    (GetItemKey::VectorMask(mask), FloatOpRhsValue::Float32(rhs)) => {
+                        setitem_mask_array!(array, indices, mask, rhs, $type);
+                    }
+                    (GetItemKey::Slice(slice), FloatOpRhsValue::Float64(rhs)) => {
+                        setitem_slice_array!(array, indices, slice, rhs, $type);
+                    }
+                    (GetItemKey::PyArrayIndices(array_indices), FloatOpRhsValue::Float64(rhs)) => {
+                        setitem_indices_array!(array, indices, array_indices.readonly().as_array(), rhs, $type);
+                    }
+                    (GetItemKey::PyArrayMask(mask), FloatOpRhsValue::Float64(rhs)) => {
+                        setitem_mask_array!(array, indices, mask.readonly().as_array(), rhs, $type);
+                    }
+                    (GetItemKey::VectorIndices(vector_indices), FloatOpRhsValue::Float64(rhs)) => {
+                        setitem_indices_array!(array, indices, vector_indices, rhs, $type);
+                    }
+                    (GetItemKey::VectorMask(mask), FloatOpRhsValue::Float64(rhs)) => {
+                        setitem_mask_array!(array, indices, mask, rhs, $type);
+                    }
+                    (GetItemKey::Slice(slice), FloatOpRhsValue::Int8(rhs)) => {
+                        setitem_slice_array!(array, indices, slice, rhs, $type);
+                    }
+                    (GetItemKey::PyArrayIndices(array_indices), FloatOpRhsValue::Int8(rhs)) => {
+                        setitem_indices_array!(array, indices, array_indices.readonly().as_array(), rhs, $type);
+                    }
+                    (GetItemKey::PyArrayMask(mask), FloatOpRhsValue::Int8(rhs)) => {
+                        setitem_mask_array!(array, indices, mask.readonly().as_array(), rhs, $type);
+                    }
+                    (GetItemKey::VectorIndices(vector_indices), FloatOpRhsValue::Int8(rhs)) => {
+                        setitem_indices_array!(array, indices, vector_indices, rhs, $type);
+                    }
+                    (GetItemKey::VectorMask(mask), FloatOpRhsValue::Int8(rhs)) => {
+                        setitem_mask_array!(array, indices, mask, rhs, $type);
+                    }
+                    (GetItemKey::Slice(slice), FloatOpRhsValue::Int16(rhs)) => {
+                        setitem_slice_array!(array, indices, slice, rhs, $type);
+                    }
+                    (GetItemKey::PyArrayIndices(array_indices), FloatOpRhsValue::Int16(rhs)) => {
+                        setitem_indices_array!(array, indices, array_indices.readonly().as_array(), rhs, $type);
+                    }
+                    (GetItemKey::PyArrayMask(mask), FloatOpRhsValue::Int16(rhs)) => {
+                        setitem_mask_array!(array, indices, mask.readonly().as_array(), rhs, $type);
+                    }
+                    (GetItemKey::VectorIndices(vector_indices), FloatOpRhsValue::Int16(rhs)) => {
+                        setitem_indices_array!(array, indices, vector_indices, rhs, $type);
+                    }
+                    (GetItemKey::VectorMask(mask), FloatOpRhsValue::Int16(rhs)) => {
+                        setitem_mask_array!(array, indices, mask, rhs, $type);
+                    }
+                    (GetItemKey::Slice(slice), FloatOpRhsValue::Int32(rhs)) => {
+                        setitem_slice_array!(array, indices, slice, rhs, $type);
+                    }
+                    (GetItemKey::PyArrayIndices(array_indices), FloatOpRhsValue::Int32(rhs)) => {
+                        setitem_indices_array!(array, indices, array_indices.readonly().as_array(), rhs, $type);
+                    }
+                    (GetItemKey::PyArrayMask(mask), FloatOpRhsValue::Int32(rhs)) => {
+                        setitem_mask_array!(array, indices, mask.readonly().as_array(), rhs, $type);
+                    }
+                    (GetItemKey::VectorIndices(vector_indices), FloatOpRhsValue::Int32(rhs)) => {
+                        setitem_indices_array!(array, indices, vector_indices, rhs, $type);
+                    }
+                    (GetItemKey::VectorMask(mask), FloatOpRhsValue::Int32(rhs)) => {
+                        setitem_mask_array!(array, indices, mask, rhs, $type);
+                    }
+                    (GetItemKey::Slice(slice), FloatOpRhsValue::Int64(rhs)) => {
+                        setitem_slice_array!(array, indices, slice, rhs, $type);
+                    }
+                    (GetItemKey::PyArrayIndices(array_indices), FloatOpRhsValue::Int64(rhs)) => {
+                        setitem_indices_array!(array, indices, array_indices.readonly().as_array(), rhs, $type);
+                    }
+                    (GetItemKey::PyArrayMask(mask), FloatOpRhsValue::Int64(rhs)) => {
+                        setitem_mask_array!(array, indices, mask.readonly().as_array(), rhs, $type);
+                    }
+                    (GetItemKey::VectorIndices(vector_indices), FloatOpRhsValue::Int64(rhs)) => {
+                        setitem_indices_array!(array, indices, vector_indices, rhs, $type);
+                    }
+                    (GetItemKey::VectorMask(mask), FloatOpRhsValue::Int64(rhs)) => {
+                        setitem_mask_array!(array, indices, mask, rhs, $type);
+                    }
+                    (GetItemKey::Slice(slice), FloatOpRhsValue::UInt8(rhs)) => {
+                        setitem_slice_array!(array, indices, slice, rhs, $type);
+                    }
+                    (GetItemKey::PyArrayIndices(array_indices), FloatOpRhsValue::UInt8(rhs)) => {
+                        setitem_indices_array!(array, indices, array_indices.readonly().as_array(), rhs, $type);
+                    }
+                    (GetItemKey::PyArrayMask(mask), FloatOpRhsValue::UInt8(rhs)) => {
+                        setitem_mask_array!(array, indices, mask.readonly().as_array(), rhs, $type);
+                    }
+                    (GetItemKey::VectorIndices(vector_indices), FloatOpRhsValue::UInt8(rhs)) => {
+                        setitem_indices_array!(array, indices, vector_indices, rhs, $type);
+                    }
+                    (GetItemKey::VectorMask(mask), FloatOpRhsValue::UInt8(rhs)) => {
+                        setitem_mask_array!(array, indices, mask, rhs, $type);
+                    }
+                    (GetItemKey::Slice(slice), FloatOpRhsValue::UInt16(rhs)) => {
+                        setitem_slice_array!(array, indices, slice, rhs, $type);
+                    }
+                    (GetItemKey::PyArrayIndices(array_indices), FloatOpRhsValue::UInt16(rhs)) => {
+                        setitem_indices_array!(array, indices, array_indices.readonly().as_array(), rhs, $type);
+                    }
+                    (GetItemKey::PyArrayMask(mask), FloatOpRhsValue::UInt16(rhs)) => {
+                        setitem_mask_array!(array, indices, mask.readonly().as_array(), rhs, $type);
+                    }
+                    (GetItemKey::VectorIndices(vector_indices), FloatOpRhsValue::UInt16(rhs)) => {
+                        setitem_indices_array!(array, indices, vector_indices, rhs, $type);
+                    }
+                    (GetItemKey::VectorMask(mask), FloatOpRhsValue::UInt16(rhs)) => {
+                        setitem_mask_array!(array, indices, mask, rhs, $type);
+                    }
+                    (GetItemKey::Slice(slice), FloatOpRhsValue::UInt32(rhs)) => {
+                        setitem_slice_array!(array, indices, slice, rhs, $type);
+                    }
+                    (GetItemKey::PyArrayIndices(array_indices), FloatOpRhsValue::UInt32(rhs)) => {
+                        setitem_indices_array!(array, indices, array_indices.readonly().as_array(), rhs, $type);
+                    }
+                    (GetItemKey::PyArrayMask(mask), FloatOpRhsValue::UInt32(rhs)) => {
+                        setitem_mask_array!(array, indices, mask.readonly().as_array(), rhs, $type);
+                    }
+                    (GetItemKey::VectorIndices(vector_indices), FloatOpRhsValue::UInt32(rhs)) => {
+                        setitem_indices_array!(array, indices, vector_indices, rhs, $type);
+                    }
+                    (GetItemKey::VectorMask(mask), FloatOpRhsValue::UInt32(rhs)) => {
+                        setitem_mask_array!(array, indices, mask, rhs, $type);
+                    }
+                    (GetItemKey::Slice(slice), FloatOpRhsValue::UInt64(rhs)) => {
+                        setitem_slice_array!(array, indices, slice, rhs, $type);
+                    }
+                    (GetItemKey::PyArrayIndices(array_indices), FloatOpRhsValue::UInt64(rhs)) => {
+                        setitem_indices_array!(array, indices, array_indices.readonly().as_array(), rhs, $type);
+                    }
+                    (GetItemKey::PyArrayMask(mask), FloatOpRhsValue::UInt64(rhs)) => {
+                        setitem_mask_array!(array, indices, mask.readonly().as_array(), rhs, $type);
+                    }
+                    (GetItemKey::VectorIndices(vector_indices), FloatOpRhsValue::UInt64(rhs)) => {
+                        setitem_indices_array!(array, indices, vector_indices, rhs, $type);
+                    }
+                    (GetItemKey::VectorMask(mask), FloatOpRhsValue::UInt64(rhs)) => {
+                        setitem_mask_array!(array, indices, mask, rhs, $type);
+                    }
+                    (GetItemKey::Slice(slice), FloatOpRhsValue::PyArrayF32(rhs)) => {
+                        setitem_slice_py_array!(array, indices, slice, rhs, $type);
+                    }
+                    (GetItemKey::PyArrayIndices(array_indices), FloatOpRhsValue::PyArrayF32(rhs)) => {
+                        setitem_indices_py_array!(array, indices, array_indices.readonly().as_array(), rhs, $type);
+                    }
+                    (GetItemKey::PyArrayMask(mask), FloatOpRhsValue::PyArrayF32(rhs)) => {
+                        setitem_mask_py_array!(array, indices, mask.readonly().as_array(), rhs, $type);
+                    }
+                    (GetItemKey::VectorIndices(vector_indices), FloatOpRhsValue::PyArrayF32(rhs)) => {
+                        setitem_indices_py_array!(array, indices, vector_indices, rhs, $type);
+                    }
+                    (GetItemKey::VectorMask(mask), FloatOpRhsValue::PyArrayF32(rhs)) => {
+                        setitem_mask_py_array!(array, indices, mask, rhs, $type);
+                    }
+                    (GetItemKey::Slice(slice), FloatOpRhsValue::PyArrayF64(rhs)) => {
+                        setitem_slice_py_array!(array, indices, slice, rhs, $type);
+                    }
+                    (GetItemKey::PyArrayIndices(array_indices), FloatOpRhsValue::PyArrayF64(rhs)) => {
+                        setitem_indices_py_array!(array, indices, array_indices.readonly().as_array(), rhs, $type);
+                    }
+                    (GetItemKey::PyArrayMask(mask), FloatOpRhsValue::PyArrayF64(rhs)) => {
+                        setitem_mask_py_array!(array, indices, mask.readonly().as_array(), rhs, $type);
+                    }
+                    (GetItemKey::VectorIndices(vector_indices), FloatOpRhsValue::PyArrayF64(rhs)) => {
+                        setitem_indices_py_array!(array, indices, vector_indices, rhs, $type);
+                    }
+                    (GetItemKey::VectorMask(mask), FloatOpRhsValue::PyArrayF64(rhs)) => {
+                        setitem_mask_py_array!(array, indices, mask, rhs, $type);
+                    }
+                    (GetItemKey::Slice(slice), FloatOpRhsValue::PyArrayI8(rhs)) => {
+                        setitem_slice_py_array!(array, indices, slice, rhs, $type);
+                    }
+                    (GetItemKey::PyArrayIndices(array_indices), FloatOpRhsValue::PyArrayI8(rhs)) => {
+                        setitem_indices_py_array!(array, indices, array_indices.readonly().as_array(), rhs, $type);
+                    }
+                    (GetItemKey::PyArrayMask(mask), FloatOpRhsValue::PyArrayI8(rhs)) => {
+                        setitem_mask_py_array!(array, indices, mask.readonly().as_array(), rhs, $type);
+                    }
+                    (GetItemKey::VectorIndices(vector_indices), FloatOpRhsValue::PyArrayI8(rhs)) => {
+                        setitem_indices_py_array!(array, indices, vector_indices, rhs, $type);
+                    }
+                    (GetItemKey::VectorMask(mask), FloatOpRhsValue::PyArrayI8(rhs)) => {
+                        setitem_mask_py_array!(array, indices, mask, rhs, $type);
+                    }
+                    (GetItemKey::Slice(slice), FloatOpRhsValue::PyArrayI16(rhs)) => {
+                        setitem_slice_py_array!(array, indices, slice, rhs, $type);
+                    }
+                    (GetItemKey::PyArrayIndices(array_indices), FloatOpRhsValue::PyArrayI16(rhs)) => {
+                        setitem_indices_py_array!(array, indices, array_indices.readonly().as_array(), rhs, $type);
+                    }
+                    (GetItemKey::PyArrayMask(mask), FloatOpRhsValue::PyArrayI16(rhs)) => {
+                        setitem_mask_py_array!(array, indices, mask.readonly().as_array(), rhs, $type);
+                    }
+                    (GetItemKey::VectorIndices(vector_indices), FloatOpRhsValue::PyArrayI16(rhs)) => {
+                        setitem_indices_py_array!(array, indices, vector_indices, rhs, $type);
+                    }
+                    (GetItemKey::VectorMask(mask), FloatOpRhsValue::PyArrayI16(rhs)) => {
+                        setitem_mask_py_array!(array, indices, mask, rhs, $type);
+                    }
+                    (GetItemKey::Slice(slice), FloatOpRhsValue::PyArrayI32(rhs)) => {
+                        setitem_slice_py_array!(array, indices, slice, rhs, $type);
+                    }
+                    (GetItemKey::PyArrayIndices(array_indices), FloatOpRhsValue::PyArrayI32(rhs)) => {
+                        setitem_indices_py_array!(array, indices, array_indices.readonly().as_array(), rhs, $type);
+                    }
+                    (GetItemKey::PyArrayMask(mask), FloatOpRhsValue::PyArrayI32(rhs)) => {
+                        setitem_mask_py_array!(array, indices, mask.readonly().as_array(), rhs, $type);
+                    }
+                    (GetItemKey::VectorIndices(vector_indices), FloatOpRhsValue::PyArrayI32(rhs)) => {
+                        setitem_indices_py_array!(array, indices, vector_indices, rhs, $type);
+                    }
+                    (GetItemKey::VectorMask(mask), FloatOpRhsValue::PyArrayI32(rhs)) => {
+                        setitem_mask_py_array!(array, indices, mask, rhs, $type);
+                    }
+                    (GetItemKey::Slice(slice), FloatOpRhsValue::PyArrayI64(rhs)) => {
+                        setitem_slice_py_array!(array, indices, slice, rhs, $type);
+                    }
+                    (GetItemKey::PyArrayIndices(array_indices), FloatOpRhsValue::PyArrayI64(rhs)) => {
+                        setitem_indices_py_array!(array, indices, array_indices.readonly().as_array(), rhs, $type);
+                    }
+                    (GetItemKey::PyArrayMask(mask), FloatOpRhsValue::PyArrayI64(rhs)) => {
+                        setitem_mask_py_array!(array, indices, mask.readonly().as_array(), rhs, $type);
+                    }
+                    (GetItemKey::VectorIndices(vector_indices), FloatOpRhsValue::PyArrayI64(rhs)) => {
+                        setitem_indices_py_array!(array, indices, vector_indices, rhs, $type);
+                    }
+                    (GetItemKey::VectorMask(mask), FloatOpRhsValue::PyArrayI64(rhs)) => {
+                        setitem_mask_py_array!(array, indices, mask, rhs, $type);
+                    }
+                    (GetItemKey::Slice(slice), FloatOpRhsValue::PyArrayU8(rhs)) => {
+                        setitem_slice_py_array!(array, indices, slice, rhs, $type);
+                    }
+                    (GetItemKey::PyArrayIndices(array_indices), FloatOpRhsValue::PyArrayU8(rhs)) => {
+                        setitem_indices_py_array!(array, indices, array_indices.readonly().as_array(), rhs, $type);
+                    }
+                    (GetItemKey::PyArrayMask(mask), FloatOpRhsValue::PyArrayU8(rhs)) => {
+                        setitem_mask_py_array!(array, indices, mask.readonly().as_array(), rhs, $type);
+                    }
+                    (GetItemKey::VectorIndices(vector_indices), FloatOpRhsValue::PyArrayU8(rhs)) => {
+                        setitem_indices_py_array!(array, indices, vector_indices, rhs, $type);
+                    }
+                    (GetItemKey::VectorMask(mask), FloatOpRhsValue::PyArrayU8(rhs)) => {
+                        setitem_mask_py_array!(array, indices, mask, rhs, $type);
+                    }
+                    (GetItemKey::Slice(slice), FloatOpRhsValue::PyArrayU16(rhs)) => {
+                        setitem_slice_py_array!(array, indices, slice, rhs, $type);
+                    }
+                    (GetItemKey::PyArrayIndices(array_indices), FloatOpRhsValue::PyArrayU16(rhs)) => {
+                        setitem_indices_py_array!(array, indices, array_indices.readonly().as_array(), rhs, $type);
+                    }
+                    (GetItemKey::PyArrayMask(mask), FloatOpRhsValue::PyArrayU16(rhs)) => {
+                        setitem_mask_py_array!(array, indices, mask.readonly().as_array(), rhs, $type);
+                    }
+                    (GetItemKey::VectorIndices(vector_indices), FloatOpRhsValue::PyArrayU16(rhs)) => {
+                        setitem_indices_py_array!(array, indices, vector_indices, rhs, $type);
+                    }
+                    (GetItemKey::VectorMask(mask), FloatOpRhsValue::PyArrayU16(rhs)) => {
+                        setitem_mask_py_array!(array, indices, mask, rhs, $type);
+                    }
+                    (GetItemKey::Slice(slice), FloatOpRhsValue::PyArrayU32(rhs)) => {
+                        setitem_slice_py_array!(array, indices, slice, rhs, $type);
+                    }
+                    (GetItemKey::PyArrayIndices(array_indices), FloatOpRhsValue::PyArrayU32(rhs)) => {
+                        setitem_indices_py_array!(array, indices, array_indices.readonly().as_array(), rhs, $type);
+                    }
+                    (GetItemKey::PyArrayMask(mask), FloatOpRhsValue::PyArrayU32(rhs)) => {
+                        setitem_mask_py_array!(array, indices, mask.readonly().as_array(), rhs, $type);
+                    }
+                    (GetItemKey::VectorIndices(vector_indices), FloatOpRhsValue::PyArrayU32(rhs)) => {
+                        setitem_indices_py_array!(array, indices, vector_indices, rhs, $type);
+                    }
+                    (GetItemKey::VectorMask(mask), FloatOpRhsValue::PyArrayU32(rhs)) => {
+                        setitem_mask_py_array!(array, indices, mask, rhs, $type);
+                    }
+                    (GetItemKey::Slice(slice), FloatOpRhsValue::PyArrayU64(rhs)) => {
+                        setitem_slice_py_array!(array, indices, slice, rhs, $type);
+                    }
+                    (GetItemKey::PyArrayIndices(array_indices), FloatOpRhsValue::PyArrayU64(rhs)) => {
+                        setitem_indices_py_array!(array, indices, array_indices.readonly().as_array(), rhs, $type);
+                    }
+                    (GetItemKey::PyArrayMask(mask), FloatOpRhsValue::PyArrayU64(rhs)) => {
+                        setitem_mask_py_array!(array, indices, mask.readonly().as_array(), rhs, $type);
+                    }
+                    (GetItemKey::VectorIndices(vector_indices), FloatOpRhsValue::PyArrayU64(rhs)) => {
+                        setitem_indices_py_array!(array, indices, vector_indices, rhs, $type);
+                    }
+                    (GetItemKey::VectorMask(mask), FloatOpRhsValue::PyArrayU64(rhs)) => {
+                        setitem_mask_py_array!(array, indices, mask, rhs, $type);
+                    }
+
                 };
                 Ok(())
             }
