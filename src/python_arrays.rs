@@ -949,20 +949,30 @@ macro_rules! python_float_array {
                 where
                     F: Fn(&u32, &mut $type, &$type),
                 {
-                    match other {
-                        ReadableFloatOpRhsValue::Float32(other) => {
-                            for (self_index, &other_index) in
-                                self.indices.iter().zip(other.indices.iter())
-                            {
-                                let self_value =
-                                    unsafe { self.vec.get_unchecked_mut(*self_index as usize) };
-                                let other_value =
-                                    unsafe { other.vec.get_unchecked(other_index as usize) };
-                                f(self_index, self_value, &(*other_value as $type))
-                            }
+                    let mut other_index = 0;
+                    for self_index in self.indices.iter() {
+                        if let Some(other_value) = get(&other, other_index) {
+                            other_index += 1;
+                            let self_value =
+                                unsafe { self.vec.get_unchecked_mut(*self_index as usize) };
+                            f(self_index, self_value, &other_value)
+                        } else {
+                            break;
                         }
-                        _ => panic!(""),
                     }
+                }
+            }
+            fn get<'a, 'lock>(
+                rhs: &'a ReadableFloatOpRhsValue<'lock>,
+                index: usize,
+            ) -> Option<$type> {
+                match rhs {
+                    ReadableFloatOpRhsValue::Float32(array) => unsafe {
+                        let other_index = array.indices.get_unchecked(index);
+                        let other_value = array.vec.get_unchecked(*other_index as usize);
+                        Some(*other_value as $type)
+                    },
+                    _ => panic!(""),
                 }
             }
         }
