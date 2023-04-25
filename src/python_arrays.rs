@@ -2,7 +2,7 @@ use crate::array_view_indices::ArrayViewIndices;
 use crate::error_handlers::{bad_index, cannot_read, cannot_write};
 use crate::getitem_key::GetItemKey;
 use crate::index::Index;
-use crate::float_op_rhs_value::FloatOpRhsValue;
+use crate::float_op_rhs_value::{FloatOpRhsValue, ReadableFloatOpRhsValue};
 use numpy::PyArray1;
 use pyo3::basic::CompareOp;
 use pyo3::prelude::*;
@@ -96,9 +96,11 @@ where
 }
 
 pub struct WriteableArray<'lock, T> {
-    vec: RwLockWriteGuard<'lock, Vec<T>>,
-    indices: RwLockReadGuard<'lock, Vec<Index>>,
+    pub vec: RwLockWriteGuard<'lock, Vec<T>>,
+    pub indices: RwLockReadGuard<'lock, Vec<Index>>,
 }
+
+
 
 pub struct ReadableArray<'lock, T> {
     vec: RwLockReadGuard<'lock, Vec<T>>,
