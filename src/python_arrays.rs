@@ -73,13 +73,13 @@ where
     }
     pub fn write(&mut self) -> PyResult<WriteableArray<T>> {
         Ok(WriteableArray {
-            vec: self.array.write().map_err(cannot_write)?,
+            array: self.array.write().map_err(cannot_write)?,
             indices: self.indices.0.read().map_err(cannot_read)?,
         })
     }
     pub fn read(&self) -> PyResult<ReadableArray<T>> {
         Ok(ReadableArray {
-            vec: self.array.read().map_err(cannot_read)?,
+            array: self.array.read().map_err(cannot_read)?,
             indices: self.indices.0.read().map_err(cannot_read)?,
         })
     }
@@ -95,12 +95,12 @@ where
 }
 
 pub struct WriteableArray<'lock, T> {
-    pub vec: RwLockWriteGuard<'lock, Vec<T>>,
+    pub array: RwLockWriteGuard<'lock, Vec<T>>,
     pub indices: RwLockReadGuard<'lock, Vec<Index>>,
 }
 
 pub struct ReadableArray<'lock, T> {
-    vec: RwLockReadGuard<'lock, Vec<T>>,
+    array: RwLockReadGuard<'lock, Vec<T>>,
     indices: RwLockReadGuard<'lock, Vec<Index>>,
 }
 
@@ -950,32 +950,21 @@ macro_rules! python_float_array {
                     F: Fn(&u32, &mut $type, &$type),
                 {
                     match other {
-                        ReadableFloatOpRhsValue::Float32(array) => {
-                            self.indices.iter().zip(array.indices.iter()).for_each(
+                        ReadableFloatOpRhsValue::Float32(float32) => {
+                            self.indices.iter().zip(float32.indices.iter()).for_each(
                                 |(self_index, other_index)| {
-                                    let self_value =
-                                        unsafe { self.vec.get_unchecked_mut(*self_index as usize) };
-                                    let other_value =
-                                        unsafe { array.vec.get_unchecked(*other_index as usize) };
+                                    let self_value = unsafe {
+                                        self.array.get_unchecked_mut(*self_index as usize)
+                                    };
+                                    let other_value = unsafe {
+                                        float32.array.get_unchecked(*other_index as usize)
+                                    };
                                     f(self_index, self_value, &(*other_value as $type))
                                 },
                             );
                         }
                         _ => panic!(""),
                     }
-                }
-            }
-            fn get<'a, 'lock>(
-                rhs: &'a ReadableFloatOpRhsValue<'lock>,
-                index: usize,
-            ) -> Option<$type> {
-                match rhs {
-                    ReadableFloatOpRhsValue::Float32(array) => unsafe {
-                        let other_index = array.indices.get_unchecked(index);
-                        let other_value = array.vec.get_unchecked(*other_index as usize);
-                        Some(*other_value as $type)
-                    },
-                    _ => panic!(""),
                 }
             }
         }
