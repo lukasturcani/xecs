@@ -620,42 +620,48 @@ macro_rules! float_array {
     (impl Array<$type:ty>) => {
         impl Array<$type> {
             pub fn __setitem__(&mut self, key: GetItemKey, value: FloatOpRhsValue) -> PyResult<()> {
-                let array = self.array.write().map_err(cannot_write)?;
+                let mut array = self.array.write().map_err(cannot_write)?;
                 let indices = self.indices.0.read().map_err(cannot_read)?;
-                match key {
-                    GetItemKey::Slice(slice) => {
+                match (key, value) {
+                    (GetItemKey::Slice(slice), FloatOpRhsValue::I64(rhs)) => {
                         let slice_indices = slice.indices(indices.len() as i64)?;
-                        for (index, new_value) in
-                            (slice_indices.start..slice_indices.stop).step_by(slice_indices.step as usize).zip(value.iter())
+                        for index in
+                            (slice_indices.start..slice_indices.stop).step_by(slice_indices.step as usize)
                         {
                             let array_index = unsafe { indices.get_unchecked(index as usize) };
-                            let value = array.get_unchecked_mut(*array_index as usize);
-                            *value = new_value;
+                            let value = unsafe { array.get_unchecked_mut(*array_index as usize) };
+                            *value = rhs as $type;
                         }
                     }
-                    GetItemKey::PyArrayIndices(array_indices_) => {
+                    (GetItemKey::PyArrayIndices(array_indices_), FloatOpRhsValue::I64(rhs)) => {
                         let array_indices = array_indices_.readonly();
                         let array_indices = array_indices.as_array();
                         for &index in array_indices {
-                            new_indices.push(*indices.get(index as usize).ok_or_else(bad_index)?);
+                            let array_index = indices.get(index as usize).ok_or_else(bad_index)?;
+                            let value = unsafe { array.get_unchecked_mut(*array_index as usize) };
+                            *value = rhs as $type;
                         }
                     }
-                    GetItemKey::PyArrayMask(mask) => {
-                        for (&keep, &index) in mask.readonly().as_array().iter().zip(indices.iter()) {
-                            if keep {
-                                new_indices.push(index);
+                    (GetItemKey::PyArrayMask(mask), FloatOpRhsValue::I64(rhs)) => {
+                        for (&write, &index) in mask.readonly().as_array().iter().zip(indices.iter()) {
+                            if write {
+                                let value = unsafe { array.get_unchecked_mut(index as usize) };
+                                *value = rhs as $type;
                             }
                         }
                     }
-                    GetItemKey::VectorIndices(vector_indices) => {
+                    (GetItemKey::VectorIndices(vector_indices), FloatOpRhsValue::I64(rhs)) => {
                         for index in vector_indices {
-                            new_indices.push(*indices.get(index).ok_or_else(bad_index)?);
+                            let array_index = indices.get(index).ok_or_else(bad_index)?;
+                            let value = unsafe { array.get_unchecked_mut(*array_index as usize) };
+                            *value = rhs as $type;
                         }
                     }
-                    GetItemKey::VectorMask(mask) => {
+                    (GetItemKey::VectorMask(mask), FloatOpRhsValue::I64(rhs)) => {
                         for (keep, &index) in mask.into_iter().zip(indices.iter()) {
                             if keep {
-                                new_indices.push(index);
+                                let value = unsafe { array.get_unchecked_mut(index as usize) };
+                                *value = rhs as $type;
                             }
                         }
                     }
