@@ -949,16 +949,19 @@ macro_rules! python_float_array {
                 where
                     F: Fn(&u32, &mut $type, &$type),
                 {
-                    let mut other_index = 0;
-                    for self_index in self.indices.iter() {
-                        if let Some(other_value) = get(&other, other_index) {
-                            other_index += 1;
-                            let self_value =
-                                unsafe { self.vec.get_unchecked_mut(*self_index as usize) };
-                            f(self_index, self_value, &other_value)
-                        } else {
-                            break;
+                    match other {
+                        ReadableFloatOpRhsValue::Float32(array) => {
+                            self.indices.iter().zip(array.indices.iter()).for_each(
+                                |(self_index, other_index)| {
+                                    let self_value =
+                                        unsafe { self.vec.get_unchecked_mut(*self_index as usize) };
+                                    let other_value =
+                                        unsafe { array.vec.get_unchecked(*other_index as usize) };
+                                    f(self_index, self_value, &(*other_value as $type))
+                                },
+                            );
                         }
+                        _ => panic!(""),
                     }
                 }
             }
