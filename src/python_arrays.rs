@@ -1,41 +1,18 @@
 use crate::array_view_indices::ArrayViewIndices;
 use crate::error_handlers::{bad_index, cannot_read, cannot_write};
 use crate::getitem_key::GetItemKey;
+use crate::index::Index;
+use crate::float_op_rhs_value::FloatOpRhsValue;
 use numpy::PyArray1;
 use pyo3::basic::CompareOp;
 use pyo3::prelude::*;
-use std::sync::{Arc, RwLock};
+use std::sync::{Arc, RwLock, RwLockWriteGuard, RwLockReadGuard};
 
 struct Array<T> {
     array: Arc<RwLock<Vec<T>>>,
     indices: ArrayViewIndices,
 }
 
-#[derive(FromPyObject)]
-pub enum FloatOpRhsValue<'a> {
-    I64(i64),
-    F64(f64),
-    Float32(PyRef<'a, Float32>),
-    Float64(PyRef<'a, Float64>),
-    Int8(PyRef<'a, Int8>),
-    Int16(PyRef<'a, Int16>),
-    Int32(PyRef<'a, Int32>),
-    Int64(PyRef<'a, Int64>),
-    UInt8(PyRef<'a, UInt8>),
-    UInt16(PyRef<'a, UInt16>),
-    UInt32(PyRef<'a, UInt32>),
-    UInt64(PyRef<'a, UInt64>),
-    PyArrayF32(&'a PyArray1<f32>),
-    PyArrayF64(&'a PyArray1<f64>),
-    PyArrayI8(&'a PyArray1<i8>),
-    PyArrayI16(&'a PyArray1<i16>),
-    PyArrayI32(&'a PyArray1<i32>),
-    PyArrayI64(&'a PyArray1<i64>),
-    PyArrayU8(&'a PyArray1<u8>),
-    PyArrayU16(&'a PyArray1<u16>),
-    PyArrayU32(&'a PyArray1<u32>),
-    PyArrayU64(&'a PyArray1<u64>),
-}
 
 #[derive(FromPyObject)]
 pub enum IntOpRhsValue<'a> {
@@ -95,6 +72,18 @@ where
             indices: ArrayViewIndices(Arc::clone(&indices.0)),
         }
     }
+    pub fn write(&mut self) -> PyResult<WriteableArray<T>> {
+        Ok(WriteableArray {
+            vec: self.array.write().map_err(cannot_write)?,
+            indices: self.indices.0.read().map_err(cannot_read)?,
+        })
+    }
+    pub fn read(&self) -> PyResult<ReadableArray<T>> {
+        Ok(ReadableArray {
+            vec: self.array.read().map_err(cannot_read)?,
+            indices: self.indices.0.read().map_err(cannot_read)?,
+        })
+    }
     pub fn __getitem__(&self, key: GetItemKey) -> PyResult<Self> {
         Ok(Self {
             array: Arc::clone(&self.array),
@@ -104,6 +93,16 @@ where
     pub fn __len__(&self) -> PyResult<usize> {
         self.indices.__len__()
     }
+}
+
+pub struct WriteableArray<'lock, T> {
+    vec: RwLockWriteGuard<'lock, Vec<T>>,
+    indices: RwLockReadGuard<'lock, Vec<Index>>,
+}
+
+pub struct ReadableArray<'lock, T> {
+    vec: RwLockReadGuard<'lock, Vec<T>>,
+    indices: RwLockReadGuard<'lock, Vec<Index>>,
 }
 
 macro_rules! value_zip_mut {
@@ -664,7 +663,9 @@ macro_rules! float_array {
             // }
 
             pub fn __iadd__(&mut self, other: FloatOpRhsValue) -> PyResult<()> {
-                float_iop!(self, other, $type, +=)
+                self.write()?.iter().zip(other.read()?.iter_f32()).for_each(|(a, b)| {
+                    a += b;
+                }
             }
 
             pub fn __isub__(&mut self, other: FloatOpRhsValue) -> PyResult<()> {
@@ -931,6 +932,14 @@ macro_rules! python_float_array {
                 }
             }
         }
+        impl $name {
+            pub fn read(&self) -> PyResult<ReadableArray<$type>> {
+                self.0.read()
+            }
+            pub fn write(&mut self) -> PyResult<WriteableArray<$type>> {
+                self.0.write()
+            }
+        }
     };
 }
 
@@ -998,6 +1007,14 @@ macro_rules! python_int_array {
                     CompareOp::Eq => self.0.__eq__(other),
                     CompareOp::Ne => self.0.__ne__(other),
                 }
+            }
+        }
+        impl $name {
+            pub fn read(&self) -> PyResult<ReadableArray<$type>> {
+                self.0.read()
+            }
+            pub fn write(&mut self) -> PyResult<WriteableArray<$type>> {
+                self.0.write()
             }
         }
     };
