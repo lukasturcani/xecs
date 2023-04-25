@@ -1,5 +1,6 @@
 use crate::python_arrays::{
-    Float32, Float64, Int16, Int32, Int64, Int8, ReadableArray, UInt16, UInt32, UInt64, UInt8,
+    float32::Float32, float64::Float64, Int16, Int32, Int64, Int8, ReadableArray, UInt16, UInt32,
+    UInt64, UInt8,
 };
 use numpy::{PyArray1, PyReadonlyArray1};
 use pyo3::prelude::*;
