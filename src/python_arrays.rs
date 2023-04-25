@@ -1,18 +1,17 @@
 use crate::array_view_indices::ArrayViewIndices;
 use crate::error_handlers::{bad_index, cannot_read, cannot_write};
+use crate::float_op_rhs_value::{FloatOpRhsValue, ReadableFloatOpRhsValue};
 use crate::getitem_key::GetItemKey;
 use crate::index::Index;
-use crate::float_op_rhs_value::{FloatOpRhsValue, ReadableFloatOpRhsValue};
 use numpy::PyArray1;
 use pyo3::basic::CompareOp;
 use pyo3::prelude::*;
-use std::sync::{Arc, RwLock, RwLockWriteGuard, RwLockReadGuard};
+use std::sync::{Arc, RwLock, RwLockReadGuard, RwLockWriteGuard};
 
 struct Array<T> {
     array: Arc<RwLock<Vec<T>>>,
     indices: ArrayViewIndices,
 }
-
 
 #[derive(FromPyObject)]
 pub enum IntOpRhsValue<'a> {
@@ -99,8 +98,6 @@ pub struct WriteableArray<'lock, T> {
     pub vec: RwLockWriteGuard<'lock, Vec<T>>,
     pub indices: RwLockReadGuard<'lock, Vec<Index>>,
 }
-
-
 
 pub struct ReadableArray<'lock, T> {
     vec: RwLockReadGuard<'lock, Vec<T>>,
@@ -665,9 +662,8 @@ macro_rules! float_array {
             // }
 
             pub fn __iadd__(&mut self, other: FloatOpRhsValue) -> PyResult<()> {
-                self.write()?.iter().zip(other.read()?.iter_f32()).for_each(|(a, b)| {
-                    a += b;
-                }
+                self.write()?.zip_with(other.read()?, |_, a, b| { *a += b });
+                Ok(())
             }
 
             pub fn __isub__(&mut self, other: FloatOpRhsValue) -> PyResult<()> {
@@ -869,80 +865,85 @@ int_array! { impl Array<u32> }
 int_array! { impl Array<u64> }
 
 macro_rules! python_float_array {
-    (pub mod $mod_name:ident { pub struct $name:ident($type:ty) }) => {
-        pub mod $mod_name {
-            use super::*;
-            #[pyclass]
-            pub struct $name(Array<$type>);
-            #[pymethods]
-            impl $name {
-                #[staticmethod]
-                pub fn p_with_indices(indices: &ArrayViewIndices) -> PyResult<Self> {
-                    Array::p_with_indices(indices, 0.0).map(Self)
-                }
-                #[staticmethod]
-                pub fn p_from_numpy(array: &PyArray1<$type>) -> PyResult<Self> {
-                    Array::p_from_numpy(array).map(Self)
-                }
-                pub fn p_new_view_with_indices(&self, indices: &ArrayViewIndices) -> Self {
-                    Self(self.0.p_new_view_with_indices(indices))
-                }
-                pub fn numpy(&self, py: Python) -> PyResult<Py<PyArray1<$type>>> {
-                    self.0.numpy(py)
-                }
-                pub fn __len__(&self) -> PyResult<usize> {
-                    self.0.__len__()
-                }
-                pub fn __getitem__(&self, key: GetItemKey) -> PyResult<Self> {
-                    self.0.__getitem__(key).map(Self)
-                }
-                // pub fn __setitem__(&mut self, key: GetItemKey, value: FloatOpRhsValue) -> PyResult<()> {
-                //     self.0.__setitem__(key, value)
-                // }
-                pub fn __iadd__(&mut self, other: FloatOpRhsValue) -> PyResult<()> {
-                    self.0.__iadd__(other)
-                }
-                pub fn __isub__(&mut self, other: FloatOpRhsValue) -> PyResult<()> {
-                    self.0.__isub__(other)
-                }
-                pub fn __imul__(&mut self, other: FloatOpRhsValue) -> PyResult<()> {
-                    self.0.__imul__(other)
-                }
-                pub fn __itruediv__(&mut self, other: FloatOpRhsValue) -> PyResult<()> {
-                    self.0.__itruediv__(other)
-                }
-                pub fn __ifloordiv__(&mut self, other: FloatOpRhsValue) -> PyResult<()> {
-                    self.0.__ifloordiv__(other)
-                }
-                pub fn __imod__(&mut self, other: FloatOpRhsValue) -> PyResult<()> {
-                    self.0.__imod__(other)
-                }
-                #[args(modulo = "None")]
-                pub fn __ipow__(&mut self, other: FloatOpRhsValue, _modulo: &PyAny) -> PyResult<()> {
-                    self.0.__ipow__(other)
-                }
-                pub fn __richcmp__(
-                    &mut self,
-                    other: FloatOpRhsValue,
-                    op: CompareOp,
-                ) -> PyResult<ArrayViewIndices> {
-                    match op {
-                        CompareOp::Lt => self.0.__lt__(other),
-                        CompareOp::Le => self.0.__le__(other),
-                        CompareOp::Gt => self.0.__gt__(other),
-                        CompareOp::Ge => self.0.__ge__(other),
-                        CompareOp::Eq => self.0.__eq__(other),
-                        CompareOp::Ne => self.0.__ne__(other),
-                    }
+    (pub struct $name:ident($type:ty)) => {
+        #[pyclass]
+        pub struct $name(Array<$type>);
+        #[pymethods]
+        impl $name {
+            #[staticmethod]
+            pub fn p_with_indices(indices: &ArrayViewIndices) -> PyResult<Self> {
+                Array::p_with_indices(indices, 0.0).map(Self)
+            }
+            #[staticmethod]
+            pub fn p_from_numpy(array: &PyArray1<$type>) -> PyResult<Self> {
+                Array::p_from_numpy(array).map(Self)
+            }
+            pub fn p_new_view_with_indices(&self, indices: &ArrayViewIndices) -> Self {
+                Self(self.0.p_new_view_with_indices(indices))
+            }
+            pub fn numpy(&self, py: Python) -> PyResult<Py<PyArray1<$type>>> {
+                self.0.numpy(py)
+            }
+            pub fn __len__(&self) -> PyResult<usize> {
+                self.0.__len__()
+            }
+            pub fn __getitem__(&self, key: GetItemKey) -> PyResult<Self> {
+                self.0.__getitem__(key).map(Self)
+            }
+            // pub fn __setitem__(&mut self, key: GetItemKey, value: FloatOpRhsValue) -> PyResult<()> {
+            //     self.0.__setitem__(key, value)
+            // }
+            pub fn __iadd__(&mut self, other: FloatOpRhsValue) -> PyResult<()> {
+                self.0.__iadd__(other)
+            }
+            pub fn __isub__(&mut self, other: FloatOpRhsValue) -> PyResult<()> {
+                self.0.__isub__(other)
+            }
+            pub fn __imul__(&mut self, other: FloatOpRhsValue) -> PyResult<()> {
+                self.0.__imul__(other)
+            }
+            pub fn __itruediv__(&mut self, other: FloatOpRhsValue) -> PyResult<()> {
+                self.0.__itruediv__(other)
+            }
+            pub fn __ifloordiv__(&mut self, other: FloatOpRhsValue) -> PyResult<()> {
+                self.0.__ifloordiv__(other)
+            }
+            pub fn __imod__(&mut self, other: FloatOpRhsValue) -> PyResult<()> {
+                self.0.__imod__(other)
+            }
+            #[args(modulo = "None")]
+            pub fn __ipow__(&mut self, other: FloatOpRhsValue, _modulo: &PyAny) -> PyResult<()> {
+                self.0.__ipow__(other)
+            }
+            pub fn __richcmp__(
+                &mut self,
+                other: FloatOpRhsValue,
+                op: CompareOp,
+            ) -> PyResult<ArrayViewIndices> {
+                match op {
+                    CompareOp::Lt => self.0.__lt__(other),
+                    CompareOp::Le => self.0.__le__(other),
+                    CompareOp::Gt => self.0.__gt__(other),
+                    CompareOp::Ge => self.0.__ge__(other),
+                    CompareOp::Eq => self.0.__eq__(other),
+                    CompareOp::Ne => self.0.__ne__(other),
                 }
             }
-            impl $name {
-                pub fn read(&self) -> PyResult<ReadableArray<$type>> {
-                    self.0.read()
-                }
-                pub fn write(&mut self) -> PyResult<WriteableArray<$type>> {
-                    self.0.write()
-                }
+        }
+        impl $name {
+            pub fn read(&self) -> PyResult<ReadableArray<$type>> {
+                self.0.read()
+            }
+            pub fn write(&mut self) -> PyResult<WriteableArray<$type>> {
+                self.0.write()
+            }
+        }
+        impl<'lock> WriteableArray<'lock, $type> {
+            fn zip_with<F>(&mut self, other: ReadableFloatOpRhsValue, f: F)
+            where
+                F: Fn(&u32, &mut $type, &$type),
+            {
+                match other {}
             }
         }
     };
@@ -1026,11 +1027,11 @@ macro_rules! python_int_array {
 }
 
 python_float_array! {
-    pub mod float32 { pub struct Float32(f32) }
+    pub struct Float32(f32)
 }
 
 python_float_array! {
-    pub mod float64 { pub struct Float64(f64) }
+    pub struct Float64(f64)
 }
 
 python_int_array! {
