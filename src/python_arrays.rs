@@ -618,8 +618,6 @@ macro_rules! float_array {
     (impl Array<$type:ty>) => {
         impl Array<$type> {
             // pub fn __setitem__(&mut self, key: GetItemKey, value: FloatOpRhsValue) -> PyResult<()> {
-            //     let array = self.array.write().map_err(cannot_write)?;
-            //     let indices = self.indices.0.read().map_err(cannot_read)?;
             //     match key {
             //         GetItemKey::Slice(slice) => {
             //             let slice_indices = slice.indices(indices.len() as i64)?;
