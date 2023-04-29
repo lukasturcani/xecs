@@ -1,23 +1,8 @@
 import ecstasy as ecs
 import numpy as np
 import pytest
-from pytest_lazyfixture import lazy_fixture
 
-from tests.types import Array, FloatArray, IntArray
-
-
-@pytest.fixture(
-    params=(
-        lambda: ecs.Float32.p_from_numpy(np.arange(5, dtype=np.float32)),
-        lambda: ecs.Float64.p_from_numpy(np.arange(5, dtype=np.float64)),
-    ),
-    ids=(
-        "Float32",
-        "Float64",
-    ),
-)
-def float_array(request: pytest.FixtureRequest) -> FloatArray:
-    return request.param()
+from tests.types import IntArray
 
 
 @pytest.fixture(
@@ -42,15 +27,5 @@ def float_array(request: pytest.FixtureRequest) -> FloatArray:
         "UInt64",
     ),
 )
-def int_array(request: pytest.FixtureRequest) -> IntArray:
+def array(request: pytest.FixtureRequest) -> IntArray:
     return request.param()
-
-
-@pytest.fixture(
-    params=(
-        lazy_fixture("float_array"),
-        lazy_fixture("int_array"),
-    ),
-)
-def array(request: pytest.FixtureRequest) -> Array:
-    return request.param

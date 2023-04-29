@@ -205,9 +205,9 @@ macro_rules! python_float_array {
             pub fn __getitem__(&self, key: GetItemKey) -> PyResult<Self> {
                 self.0.__getitem__(key).map(Self)
             }
-            // pub fn __setitem__(&mut self, key: GetItemKey, value: FloatRhs) -> PyResult<()> {
-            //     self.0.__setitem__(key, value)
-            // }
+            pub fn __setitem__(&mut self, key: GetItemKey, value: FloatRhs) -> PyResult<()> {
+                self.0.__setitem__(key, value)
+            }
             pub fn __iadd__(&mut self, other: FloatRhs) -> PyResult<()> {
                 self.0.__iadd__(other)
             }
