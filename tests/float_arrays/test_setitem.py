@@ -8,6 +8,10 @@ if typing.TYPE_CHECKING:
     from ecstasy.ecstasy import FloatRhs, GetItemKey
 
 
+def test_setitem_self(array: FloatArray, key: "GetItemKey") -> None:
+    array[key] = array[key]
+
+
 def test_setitem_single_value(
     array: FloatArray,
     key: "GetItemKey",
