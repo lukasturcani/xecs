@@ -154,3 +154,27 @@ def single_value_float_rhs(request: pytest.FixtureRequest) -> "FloatRhs":
 )
 def multiple_value_float_rhs(request: pytest.FixtureRequest) -> "FloatRhs":
     return request.param()
+
+
+@pytest.fixture(
+    params=(
+        lambda: 3.125,
+        lambda: np.array([3.125, 3.125], dtype=np.float32),
+        lambda: np.array([3.125, 3.125], dtype=np.float64),
+        lambda: ecs.Float32.p_from_numpy(
+            np.array([3.125, 3.125], dtype=np.float32)
+        ),
+        lambda: ecs.Float64.p_from_numpy(
+            np.array([3.125, 3.125], dtype=np.float64)
+        ),
+    ),
+    ids=(
+        "float",
+        "numpy_f32",
+        "numpy_f64",
+        "Float32",
+        "Float64",
+    ),
+)
+def non_integer_value(request: pytest.FixtureRequest) -> "FloatRhs":
+    return request.param()

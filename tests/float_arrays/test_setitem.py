@@ -26,3 +26,13 @@ def test_setitem_multiple_values(
     assert np.all(np.equal(array.numpy(), [0, 1, 2, 3, 4]))
     array[key] = multiple_value_float_rhs
     assert np.all(np.equal(array.numpy(), [50, 100, 2, 3, 4]))
+
+
+def test_setitem_non_integer_value(
+    array: FloatArray,
+    key: "GetItemKey",
+    non_integer_value: "FloatRhs",
+) -> None:
+    assert np.all(np.equal(array.numpy(), [0, 1, 2, 3, 4]))
+    array[key] = non_integer_value
+    assert np.all(np.equal(array.numpy(), [3.125, 3.125, 2, 3, 4]))
