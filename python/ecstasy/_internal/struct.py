@@ -1,8 +1,10 @@
 import inspect
 import typing
 
-from ecstasy._internal.rust_type_aliases import GetItemKey
 from ecstasy.ecstasy import ArrayViewIndices
+
+if typing.TYPE_CHECKING:
+    from ecstasy.ecstasy import GetItemKey
 
 
 class Struct:
@@ -16,7 +18,7 @@ class Struct:
             setattr(struct, key, value.p_with_indices(indices))
         return struct
 
-    def __getitem__(self, key: GetItemKey) -> typing.Self:
+    def __getitem__(self, key: "GetItemKey") -> typing.Self:
         cls = self.__class__
         struct = cls()
         struct._indices = self._indices[key]

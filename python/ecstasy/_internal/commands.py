@@ -1,8 +1,10 @@
 import typing
 
 from ecstasy._internal.component import Component, ComponentPool
-from ecstasy._internal.rust_type_aliases import ComponentId
 from ecstasy.ecstasy import RustApp
+
+if typing.TYPE_CHECKING:
+    from ecstasy.ecstasy import ComponentId
 
 T = typing.TypeVar("T")
 
@@ -29,7 +31,7 @@ class Commands:
     def p_apply(
         self,
         app: RustApp,
-        pools: dict[ComponentId, ComponentPool[typing.Any]],
+        pools: dict["ComponentId", ComponentPool[typing.Any]],
     ) -> None:
         # TODO: This function will probably need to be removed
         # once a World object is added.

@@ -9,8 +9,10 @@ from ecstasy._internal.component import (
     ComponentT,
 )
 from ecstasy._internal.query import Query
-from ecstasy._internal.rust_type_aliases import ComponentId
 from ecstasy.ecstasy import RustApp
+
+if typing.TYPE_CHECKING:
+    from ecstasy.ecstasy import ComponentId
 
 P = typing.ParamSpec("P")
 R = typing.TypeVar("R")
@@ -41,7 +43,7 @@ class SystemSpec:
 
 class App:
     _rust_app: RustApp
-    _pools: dict[ComponentId, ComponentPool[Component]]
+    _pools: dict["ComponentId", ComponentPool[Component]]
     _startup_systems: list[SystemSpec]
     _systems: list[SystemSpec]
     _commands: Commands

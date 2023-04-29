@@ -1,7 +1,6 @@
 import typing
 
 import ecstasy as ecs
-from ecstasy._internal.rust_type_aliases import GetItemKey
 
 FloatArray: typing.TypeAlias = ecs.Float32 | ecs.Float64
 IntArray: typing.TypeAlias = (
@@ -15,11 +14,3 @@ IntArray: typing.TypeAlias = (
     | ecs.UInt64
 )
 Array: typing.TypeAlias = FloatArray | IntArray
-
-
-__all__ = [
-    "FloatArray",
-    "IntArray",
-    "Array",
-    "GetItemKey",
-]

@@ -3,11 +3,27 @@ import typing
 import numpy as np
 import numpy.typing as npt
 
-from ecstasy._internal.rust_type_aliases import (
-    ComponentId,
-    GetItemKey,
-    QueryId,
+QueryId: typing.TypeAlias = int
+ComponentId: typing.TypeAlias = int
+GetItemKey: typing.TypeAlias = (
+    list[int]
+    | list[bool]
+    | npt.NDArray[np.uint32]
+    | npt.NDArray[np.bool_]
+    | slice
 )
+_NumpyFloat: typing.TypeAlias = np.float32 | np.float64
+_NumpyInt: typing.TypeAlias = (
+    np.int8
+    | np.int16
+    | np.int32
+    | np.int64
+    | np.uint8
+    | np.uint16
+    | np.uint32
+    | np.uint64
+)
+FloatRhs: typing.TypeAlias = float | npt.NDArray[_NumpyFloat | _NumpyInt]
 
 class MultipleArrayInidices:
     def next(self) -> ArrayViewIndices | None: ...
@@ -45,18 +61,6 @@ _NumpyIntT = typing.TypeVar(
     np.uint16,
     np.uint32,
     np.uint64,
-)
-
-_NumpyFloat: typing.TypeAlias = np.float32 | np.float64
-_NumpyInt: typing.TypeAlias = (
-    np.int8
-    | np.int16
-    | np.int32
-    | np.int64
-    | np.uint8
-    | np.uint16
-    | np.uint32
-    | np.uint64
 )
 
 _Array: typing.TypeAlias = _FloatArray | _IntArray

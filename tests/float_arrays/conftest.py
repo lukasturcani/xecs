@@ -1,8 +1,13 @@
+import typing
+
 import ecstasy as ecs
 import numpy as np
 import pytest
 
-from tests.types import FloatArray, GetItemKey
+from tests.types import FloatArray
+
+if typing.TYPE_CHECKING:
+    from ecstasy.ecstasy import GetItemKey
 
 
 @pytest.fixture(
@@ -35,5 +40,5 @@ def array(request: pytest.FixtureRequest) -> FloatArray:
         "slice",
     ),
 )
-def key(request: pytest.FixtureRequest) -> GetItemKey:
+def key(request: pytest.FixtureRequest) -> "GetItemKey":
     return request.param
