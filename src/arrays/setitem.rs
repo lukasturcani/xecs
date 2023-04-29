@@ -1,3 +1,15 @@
+use std::sync::{Arc, RwLock};
+
+pub fn same_array<T, U>(a: &Arc<RwLock<Vec<T>>>, b: &Arc<RwLock<Vec<U>>>) -> bool {
+    let alpha = unsafe {
+        std::mem::transmute::<*const std::sync::RwLock<Vec<T>>, *const ()>(Arc::as_ptr(a))
+    };
+    let beta = unsafe {
+        std::mem::transmute::<*const std::sync::RwLock<Vec<U>>, *const ()>(Arc::as_ptr(b))
+    };
+    alpha == beta
+}
+
 macro_rules! slice_value {
     ($array:expr, $indices:expr, $slice:expr, $rhs:expr, $type:ty) => {
         let slice_indices = $slice.indices($indices.len() as i64)?;
@@ -37,19 +49,40 @@ macro_rules! mask_value {
 
 pub(crate) use mask_value;
 
-macro_rules! slice_array {
-    ($array:expr, $indices:expr, $slice:expr, $rhs:expr, $type:ty) => {
-        let other_array = $rhs.0.array.read().map_err(cannot_read)?;
-        let other_indices = $rhs.0.indices.0.read().map_err(cannot_read)?;
+macro_rules! slice_array_inner {
+    ($array:expr, $indices:expr, $slice:expr, $other_array:expr, $other_indices:expr, $type:ty) => {
         let slice_indices = $slice.indices($indices.len() as i64)?;
         for (index, &other_index) in (slice_indices.start..slice_indices.stop)
             .step_by(slice_indices.step as usize)
-            .zip(other_indices.iter())
+            .zip($other_indices.iter())
         {
             let array_index = unsafe { $indices.get_unchecked(index as usize) };
             let self_value = unsafe { $array.get_unchecked_mut(*array_index as usize) };
-            let other_value = unsafe { other_array.get_unchecked(other_index as usize) };
+            let other_value = unsafe { $other_array.get_unchecked(other_index as usize) };
             *self_value = *other_value as $type;
+        }
+    };
+}
+
+pub(crate) use slice_array_inner;
+
+macro_rules! slice_array {
+    ($array:expr, $indices:expr, $slice:expr, $rhs:expr, $type:ty) => {
+        if $crate::arrays::setitem::same_array(&$array, &$rhs.0.array) {
+            $crate::arrays::setitem::slice_array_inner!(
+                $array, $indices, $slice, $array, $indices, $type
+            );
+        } else {
+            let other_array = $rhs.0.array.read().map_err(cannot_read)?;
+            let other_indices = $rhs.0.indices.0.read().map_err(cannot_read)?;
+            $crate::arrays::setitem::slice_array_inner!(
+                $array,
+                $indices,
+                $slice,
+                other_array,
+                other_indices,
+                $type
+            );
         }
     };
 }
