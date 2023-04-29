@@ -36,3 +36,10 @@ def test_setitem_non_integer_value(
     assert np.all(np.equal(array.numpy(), [0, 1, 2, 3, 4]))
     array[key] = non_integer_value
     assert np.all(np.equal(array.numpy(), [3.125, 3.125, 2, 3, 4]))
+
+
+def test_setitem_on_subview(array: FloatArray, key: "GetItemKey") -> None:
+    assert np.all(np.equal(array.numpy(), [0, 1, 2, 3, 4]))
+    subview = array[key]
+    subview[[1]] = 100.0
+    assert np.all(np.equal(array.numpy(), [0, 100, 2, 3, 4]))
