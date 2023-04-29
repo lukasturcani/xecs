@@ -12,9 +12,20 @@ if typing.TYPE_CHECKING:
     from ecstasy.ecstasy import NumpyFloat, NumpyInt
 
 
+def test_ioperator_value(
+    array: FloatArray,
+    other_value: float,
+    iop: typing.Any,
+) -> None:
+    expected = array.numpy()
+    iop(array, other_value)
+    iop(expected, other_value)
+    assert np.all(np.equal(array.numpy(), expected))
+
+
 def test_ioperator_numpy(
     array: FloatArray,
-    other_numpy: "float | npt.NDArray[NumpyFloat | NumpyInt]",
+    other_numpy: "npt.NDArray[NumpyFloat | NumpyInt]",
     iop: typing.Any,
 ) -> None:
     expected = array.numpy()
@@ -34,8 +45,46 @@ def test_ioperator_array(
     assert np.all(np.equal(array.numpy(), expected))
 
 
-def test_ioperator_on_subview(array: FloatArray, iop: typing.Any) -> None:
-    pass
+def test_ioperator_on_subview_value(
+    array: FloatArray,
+    other_value: float,
+    iop: typing.Any,
+) -> None:
+    expected = array.numpy()
+    sub_view = array[0:2]
+    iop(sub_view, other_value)
+    iop(expected[0:2], other_value)
+    assert np.all(np.equal(array.numpy(), expected))
+
+
+def test_ioperator_on_subview_numpy(
+    array: FloatArray,
+    other_numpy: "npt.NDArray[NumpyFloat | NumpyInt]",
+    iop: typing.Any,
+) -> None:
+    expected = array.numpy()
+    sub_view = array[0:2]
+    iop(sub_view, other_numpy[0:2])
+    iop(expected[0:2], other_numpy[0:2])
+    assert np.all(np.equal(array.numpy(), expected))
+
+
+def test_ioperator_on_subview_array(
+    array: FloatArray,
+    other_array: FloatArray | IntArray,
+    iop: typing.Any,
+) -> None:
+    expected = array.numpy()
+    sub_view = array[0:2]
+    iop(sub_view, other_array[0:2])
+    iop(expected[0:2], other_array[0:2].numpy())
+    assert np.all(np.equal(array.numpy(), expected))
+
+
+def test_works_with_complex_indices() -> None:
+    array = ecs.Float32.p_from_numpy(np.arange(5, dtype=np.float32))
+    array[[0, 3]] += np.array([10, 20])
+    assert np.all(np.equal(array.numpy(), [10, 1, 2, 23, 4]))
 
 
 @pytest.fixture(
@@ -57,6 +106,18 @@ def iop(request: pytest.FixtureRequest) -> typing.Any:
     params=(
         lambda: 10,
         lambda: 10.5,
+    ),
+    ids=(
+        "int",
+        "float",
+    ),
+)
+def other_value(request: pytest.FixtureRequest) -> float:
+    return request.param()
+
+
+@pytest.fixture(
+    params=(
         lambda: np.array([10.2, 20.5, 30.5, 40.5, 50.5], dtype=np.float32),
         lambda: np.array([10.2, 20.5, 30.5, 40.5, 50.5], dtype=np.float64),
         lambda: np.array([10, 20, 30, 40, 50], dtype=np.int8),
@@ -69,8 +130,6 @@ def iop(request: pytest.FixtureRequest) -> typing.Any:
         lambda: np.array([10, 20, 30, 40, 50], dtype=np.uint64),
     ),
     ids=(
-        "int",
-        "float",
         "numpy_f32",
         "numpy_f64",
         "numpy_i8",
