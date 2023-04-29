@@ -7,7 +7,7 @@ import pytest
 from tests.types import FloatArray
 
 if typing.TYPE_CHECKING:
-    from ecstasy.ecstasy import GetItemKey
+    from ecstasy.ecstasy import FloatRhs, GetItemKey
 
 
 @pytest.fixture(
@@ -42,3 +42,115 @@ def array(request: pytest.FixtureRequest) -> FloatArray:
 )
 def key(request: pytest.FixtureRequest) -> "GetItemKey":
     return request.param
+
+
+@pytest.fixture(
+    params=(
+        lambda: 100,
+        lambda: 100.0,
+        lambda: np.array([100, 100], dtype=np.float32),
+        lambda: np.array([100, 100], dtype=np.float64),
+        lambda: np.array([100, 100], dtype=np.int8),
+        lambda: np.array([100, 100], dtype=np.int16),
+        lambda: np.array([100, 100], dtype=np.int32),
+        lambda: np.array([100, 100], dtype=np.int64),
+        lambda: np.array([100, 100], dtype=np.uint8),
+        lambda: np.array([100, 100], dtype=np.uint16),
+        lambda: np.array([100, 100], dtype=np.uint32),
+        lambda: np.array([100, 100], dtype=np.uint64),
+        lambda: ecs.Float32.p_from_numpy(
+            np.array([100, 100], dtype=np.float32)
+        ),
+        lambda: ecs.Float64.p_from_numpy(
+            np.array([100, 100], dtype=np.float64)
+        ),
+        lambda: ecs.Int8.p_from_numpy(np.array([100, 100], dtype=np.int8)),
+        lambda: ecs.Int16.p_from_numpy(np.array([100, 100], dtype=np.int16)),
+        lambda: ecs.Int32.p_from_numpy(np.array([100, 100], dtype=np.int32)),
+        lambda: ecs.Int64.p_from_numpy(np.array([100, 100], dtype=np.int64)),
+        lambda: ecs.UInt8.p_from_numpy(np.array([100, 100], dtype=np.uint8)),
+        lambda: ecs.UInt16.p_from_numpy(np.array([100, 100], dtype=np.uint16)),
+        lambda: ecs.UInt32.p_from_numpy(np.array([100, 100], dtype=np.uint32)),
+        lambda: ecs.UInt64.p_from_numpy(np.array([100, 100], dtype=np.uint64)),
+    ),
+    ids=(
+        "int",
+        "float",
+        "numpy_f32",
+        "numpy_f64",
+        "numpy_i8",
+        "numpy_i16",
+        "numpy_i32",
+        "numpy_i64",
+        "numpy_u8",
+        "numpy_u16",
+        "numpy_u32",
+        "numpy_u64",
+        "Float32",
+        "Float64",
+        "Int8",
+        "Int16",
+        "Int32",
+        "Int64",
+        "UInt8",
+        "UInt16",
+        "UInt32",
+        "UInt64",
+    ),
+)
+def single_value_float_rhs(request: pytest.FixtureRequest) -> "FloatRhs":
+    return request.param()
+
+
+@pytest.fixture(
+    params=(
+        lambda: np.array([50, 100], dtype=np.float32),
+        lambda: np.array([50, 100], dtype=np.float64),
+        lambda: np.array([50, 100], dtype=np.int8),
+        lambda: np.array([50, 100], dtype=np.int16),
+        lambda: np.array([50, 100], dtype=np.int32),
+        lambda: np.array([50, 100], dtype=np.int64),
+        lambda: np.array([50, 100], dtype=np.uint8),
+        lambda: np.array([50, 100], dtype=np.uint16),
+        lambda: np.array([50, 100], dtype=np.uint32),
+        lambda: np.array([50, 100], dtype=np.uint64),
+        lambda: ecs.Float32.p_from_numpy(
+            np.array([50, 100], dtype=np.float32)
+        ),
+        lambda: ecs.Float64.p_from_numpy(
+            np.array([50, 100], dtype=np.float64)
+        ),
+        lambda: ecs.Int8.p_from_numpy(np.array([50, 100], dtype=np.int8)),
+        lambda: ecs.Int16.p_from_numpy(np.array([50, 100], dtype=np.int16)),
+        lambda: ecs.Int32.p_from_numpy(np.array([50, 100], dtype=np.int32)),
+        lambda: ecs.Int64.p_from_numpy(np.array([50, 100], dtype=np.int64)),
+        lambda: ecs.UInt8.p_from_numpy(np.array([50, 100], dtype=np.uint8)),
+        lambda: ecs.UInt16.p_from_numpy(np.array([50, 100], dtype=np.uint16)),
+        lambda: ecs.UInt32.p_from_numpy(np.array([50, 100], dtype=np.uint32)),
+        lambda: ecs.UInt64.p_from_numpy(np.array([50, 100], dtype=np.uint64)),
+    ),
+    ids=(
+        "numpy_f32",
+        "numpy_f64",
+        "numpy_i8",
+        "numpy_i16",
+        "numpy_i32",
+        "numpy_i64",
+        "numpy_u8",
+        "numpy_u16",
+        "numpy_u32",
+        "numpy_u64",
+        "Float32",
+        "Float64",
+        "Int8",
+        "Int16",
+        "Int32",
+        "Int64",
+        "UInt8",
+        "UInt16",
+        "UInt32",
+        "UInt64",
+    ),
+)
+def multiple_value_float_rhs(request: pytest.FixtureRequest) -> "FloatRhs":
+    return request.param()

@@ -5,9 +5,9 @@ use pyo3::types::PySlice;
 
 #[derive(FromPyObject)]
 pub enum GetItemKey<'a> {
+    PyArrayMask(&'a PyArray1<bool>),
+    VectorMask(Vec<bool>),
     Slice(&'a PySlice),
     PyArrayIndices(&'a PyArray1<Index>),
-    PyArrayMask(&'a PyArray1<bool>),
     VectorIndices(Vec<usize>),
-    VectorMask(Vec<bool>),
 }

@@ -244,6 +244,12 @@ macro_rules! python_float_array {
                     CompareOp::Ne => self.0.__ne__(other),
                 }
             }
+            pub fn __repr__(&self) -> PyResult<String> {
+                Ok(format!("{}({:?})", stringify!($name), self.0.to_vec()?))
+            }
+            pub fn __str__(&self) -> PyResult<String> {
+                Ok(format!("{}({:?})", stringify!($name), self.0.to_vec()?))
+            }
         }
     };
 }

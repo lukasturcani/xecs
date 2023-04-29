@@ -12,7 +12,7 @@ pub struct Array<T> {
 
 impl<T> Array<T>
 where
-    T: numpy::Element,
+    T: numpy::Element + Copy,
 {
     pub fn p_from_numpy(array: &PyArray1<T>) -> PyResult<Self> {
         Ok(Self {
@@ -23,9 +23,17 @@ where
         })
     }
 
+    pub fn to_vec(&self) -> PyResult<Vec<T>> {
+        let array = self.array.read().map_err(cannot_read)?;
+        let indices = self.indices.0.read().map_err(cannot_read)?;
+        Ok(indices
+            .iter()
+            .map(|&index| unsafe { *array.get_unchecked(index as usize) })
+            .collect())
+    }
+
     pub fn numpy(&self, py: Python) -> PyResult<Py<PyArray1<T>>> {
-        let vec = self.array.read().map_err(cannot_read)?;
-        Ok(PyArray1::from_vec(py, vec.clone()).into_py(py))
+        Ok(PyArray1::from_vec(py, self.to_vec()?).into_py(py))
     }
 
     pub fn p_with_indices(indices: &ArrayViewIndices, default: T) -> PyResult<Self> {
