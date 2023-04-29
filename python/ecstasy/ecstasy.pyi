@@ -12,8 +12,8 @@ GetItemKey: typing.TypeAlias = (
     | npt.NDArray[np.bool_]
     | slice
 )
-_NumpyFloat: typing.TypeAlias = np.float32 | np.float64
-_NumpyInt: typing.TypeAlias = (
+NumpyFloat: typing.TypeAlias = np.float32 | np.float64
+NumpyInt: typing.TypeAlias = (
     np.int8
     | np.int16
     | np.int32
@@ -24,7 +24,7 @@ _NumpyInt: typing.TypeAlias = (
     | np.uint64
 )
 FloatRhs: typing.TypeAlias = (
-    float | npt.NDArray[_NumpyFloat | _NumpyInt] | _FloatArray | _IntArray
+    float | npt.NDArray[NumpyFloat | NumpyInt] | _FloatArray | _IntArray
 )
 
 class MultipleArrayInidices:
