@@ -78,13 +78,18 @@ macro_rules! slice_array {
     ($self:expr, $slice:expr, $rhs:expr, $type:ty) => {
         let mut array = $self.array.write().map_err(cannot_write)?;
         let indices = $self.indices.0.read().map_err(cannot_read)?;
+        let other_indices = $rhs.0.indices.0.read().map_err(cannot_read)?;
         if $crate::arrays::setitem::same_array(&$self.array, &$rhs.0.array) {
             $crate::arrays::setitem::slice_array_inner!(
-                array, indices, $slice, array, indices, $type
+                array,
+                indices,
+                $slice,
+                array,
+                other_indices,
+                $type
             );
         } else {
             let other_array = $rhs.0.array.read().map_err(cannot_read)?;
-            let other_indices = $rhs.0.indices.0.read().map_err(cannot_read)?;
             $crate::arrays::setitem::slice_array_inner!(
                 array,
                 indices,
@@ -118,18 +123,18 @@ macro_rules! indices_array {
     ($self:expr, $array_indices:expr, $rhs:expr, $type:ty) => {
         let mut array = $self.array.write().map_err(cannot_write)?;
         let indices = $self.indices.0.read().map_err(cannot_read)?;
+        let other_indices = $rhs.0.indices.0.read().map_err(cannot_read)?;
         if $crate::arrays::setitem::same_array(&$self.array, &$rhs.0.array) {
             $crate::arrays::setitem::indices_array_inner!(
                 array,
                 indices,
                 $array_indices,
                 array,
-                indices,
+                other_indices,
                 $type
             );
         } else {
             let other_array = $rhs.0.array.read().map_err(cannot_read)?;
-            let other_indices = $rhs.0.indices.0.read().map_err(cannot_read)?;
             $crate::arrays::setitem::indices_array_inner!(
                 array,
                 indices,
@@ -165,8 +170,9 @@ macro_rules! mask_array {
     ($self:expr, $mask:expr, $rhs:expr, $type:ty) => {
         let mut array = $self.array.write().map_err(cannot_write)?;
         let indices = $self.indices.0.read().map_err(cannot_read)?;
+        let other_indices = $rhs.0.indices.0.read().map_err(cannot_read)?;
+        let mut other_indices = other_indices.iter();
         if $crate::arrays::setitem::same_array(&$self.array, &$rhs.0.array) {
-            let mut other_indices = indices.iter();
             $crate::arrays::setitem::mask_array_inner!(
                 array,
                 indices,
@@ -177,8 +183,6 @@ macro_rules! mask_array {
             );
         } else {
             let other_array = $rhs.0.array.read().map_err(cannot_read)?;
-            let other_indices = $rhs.0.indices.0.read().map_err(cannot_read)?;
-            let mut other_indices = other_indices.iter();
             $crate::arrays::setitem::mask_array_inner!(
                 array,
                 indices,
