@@ -99,17 +99,45 @@ macro_rules! slice_array {
 
 pub(crate) use slice_array;
 
+macro_rules! indices_array_inner {
+    ($array:expr, $indices:expr, $array_indices:expr, $other_array:expr, $other_indices:expr, $type:ty) => {
+        for (&index, &other_index) in $array_indices.iter().zip($other_indices.iter()) {
+            unsafe {
+                let array_index = $indices.get(index as usize).ok_or_else(bad_index)?;
+                let self_value = $array.get_unchecked_mut(*array_index as usize) as *mut $type;
+                let other_value = $other_array.get_unchecked(other_index as usize);
+                *self_value = *other_value as $type;
+            }
+        }
+    };
+}
+
+pub(crate) use indices_array_inner;
+
 macro_rules! indices_array {
     ($self:expr, $array_indices:expr, $rhs:expr, $type:ty) => {
         let mut array = $self.array.write().map_err(cannot_write)?;
         let indices = $self.indices.0.read().map_err(cannot_read)?;
-        let other_array = $rhs.0.array.read().map_err(cannot_read)?;
-        let other_indices = $rhs.0.indices.0.read().map_err(cannot_read)?;
-        for (&index, &other_index) in $array_indices.iter().zip(other_indices.iter()) {
-            let array_index = indices.get(index as usize).ok_or_else(bad_index)?;
-            let self_value = unsafe { array.get_unchecked_mut(*array_index as usize) };
-            let other_value = unsafe { other_array.get_unchecked(other_index as usize) };
-            *self_value = *other_value as $type;
+        if $crate::arrays::setitem::same_array(&$self.array, &$rhs.0.array) {
+            $crate::arrays::setitem::indices_array_inner!(
+                array,
+                indices,
+                $array_indices,
+                array,
+                indices,
+                $type
+            );
+        } else {
+            let other_array = $rhs.0.array.read().map_err(cannot_read)?;
+            let other_indices = $rhs.0.indices.0.read().map_err(cannot_read)?;
+            $crate::arrays::setitem::indices_array_inner!(
+                array,
+                indices,
+                $array_indices,
+                other_array,
+                other_indices,
+                $type
+            );
         }
     };
 }
