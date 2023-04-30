@@ -144,20 +144,49 @@ macro_rules! indices_array {
 
 pub(crate) use indices_array;
 
+macro_rules! mask_array_inner {
+    ($array:expr, $indices:expr, $mask:expr, $other_array:expr, $other_indices:expr, $type:ty) => {
+        for (&write, &self_index) in $mask.iter().zip($indices.iter()) {
+            if write {
+                unsafe {
+                    let self_value = $array.get_unchecked_mut(self_index as usize) as *mut $type;
+                    let other_value =
+                        $other_array.get_unchecked(*$other_indices.next().unwrap() as usize);
+                    *self_value = *other_value as $type;
+                }
+            }
+        }
+    };
+}
+
+pub(crate) use mask_array_inner;
+
 macro_rules! mask_array {
     ($self:expr, $mask:expr, $rhs:expr, $type:ty) => {
         let mut array = $self.array.write().map_err(cannot_write)?;
         let indices = $self.indices.0.read().map_err(cannot_read)?;
-        let other_array = $rhs.0.array.read().map_err(cannot_read)?;
-        let other_indices = $rhs.0.indices.0.read().map_err(cannot_read)?;
-        let mut other_indices = other_indices.iter();
-        for (&write, &self_index) in $mask.iter().zip(indices.iter()) {
-            if write {
-                let self_value = unsafe { array.get_unchecked_mut(self_index as usize) };
-                let other_value =
-                    unsafe { other_array.get_unchecked(*other_indices.next().unwrap() as usize) };
-                *self_value = *other_value as $type;
-            }
+        if $crate::arrays::setitem::same_array(&$self.array, &$rhs.0.array) {
+            let mut other_indices = indices.iter();
+            $crate::arrays::setitem::mask_array_inner!(
+                array,
+                indices,
+                $mask,
+                array,
+                other_indices,
+                $type
+            );
+        } else {
+            let other_array = $rhs.0.array.read().map_err(cannot_read)?;
+            let other_indices = $rhs.0.indices.0.read().map_err(cannot_read)?;
+            let mut other_indices = other_indices.iter();
+            $crate::arrays::setitem::mask_array_inner!(
+                array,
+                indices,
+                $mask,
+                other_array,
+                other_indices,
+                $type
+            );
         }
     };
 }
