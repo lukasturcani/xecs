@@ -81,22 +81,25 @@ def test_ioperator_on_subview_array(
     assert np.all(np.equal(array.numpy(), expected))
 
 
-def test_self() -> None:
-    array = ecs.Float32.p_from_numpy(np.arange(5, dtype=np.float32))
-    array += array
-    assert np.all(np.equal(array.numpy(), [0, 2, 4, 6, 8]))
+def test_self(array: FloatArray, iop: typing.Any) -> None:
+    expected = array.numpy()
+    iop(array, array)
+    iop(expected, expected)
+    assert np.all(np.equal(array.numpy(), expected))
 
 
-def test_self_slice() -> None:
-    array = ecs.Float32.p_from_numpy(np.arange(5, dtype=np.float32))
-    array += array[:]
-    assert np.all(np.equal(array.numpy(), [0, 2, 4, 6, 8]))
+def test_self_slice(array: FloatArray, iop: typing.Any) -> None:
+    expected = array.numpy()
+    iop(array, array[:])
+    iop(expected, expected)
+    assert np.all(np.equal(array.numpy(), expected))
 
 
-def test_self_slice_both_sides() -> None:
-    array = ecs.Float32.p_from_numpy(np.arange(5, dtype=np.float32))
-    array[:] += array[:]
-    assert np.all(np.equal(array.numpy(), [0, 2, 4, 6, 8]))
+def test_self_slice_both_sides(array: FloatArray, iop: typing.Any) -> None:
+    expected = array.numpy()
+    iop(array[:], array[:])
+    iop(expected, expected)
+    assert np.all(np.equal(array.numpy(), expected))
 
 
 def test_self_mask() -> None:
