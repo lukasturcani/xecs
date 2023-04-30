@@ -9,7 +9,10 @@ if typing.TYPE_CHECKING:
 
 
 def test_setitem_self(array: FloatArray, key: "GetItemKey") -> None:
+    before = array.numpy()
     array[key] = array[key]
+    after = array.numpy()
+    assert np.all(np.equal(before, after))
 
 
 def test_setitem_single_value(
