@@ -82,7 +82,28 @@ def test_ioperator_on_subview_array(
 
 
 def test_self() -> None:
-    pass
+    array = ecs.Float32.p_from_numpy(np.arange(5, dtype=np.float32))
+    array += array
+    assert np.all(np.equal(array.numpy(), [0, 2, 4, 6, 8]))
+
+
+def test_self_slice() -> None:
+    array = ecs.Float32.p_from_numpy(np.arange(5, dtype=np.float32))
+    array += array[:]
+    assert np.all(np.equal(array.numpy(), [0, 2, 4, 6, 8]))
+
+
+def test_self_slice_both_sides() -> None:
+    array = ecs.Float32.p_from_numpy(np.arange(5, dtype=np.float32))
+    array[:] += array[:]
+    assert np.all(np.equal(array.numpy(), [0, 2, 4, 6, 8]))
+
+
+def test_self_mask() -> None:
+    array = ecs.Float32.p_from_numpy(np.arange(5, dtype=np.float32))
+    mask = [True, False, False, True, False]
+    array[mask] += array[mask]
+    assert np.all(np.equal(array.numpy(), [0, 2, 4, 6, 8]))
 
 
 def test_works_with_complex_indices() -> None:
@@ -92,7 +113,9 @@ def test_works_with_complex_indices() -> None:
 
 
 def test_works_with_mask() -> None:
-    pass
+    array = ecs.Float32.p_from_numpy(np.arange(5, dtype=np.float32))
+    array[[True, False, False, True, False]] += np.array([10, 20])
+    assert np.all(np.equal(array.numpy(), [10, 1, 2, 23, 4]))
 
 
 @pytest.fixture(
