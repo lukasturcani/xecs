@@ -110,6 +110,8 @@ def test_works_with_complex_indices() -> None:
     array = ecs.Float32.p_from_numpy(np.arange(5, dtype=np.float32))
     array[[0, 3]] += np.array([10, 20])
     assert np.all(np.equal(array.numpy(), [10, 1, 2, 23, 4]))
+    array[[0, 3]] += array[[0, 3]]
+    assert np.all(np.equal(array.numpy(), [20, 1, 2, 46, 4]))
 
 
 def test_works_with_mask() -> None:
