@@ -3,7 +3,7 @@ use crate::arrays::python_int_array::{Int16, Int32, Int64, Int8, UInt16, UInt32,
 use numpy::PyArray1;
 use pyo3::prelude::*;
 
-#[derive(FromPyObject)]
+#[derive(FromPyObject, Debug)]
 pub enum FloatRhs<'a> {
     I64(i64),
     F64(f64),

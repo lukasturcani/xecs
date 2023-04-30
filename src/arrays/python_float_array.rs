@@ -182,6 +182,7 @@ macro_rules! float_array {
 macro_rules! python_float_array {
     (pub struct $name:ident($type:ty)) => {
         #[pyclass]
+        #[derive(Debug)]
         pub struct $name(pub Array<$type>);
         #[pymethods]
         impl $name {

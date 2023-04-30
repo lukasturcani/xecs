@@ -5,6 +5,7 @@ use numpy::PyArray1;
 use pyo3::prelude::*;
 use std::sync::{Arc, RwLock};
 
+#[derive(Debug)]
 pub struct Array<T> {
     pub array: Arc<RwLock<Vec<T>>>,
     pub indices: ArrayViewIndices,

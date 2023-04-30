@@ -271,6 +271,7 @@ macro_rules! int_array {
 macro_rules! python_int_array {
     (pub struct $name:ident($type:ty)) => {
         #[pyclass]
+        #[derive(Debug)]
         pub struct $name(pub Array<$type>);
         #[pymethods]
         impl $name {

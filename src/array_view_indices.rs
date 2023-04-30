@@ -32,6 +32,7 @@ impl MultipleArrayViewIndices {
 }
 
 #[pyclass]
+#[derive(Debug)]
 pub struct ArrayViewIndices(pub Arc<RwLock<Vec<Index>>>);
 
 #[pymethods]

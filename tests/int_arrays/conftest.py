@@ -38,11 +38,11 @@ def array(request: pytest.FixtureRequest) -> IntArray:
 
 @pytest.fixture(
     params=(
-        [0, 1],
-        [True, True, False, False, False],
-        np.array([0, 1], dtype=np.uint32),
-        np.array([True, True, False, False, False], dtype=np.bool_),
-        slice(0, 2),
+        lambda: [0, 1],
+        lambda: [True, True, False, False, False],
+        lambda: np.array([0, 1], dtype=np.uint32),
+        lambda: np.array([True, True, False, False, False], dtype=np.bool_),
+        lambda: slice(0, 2),
     ),
     ids=(
         "list_indices",
@@ -53,4 +53,22 @@ def array(request: pytest.FixtureRequest) -> IntArray:
     ),
 )
 def key(request: pytest.FixtureRequest) -> "GetItemKey":
-    return request.param
+    return request.param()
+
+
+@pytest.fixture(
+    params=(
+        lambda: [0, 3],
+        lambda: [True, False, False, True, False],
+        lambda: np.array([0, 3], dtype=np.uint32),
+        lambda: np.array([True, False, False, True, False], dtype=np.bool_),
+    ),
+    ids=(
+        "list_indices",
+        "list_mask",
+        "numpy_indices",
+        "numpy_mask",
+    ),
+)
+def detached_key(request: pytest.FixtureRequest) -> "GetItemKey":
+    return request.param()

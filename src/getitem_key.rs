@@ -3,7 +3,7 @@ use numpy::PyArray1;
 use pyo3::prelude::*;
 use pyo3::types::PySlice;
 
-#[derive(FromPyObject)]
+#[derive(FromPyObject, Debug)]
 pub enum GetItemKey<'a> {
     PyArrayMask(&'a PyArray1<bool>),
     VectorMask(Vec<bool>),
