@@ -102,16 +102,19 @@ def test_self_slice_both_sides(array: FloatArray, iop: typing.Any) -> None:
     assert np.all(np.equal(array.numpy(), expected))
 
 
-def test_self_mask() -> None:
+def test_self_key() -> None:
     array = ecs.Float32.p_from_numpy(np.arange(5, dtype=np.float32))
     mask = [True, False, False, True, False]
     array[mask] += array[mask]
     assert np.all(np.equal(array.numpy(), [0, 2, 4, 6, 8]))
 
 
-def test_works_with_complex_indices() -> None:
-    array = ecs.Float32.p_from_numpy(np.arange(5, dtype=np.float32))
-    array[[0, 3]] += np.array([10, 20])
+def test_works_with_complex_indices(
+    array: FloatArray,
+    iop: typing.Any,
+) -> None:
+    expected = array.numpy()
+    iop(array[[0, 3]], np.array([10, 20]))
     assert np.all(np.equal(array.numpy(), [10, 1, 2, 23, 4]))
     array[[0, 3]] += array[[0, 3]]
     assert np.all(np.equal(array.numpy(), [20, 1, 2, 46, 4]))
