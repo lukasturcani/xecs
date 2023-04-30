@@ -1,6 +1,7 @@
 import typing
 
 import numpy as np
+import pytest
 
 from tests.types import FloatArray
 
@@ -8,11 +9,22 @@ if typing.TYPE_CHECKING:
     from ecstasy.ecstasy import FloatRhs, GetItemKey
 
 
-def test_setitem_self(array: FloatArray, key: "GetItemKey") -> None:
+def test_setitem_same_array_different_indices(
+    array: FloatArray,
+    key: "GetItemKey",
+) -> None:
     before = array.numpy()
     array[key] = array[key]
     after = array.numpy()
     assert np.all(np.equal(before, after))
+
+
+def test_setitem_same_array_same_indices(
+    array: FloatArray,
+    key: "GetItemKey",
+) -> None:
+    with pytest.raises(TypeError):
+        array[key] = array
 
 
 def test_setitem_single_value(
