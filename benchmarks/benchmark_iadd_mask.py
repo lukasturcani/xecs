@@ -24,7 +24,7 @@ def size(request: pytest.FixtureRequest) -> int:
     return request.param
 
 
-@pytest.mark.benchmark(group="numpy-iadd")
+@pytest.mark.benchmark(group="numpy-iadd-mask")
 def benchmark_iadd_numpy(
     benchmark: typing.Any, size: int, key_size: float
 ) -> None:
@@ -35,7 +35,7 @@ def benchmark_iadd_numpy(
     benchmark(iadd_numpy, first, first_key, second)
 
 
-@pytest.mark.benchmark(group="ecstasy-iadd")
+@pytest.mark.benchmark(group="ecstasy-iadd-mask")
 def benchmark_iadd_ecstasy(
     benchmark: typing.Any,
     size: int,
@@ -45,8 +45,7 @@ def benchmark_iadd_ecstasy(
     first = ecs.Float32.from_numpy(generator.random(size, dtype=np.float32))
     first_key = generator.random(len(first)) < key_size
     second = ecs.Float32.from_numpy(generator.random(size, dtype=np.float32))
-    second_key = generator.random(len(second)) < key_size
-    benchmark(iadd_ecstasy, first, first_key, second[second_key])
+    benchmark(iadd_ecstasy, first, first_key, second[first_key])
 
 
 def iadd_numpy(
