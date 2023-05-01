@@ -1,5 +1,6 @@
 mod array;
 mod float_rhs;
+pub mod imath;
 mod int_rhs;
 mod python_float_array;
 mod python_int_array;

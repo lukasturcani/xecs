@@ -17,6 +17,7 @@ mod set;
 /// A Python module implemented in Rust.
 #[pymodule]
 fn ecstasy(_py: Python, m: &PyModule) -> PyResult<()> {
+    m.add_function(wrap_pyfunction!(arrays::imath::iadd_float32, m)?)?;
     m.add_class::<arrays::Float32>()?;
     m.add_class::<arrays::Float64>()?;
     m.add_class::<arrays::Int8>()?;

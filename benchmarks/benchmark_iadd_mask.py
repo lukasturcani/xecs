@@ -4,6 +4,7 @@ import ecstasy as ecs
 import numpy as np
 import numpy.typing as npt
 import pytest
+from ecstasy._internal.arrays.float32 import Float32
 
 
 @pytest.fixture(
@@ -42,9 +43,9 @@ def benchmark_iadd_ecstasy(
     key_size: float,
 ) -> None:
     generator = np.random.default_rng(55)
-    first = ecs.Float32.p_from_numpy(generator.random(size, dtype=np.float32))
+    first = Float32.p_from_numpy(generator.random(size, dtype=np.float32))
     first_key = generator.random(len(first)) < key_size
-    second = ecs.Float32.p_from_numpy(generator.random(size, dtype=np.float32))
+    second = Float32.p_from_numpy(generator.random(size, dtype=np.float32))
     benchmark(iadd_ecstasy, first, first_key, second[first_key])
 
 
@@ -57,9 +58,9 @@ def iadd_numpy(
 
 
 def iadd_ecstasy(
-    first: ecs.Float32,
+    first: Float32,
     first_key: npt.NDArray[np.bool_],
-    second: ecs.Float32,
+    second: Float32,
 ) -> None:
     first_subview = first[first_key]
     first_subview += second

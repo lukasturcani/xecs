@@ -4,6 +4,7 @@ import ecstasy as ecs
 import numpy as np
 import numpy.typing as npt
 import pytest
+from ecstasy._internal.arrays.float32 import Float32
 
 
 @pytest.fixture(
@@ -35,8 +36,12 @@ def benchmark_iadd_numpy(benchmark: typing.Any, size: int) -> None:
 @pytest.mark.benchmark(group="ecstasy-iadd")
 def benchmark_iadd_ecstasy(benchmark: typing.Any, size: int) -> None:
     generator = np.random.default_rng(55)
-    first = ecs.Float32.p_from_numpy(generator.random(size, dtype=np.float32))
-    second = ecs.Float32.p_from_numpy(generator.random(size, dtype=np.float32))
+    first = Float32.p_from_numpy(
+        generator.random(size, dtype=np.float32),
+    )
+    second = Float32.p_from_numpy(
+        generator.random(size, dtype=np.float32),
+    )
     benchmark(iadd, first, second)
 
 

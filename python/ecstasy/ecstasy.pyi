@@ -184,3 +184,12 @@ class UInt64(_IntArray[np.uint64]):
     def p_from_numpy(array: npt.NDArray[np.uint64]) -> UInt64: ...
     @staticmethod
     def p_with_indices(indices: ArrayViewIndices) -> UInt64: ...
+
+FloatRhs2: typing.TypeAlias = float | npt.NDArray[NumpyFloat | NumpyInt]
+
+def iadd_float32(
+    array: FloatRhs2,
+    indices: ArrayViewIndices,
+    other_array: FloatRhs2,
+    other_indices: ArrayViewIndices,
+) -> None: ...
