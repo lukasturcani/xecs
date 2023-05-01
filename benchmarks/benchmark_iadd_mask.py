@@ -42,9 +42,9 @@ def benchmark_iadd_ecstasy(
     key_size: float,
 ) -> None:
     generator = np.random.default_rng(55)
-    first = ecs.Float32.from_numpy(generator.random(size, dtype=np.float32))
+    first = ecs.Float32.p_from_numpy(generator.random(size, dtype=np.float32))
     first_key = generator.random(len(first)) < key_size
-    second = ecs.Float32.from_numpy(generator.random(size, dtype=np.float32))
+    second = ecs.Float32.p_from_numpy(generator.random(size, dtype=np.float32))
     benchmark(iadd_ecstasy, first, first_key, second[first_key])
 
 
