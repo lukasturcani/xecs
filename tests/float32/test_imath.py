@@ -78,12 +78,12 @@ def test_works_with_mask() -> None:
 @pytest.fixture(
     params=(
         operator.iadd,
-        # operator.isub,
-        # operator.imul,
-        # operator.itruediv,
-        # operator.ifloordiv,
-        # operator.imod,
-        # operator.ipow,
+        operator.isub,
+        operator.imul,
+        operator.itruediv,
+        operator.ifloordiv,
+        operator.imod,
+        operator.ipow,
     ),
 )
 def iop(request: pytest.FixtureRequest) -> typing.Any:
@@ -92,12 +92,12 @@ def iop(request: pytest.FixtureRequest) -> typing.Any:
 
 @pytest.fixture
 def array() -> ecs.Float32:
-    return ecs.Float32.p_from_numpy(np.arange(5, dtype=np.float32))
+    return ecs.Float32.p_from_numpy(np.arange(1, 6, dtype=np.float32))
 
 
 @pytest.fixture
 def other_array() -> ecs.Float32:
-    return ecs.Float32.p_from_numpy(np.arange(5, 10, dtype=np.float32))
+    return ecs.Float32.p_from_numpy(np.arange(6, 11, dtype=np.float32))
 
 
 @pytest.fixture
