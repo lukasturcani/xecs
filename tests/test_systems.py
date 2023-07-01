@@ -10,6 +10,10 @@ class Two(ecs.Component):
     y: ecs.Float32
 
 
+class Params(ecs.Resource):
+    z: str
+
+
 def test_query_with_one_component(app: ecs.App) -> None:
     app.add_system(query_with_one_component)
     app.run()
@@ -17,6 +21,12 @@ def test_query_with_one_component(app: ecs.App) -> None:
 
 def test_query_with_two_components(app: ecs.App) -> None:
     app.add_system(query_with_two_components)
+    app.run()
+
+
+def test_system_with_resource(app: ecs.App) -> None:
+    app.add_system(system_with_resource)
+    app.add_resource(Params("hi"))
     app.run()
 
 
@@ -38,6 +48,13 @@ def query_with_two_components(query: ecs.Query[tuple[One, Two]]) -> None:
     assert len(one) == len(two) == 5
     assert isinstance(one, One)
     assert isinstance(two, Two)
+
+
+def system_with_resource(params: Params, query: ecs.Query[tuple[One]]) -> None:
+    (one,) = query.result()
+    assert isinstance(one, One)
+    assert len(one) == 10
+    assert params.z == "hi"
 
 
 def spawn_entities(commands: ecs.Commands) -> None:

@@ -23,8 +23,8 @@ class SystemSignatureError(Exception):
     pass
 
 
-SystemParameter: typing.TypeAlias = Query | Commands
-NonQueryParameter: typing.TypeAlias = Commands
+SystemParameter: typing.TypeAlias = Query | Commands | Resource
+NonQueryParameter: typing.TypeAlias = Commands | Resource
 System: typing.TypeAlias = abc.Callable
 
 
@@ -45,7 +45,9 @@ class SystemSpec:
 class App:
     _rust_app: RustApp
     _pools: "dict[ComponentId, ComponentPool[Component]]"
+    _pending_startup_systems: list[System]
     _startup_systems: list[SystemSpec]
+    _pending_systems: list[System]
     _systems: list[SystemSpec]
     _commands: Commands
     _resources: dict[type[Resource], Resource]
@@ -58,7 +60,9 @@ class App:
             num_queries=Query.p_num_queries,
         )
         app._pools = {}
+        app._pending_startup_systems = []
         app._startup_systems = []
+        app._pending_systems = []
         app._systems = []
         app._commands = Commands()
         app._resources = {}
@@ -68,24 +72,10 @@ class App:
         self._resources[type(resource)] = resource
 
     def add_startup_system(self, system: System) -> None:
-        query_args, other_args = self._get_system_args(system)
-        self._startup_systems.append(
-            SystemSpec(
-                function=system,
-                query_args=query_args,
-                other_args=other_args,
-            )
-        )
+        self._pending_startup_systems.append(system)
 
     def add_system(self, system: System) -> None:
-        query_args, other_args = self._get_system_args(system)
-        self._systems.append(
-            SystemSpec(
-                function=system,
-                query_args=query_args,
-                other_args=other_args,
-            )
-        )
+        self._pending_systems.append(system)
 
     def _get_system_args(
         self,
@@ -113,6 +103,8 @@ class App:
 
             elif parameter.annotation is Commands:
                 other_args[name] = self._commands
+            elif issubclass(parameter.annotation, Resource):
+                other_args[name] = self._resources[parameter.annotation]
             else:
                 expected_type = " | ".join(
                     arg.__name__ for arg in typing.get_args(SystemParameter)
@@ -154,6 +146,26 @@ class App:
                 pools=self._pools,
             )
 
+    def p_process_pending_systems(self) -> None:
+        for system in self._pending_startup_systems:
+            query_args, other_args = self._get_system_args(system)
+            self._startup_systems.append(
+                SystemSpec(
+                    function=system,
+                    query_args=query_args,
+                    other_args=other_args,
+                )
+            )
+        for system in self._pending_systems:
+            query_args, other_args = self._get_system_args(system)
+            self._systems.append(
+                SystemSpec(
+                    function=system,
+                    query_args=query_args,
+                    other_args=other_args,
+                )
+            )
+
     def p_run_startup_systems(self) -> None:
         self._run_systems(self._startup_systems)
 
@@ -161,6 +173,7 @@ class App:
         self._run_systems(self._systems)
 
     def run(self) -> None:
+        self.p_process_pending_systems()
         self.p_run_startup_systems()
         self.p_run_systems()
 
