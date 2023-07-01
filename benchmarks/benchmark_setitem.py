@@ -40,13 +40,13 @@ def benchmark_ecstasy_setitem_mask_many(
 
 @pytest.fixture(
     params=(
-        np.arange(10, dtype=np.float32),
+        np.arange(15, dtype=np.float32),
         np.arange(100, dtype=np.float32),
         np.arange(1_000, dtype=np.float32),
         np.arange(1_000_000, dtype=np.float32),
     ),
     ids=(
-        "10",
+        "15",
         "100",
         "1_000",
         "1_000_000",
