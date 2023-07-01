@@ -15,8 +15,9 @@ def test_numpy(vec1: ecs.Vec2) -> None:
     generator = np.random.default_rng(54)
     xs = generator.random(10, dtype=np.float32)
     ys = generator.random(10, dtype=np.float32)
-    vec1.x[:] = xs
-    vec1.y[:] = ys
+    all_mask = np.ones(10, dtype=np.bool_)
+    vec1.x[all_mask] = xs
+    vec1.y[all_mask] = ys
     assert np.all(
         np.equal(
             vec1.numpy(),
@@ -78,8 +79,9 @@ def vec1() -> ecs.Vec2:
     generator = np.random.default_rng(55)
     pool = VecContainer.create_pool(10)
     pool.p_spawn(10)
-    pool.p_component.vec.x[:] = generator.random(10, dtype=np.float32)
-    pool.p_component.vec.y[:] = generator.random(10, dtype=np.float32)
+    all_mask = np.ones(10, dtype=np.bool_)
+    pool.p_component.vec.x[all_mask] = generator.random(10, dtype=np.float32)
+    pool.p_component.vec.y[all_mask] = generator.random(10, dtype=np.float32)
     return pool.p_component.vec
 
 
@@ -88,8 +90,9 @@ def vec2() -> ecs.Vec2:
     generator = np.random.default_rng(56)
     pool = VecContainer.create_pool(10)
     pool.p_spawn(10)
-    pool.p_component.vec.x[:] = generator.random(10, dtype=np.float32)
-    pool.p_component.vec.y[:] = generator.random(10, dtype=np.float32)
+    all_mask = np.ones(10, dtype=np.bool_)
+    pool.p_component.vec.x[all_mask] = generator.random(10, dtype=np.float32)
+    pool.p_component.vec.y[all_mask] = generator.random(10, dtype=np.float32)
     return pool.p_component.vec
 
 
