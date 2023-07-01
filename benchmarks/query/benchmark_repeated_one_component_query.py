@@ -5,7 +5,7 @@ import pytest
 
 
 class One(ecs.Component):
-    x: ecs.Float64
+    x: ecs.Float32
 
 
 @pytest.mark.benchmark(group="repeated-one-component-query")

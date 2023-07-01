@@ -13,11 +13,11 @@ import pytest
 
 
 class One(ecs.Component):
-    x: ecs.Float64
+    x: ecs.Float32
 
 
 class Two(ecs.Component):
-    x: ecs.Float64
+    x: ecs.Float32
 
 
 @pytest.mark.benchmark(group="repeated-two-component-query")
