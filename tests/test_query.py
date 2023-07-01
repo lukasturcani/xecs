@@ -3,11 +3,11 @@ import pytest
 
 
 class One(ecs.Component):
-    x: ecs.Float64
+    x: ecs.Float32
 
 
 class Two(ecs.Component):
-    y: ecs.Float64
+    y: ecs.Float32
 
 
 def test_query_with_one_component(app: ecs.App) -> None:

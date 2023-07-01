@@ -1,8 +1,13 @@
 import inspect
 import typing
 
-from ecstasy._internal.rust_type_aliases import ComponentId, Key
+import numpy as np
+import numpy.typing as npt
+
 from ecstasy.ecstasy import ArrayViewIndices
+
+if typing.TYPE_CHECKING:
+    from ecstasy.ecstasy import ComponentId
 
 ComponentT = typing.TypeVar("ComponentT", bound="Component")
 
@@ -37,7 +42,7 @@ class Component:
             )
         return ComponentPool(component, capacity)
 
-    def __getitem__(self, key: Key) -> typing.Self:
+    def __getitem__(self, key: npt.NDArray[np.bool_]) -> typing.Self:
         cls = self.__class__
         component = cls()
         component.p_indices = self.p_indices[key]

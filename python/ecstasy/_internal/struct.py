@@ -1,7 +1,9 @@
 import inspect
 import typing
 
-from ecstasy._internal.rust_type_aliases import Key
+import numpy as np
+import numpy.typing as npt
+
 from ecstasy.ecstasy import ArrayViewIndices
 
 
@@ -16,7 +18,7 @@ class Struct:
             setattr(struct, key, value.p_with_indices(indices))
         return struct
 
-    def __getitem__(self, key: Key) -> typing.Self:
+    def __getitem__(self, key: npt.NDArray[np.bool_]) -> typing.Self:
         cls = self.__class__
         struct = cls()
         struct._indices = self._indices[key]
