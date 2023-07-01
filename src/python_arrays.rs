@@ -1,6 +1,6 @@
 use crate::array_view_indices::ArrayViewIndices;
-use crate::error_handlers::{bad_index, cannot_read, cannot_write};
-use crate::getitem_key::Key;
+use crate::error_handlers::{cannot_read, cannot_write};
+use crate::getitem_key::GetItemKey;
 use itertools::izip;
 use numpy::PyArray1;
 use pyo3::prelude::*;
@@ -63,18 +63,18 @@ macro_rules! python_array {
                     })
                 }
 
-                pub fn __getitem__(&self, key: Key) -> PyResult<Self> {
+                pub fn __getitem__(&self, key: GetItemKey) -> PyResult<Self> {
                     Ok(Self {
                         array: Arc::clone(&self.array),
                         indices: self.indices.__getitem__(key)?,
                     })
                 }
 
-                pub fn __setitem__(&mut self, key: Key, value: Value) -> PyResult<()> {
+                pub fn __setitem__(&mut self, key: GetItemKey, value: Value) -> PyResult<()> {
                     let mut array = self.array.write().map_err(cannot_write)?;
                     let indices = self.indices.0.read().map_err(cannot_read)?;
                     match (key, value) {
-                        (Key::Slice(slice), Value::One(item)) => {
+                        (GetItemKey::Slice(slice), Value::One(item)) => {
                             let slice_indices = slice.indices(indices.len() as i64)?;
                             for index in (slice_indices.start..slice_indices.stop)
                                 .step_by(slice_indices.step as usize)
@@ -86,16 +86,7 @@ macro_rules! python_array {
                                 };
                             }
                         }
-                        (Key::ArrayIndices(array_indices), Value::One(item)) => {
-                            for &index in array_indices.readonly().as_array() {
-                                let array_index =
-                                    *indices.get(index as usize).ok_or_else(bad_index)?;
-                                unsafe {
-                                    *array.get_unchecked_mut(array_index as usize) = item;
-                                }
-                            }
-                        }
-                        (Key::ArrayMask(mask), Value::One(item)) => {
+                        (GetItemKey::ArrayMask(mask), Value::One(item)) => {
                             for (&keep, &index) in
                                 mask.readonly().as_array().iter().zip(indices.iter())
                             {
@@ -108,7 +99,7 @@ macro_rules! python_array {
                                 }
                             }
                         }
-                        (Key::Slice(slice), Value::Many(items)) => {
+                        (GetItemKey::Slice(slice), Value::Many(items)) => {
                             let slice_indices = slice.indices(indices.len() as i64)?;
                             for (index, &item) in (slice_indices.start..slice_indices.stop)
                                 .step_by(slice_indices.step as usize)
@@ -121,21 +112,7 @@ macro_rules! python_array {
                                 };
                             }
                         }
-                        (Key::ArrayIndices(array_indices), Value::Many(items)) => {
-                            for (&index, &item) in array_indices
-                                .readonly()
-                                .as_array()
-                                .iter()
-                                .zip(items.array.read().map_err(cannot_read)?.iter())
-                            {
-                                let array_index =
-                                    *indices.get(index as usize).ok_or_else(bad_index)?;
-                                unsafe {
-                                    *array.get_unchecked_mut(array_index as usize) = item;
-                                }
-                            }
-                        }
-                        (Key::ArrayMask(mask), Value::Many(items)) => {
+                        (GetItemKey::ArrayMask(mask), Value::Many(items)) => {
                             for (&keep, &index, &item) in izip!(
                                 mask.readonly().as_array().iter(),
                                 indices.iter(),
@@ -150,7 +127,7 @@ macro_rules! python_array {
                                 }
                             }
                         }
-                        (Key::Slice(slice), Value::ManyArray(items)) => {
+                        (GetItemKey::Slice(slice), Value::ManyArray(items)) => {
                             let slice_indices = slice.indices(indices.len() as i64)?;
                             for (index, &item) in (slice_indices.start..slice_indices.stop)
                                 .step_by(slice_indices.step as usize)
@@ -163,21 +140,7 @@ macro_rules! python_array {
                                 };
                             }
                         }
-                        (Key::ArrayIndices(array_indices), Value::ManyArray(items)) => {
-                            for (&index, &item) in array_indices
-                                .readonly()
-                                .as_array()
-                                .iter()
-                                .zip(items.readonly().as_array())
-                            {
-                                let array_index =
-                                    *indices.get(index as usize).ok_or_else(bad_index)?;
-                                unsafe {
-                                    *array.get_unchecked_mut(array_index as usize) = item;
-                                }
-                            }
-                        }
-                        (Key::ArrayMask(mask), Value::ManyArray(items)) => {
+                        (GetItemKey::ArrayMask(mask), Value::ManyArray(items)) => {
                             for (&keep, &index, &item) in izip!(
                                 mask.readonly().as_array().iter(),
                                 indices.iter(),

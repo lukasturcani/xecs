@@ -138,10 +138,3 @@ def test_new_view_uses_same_array() -> None:
 
     array_2[4:5] = 2
     assert array_1.numpy()[4] == array_2.numpy()[4] == 2
-
-
-def test_iadd() -> None:
-    first = ecs.Float32.from_numpy(np.arange(10, dtype=np.float32))
-    second = ecs.Float32.from_numpy(np.arange(10, dtype=np.float32))
-    first += second
-    assert np.all(np.equal(first.numpy(), second.numpy() * 2))

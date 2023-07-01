@@ -1,5 +1,5 @@
-use crate::error_handlers::{bad_index, cannot_read, cannot_write};
-use crate::getitem_key::Key;
+use crate::error_handlers::{cannot_read, cannot_write};
+use crate::getitem_key::GetItemKey;
 use crate::index::Index;
 use pyo3::exceptions::PyRuntimeError;
 use pyo3::prelude::*;
@@ -56,10 +56,10 @@ impl ArrayViewIndices {
         Ok(self.0.read().map_err(cannot_read)?.len())
     }
 
-    pub fn __getitem__(&self, key: Key) -> PyResult<Self> {
+    pub fn __getitem__(&self, key: GetItemKey) -> PyResult<Self> {
         let indices = self.0.read().map_err(cannot_read)?;
         let new_indices = match key {
-            Key::Slice(slice) => {
+            GetItemKey::Slice(slice) => {
                 let slice_indices = slice.indices(indices.len() as i64)?;
                 let mut new_indices = Vec::with_capacity(slice_indices.slicelength as usize);
                 for index in
@@ -69,16 +69,7 @@ impl ArrayViewIndices {
                 }
                 new_indices
             }
-            Key::ArrayIndices(array_indices_) => {
-                let array_indices = array_indices_.readonly();
-                let array_indices = array_indices.as_array();
-                let mut new_indices = Vec::with_capacity(array_indices.len());
-                for &index in array_indices {
-                    new_indices.push(*indices.get(index as usize).ok_or_else(bad_index)?);
-                }
-                new_indices
-            }
-            Key::ArrayMask(mask) => {
+            GetItemKey::ArrayMask(mask) => {
                 // Ideally the capacity if new_indices would be the number of
                 // true values in mask. However, because that would mean we count
                 // them first, we allocate for the worst-case scenario instead -- we

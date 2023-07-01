@@ -9,6 +9,6 @@ name = "ecstasy"
 crate-type = ["cdylib"]
 
 [dependencies]
-pyo3 = "0.18.1"
-numpy = "0.18"
+pyo3 = "0.19"
+numpy = "0.19"
 itertools = "0.10"
