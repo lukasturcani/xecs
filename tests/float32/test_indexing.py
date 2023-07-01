@@ -93,9 +93,9 @@ def test_spawning_to_a_full_array_causes_error() -> None:
 
 def test_new_view_uses_same_array() -> None:
     array_1 = ecs.Float32.p_from_numpy(np.zeros(10, dtype=np.float32))
-    indices = ecs.ecstasy.ArrayViewIndices.with_capacity(10)
-    array_2 = array_1.p_new_view_with_indices(indices)
-    indices.spawn(5)
+    array_indices = ecs.ecstasy.ArrayViewIndices.with_capacity(10)
+    array_2 = array_1.p_new_view_with_indices(array_indices)
+    array_indices.spawn(5)
 
     assert len(array_1) == 10
     assert len(array_2) == 5

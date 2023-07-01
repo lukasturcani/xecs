@@ -45,16 +45,18 @@ def test_self(array: ecs.Float32, iop: typing.Any) -> None:
         iop(array, array)
 
 
-def test_self_slice(array: ecs.Float32, iop: typing.Any) -> None:
+def test_self_mask(array: ecs.Float32, iop: typing.Any) -> None:
     expected = array.numpy()
-    iop(array, array[:])
+    all_mask = np.ones(len(array), dtype=np.bool_)
+    iop(array, array[all_mask])
     iop(expected, expected)
     assert np.all(np.equal(array.numpy(), expected))
 
 
 def test_self_slice_both_sides(array: ecs.Float32, iop: typing.Any) -> None:
     expected = array.numpy()
-    iop(array[:], array[:])
+    all_mask = np.ones(len(array), dtype=np.bool_)
+    iop(array[all_mask], array[all_mask])
     iop(expected, expected)
     assert np.all(np.equal(array.numpy(), expected))
 
