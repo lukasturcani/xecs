@@ -58,8 +58,8 @@ def test_operators_float(
     math_operator: typing.Any,
 ) -> None:
     array1 = vec1.numpy()
-    expected = math_operator(array1, 3)
-    result = math_operator(vec1, 3)
+    expected = math_operator(array1, 2)
+    result = math_operator(vec1, 2)
     assert np.all(np.equal(result.numpy(), expected))
 
 
