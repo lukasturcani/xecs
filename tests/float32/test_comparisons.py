@@ -17,6 +17,46 @@ def test_ioperator_value(
     assert np.all(np.equal(result, expected))
 
 
+def test_ioperator_numpy(
+    array: ecs.Float32,
+    other_numpy: npt.NDArray[np.float32],
+    op: typing.Any,
+) -> None:
+    result = op(array, other_numpy)
+    expected = op(array.numpy(), other_numpy)
+    assert np.all(np.equal(result, expected))
+
+
+def test_ioperator_array(
+    array: ecs.Float32,
+    other_array: ecs.Float32,
+    op: typing.Any,
+) -> None:
+    result = op(array, other_array)
+    expected = op(array.numpy(), other_array.numpy())
+    assert np.all(np.equal(result, expected))
+
+
+def test_self(array: ecs.Float32, op: typing.Any) -> None:
+    result = op(array, array)
+    expected = op(array.numpy(), array.numpy())
+    assert np.all(np.equal(result, expected))
+
+
+def test_self_mask(array: ecs.Float32, op: typing.Any) -> None:
+    all_mask = np.ones(len(array), dtype=np.bool_)
+    result = op(array, array[all_mask])
+    expected = op(array.numpy(), array.numpy())
+    assert np.all(np.equal(result, expected))
+
+
+def test_self_slice_both_sides(array: ecs.Float32, op: typing.Any) -> None:
+    all_mask = np.ones(len(array), dtype=np.bool_)
+    result = op(array[all_mask], array[all_mask])
+    expected = op(array.numpy(), array.numpy())
+    assert np.all(np.equal(result, expected))
+
+
 @pytest.fixture(
     params=(
         operator.lt,
@@ -43,7 +83,7 @@ def other_array() -> ecs.Float32:
 
 @pytest.fixture
 def other_numpy() -> npt.NDArray[np.float32]:
-    return np.arange([1, 5, 3, 11], dtype=np.float32)
+    return np.array([1, 5, 3, 11], dtype=np.float32)
 
 
 @pytest.fixture(
