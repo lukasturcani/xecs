@@ -124,7 +124,6 @@ impl Float32 {
         }
         Ok(())
     }
-
     fn __iadd__(&mut self, rhs: Float32Rhs) -> PyResult<()> {
         let mut array = self.array.write().map_err(cannot_write)?;
         let indices = self.indices.0.read().map_err(cannot_read)?;

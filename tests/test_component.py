@@ -3,8 +3,10 @@ import numpy as np
 import numpy.typing as npt
 
 
-def indices(xs: list[int]) -> npt.NDArray[np.uint32]:
-    return np.array(xs, dtype=np.uint32)
+def indices(length: int, indices: list[int]) -> npt.NDArray[np.bool_]:
+    mask = np.zeros(length, dtype=np.bool_)
+    mask[indices] = True
+    return mask
 
 
 class StructA(ecs.Struct):
@@ -36,7 +38,7 @@ def test_spawning_entities_updates_views_of_children() -> None:
     assert len(component.f.c) == 50
     assert len(component.f.c.a) == 50
 
-    sub_view = component[indices([0, 10, 32])]
+    sub_view = component[indices(50, [0, 10, 32])]
     assert len(sub_view) == 3
     assert len(sub_view.d) == 3
     assert len(sub_view.e) == 3
@@ -75,7 +77,7 @@ def test_struct_getitem_creates_shared_view() -> None:
     assert len(struct.b) == 10
     assert len(struct.c) == 10
     assert len(struct.c.a) == 10
-    sub_view = struct[:5]
+    sub_view = struct[indices(10, list(range(5)))]
     assert len(sub_view) == 5
     assert len(sub_view.b) == 5
     assert len(sub_view.c) == 5
@@ -83,6 +85,7 @@ def test_struct_getitem_creates_shared_view() -> None:
 
     assert np.sum(struct.c.a.numpy()) == 0
     assert np.sum(sub_view.c.a.numpy()) == 0
-    sub_view.c.a[:] = 1
+    all_mask = np.ones(len(sub_view), dtype=np.bool_)
+    sub_view.c.a[all_mask] = 1
     assert np.sum(struct.c.a.numpy()) == 5
     assert np.sum(sub_view.c.a.numpy()) == 5

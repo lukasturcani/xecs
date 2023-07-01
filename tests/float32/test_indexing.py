@@ -8,7 +8,7 @@ def mask(xs: list[bool]) -> npt.NDArray[np.bool_]:
     return np.array(xs, dtype=np.bool_)
 
 
-def index_mask(length: int, indices: list[int]) -> npt.NDArray[np.bool_]:
+def indices(length: int, indices: list[int]) -> npt.NDArray[np.bool_]:
     mask = np.zeros(length, dtype=np.bool_)
     mask[indices] = True
     return mask
@@ -40,8 +40,8 @@ def test_assigning_with_boolean_mask_does_not_return_a_copy() -> None:
 
 def test_mulitple_complex_indices_reach_correct_elements() -> None:
     array = ecs.Float32.p_from_numpy(np.zeros(10, dtype=np.float32))
-    sub_array = array[index_mask(10, [7, 8, 9])]
-    sub_array = sub_array[index_mask(3, [1, 2])]
+    sub_array = array[indices(10, [7, 8, 9])]
+    sub_array = sub_array[indices(3, [1, 2])]
     all_mask = np.ones(len(sub_array), dtype=np.bool_)
     sub_array[all_mask] = 1.0
     assert np.sum(sub_array.numpy()) == 2.0
@@ -52,9 +52,9 @@ def test_mulitple_complex_indices_reach_correct_elements() -> None:
 def test_length_of_sub_array_is_accurate() -> None:
     array = ecs.Float32.p_from_numpy(np.zeros(10, dtype=np.float32))
     assert len(array) == 10
-    sub_array = array[index_mask(10, [5, 8, 9])]
+    sub_array = array[indices(10, [5, 8, 9])]
     assert len(sub_array) == 3
-    assert len(sub_array[index_mask(3, [1])]) == 1
+    assert len(sub_array[indices(3, [1])]) == 1
 
 
 def test_spawning_increases_length() -> None:
@@ -102,8 +102,8 @@ def test_new_view_uses_same_array() -> None:
     assert array_1.numpy()[2] == array_2.numpy()[2] == 0
     assert array_1.numpy()[4] == array_2.numpy()[4] == 0
 
-    array_1[index_mask(10, [2])] = 1
+    array_1[indices(10, [2])] = 1
     assert array_1.numpy()[2] == array_2.numpy()[2] == 1
 
-    array_2[index_mask(5, [4])] = 2
+    array_2[indices(5, [4])] = 2
     assert array_1.numpy()[4] == array_2.numpy()[4] == 2
