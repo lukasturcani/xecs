@@ -9,7 +9,7 @@ import pytest
 def setitem(
     array: ecs.Float32 | npt.NDArray[np.float32],
     key: npt.NDArray[np.bool_],
-    value: float | npt.NDArray[np.float32],
+    value: npt.NDArray[np.float32],
 ) -> None:
     array[key] = value
 
