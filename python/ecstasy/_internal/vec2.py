@@ -13,9 +13,9 @@ class Vec2(Struct):
 
     def __iadd__(
         self,
-        other: typing.Self | npt.NDArray[np.float32] | float,
+        other: typing.Self | Float32 | npt.NDArray[np.float32] | float,
     ) -> typing.Self:
-        if isinstance(other, int | float | np.ndarray):
+        if isinstance(other, int | float | np.ndarray | Float32):
             self.x += other
             self.y += other
         else:
@@ -25,9 +25,9 @@ class Vec2(Struct):
 
     def __isub__(
         self,
-        other: typing.Self | npt.NDArray[np.float32] | float,
+        other: typing.Self | Float32 | npt.NDArray[np.float32] | float,
     ) -> typing.Self:
-        if isinstance(other, int | float | np.ndarray):
+        if isinstance(other, int | float | np.ndarray | Float32):
             self.x -= other
             self.y -= other
         else:
@@ -37,9 +37,9 @@ class Vec2(Struct):
 
     def __imul__(
         self,
-        other: typing.Self | npt.NDArray[np.float32] | float,
+        other: typing.Self | Float32 | npt.NDArray[np.float32] | float,
     ) -> typing.Self:
-        if isinstance(other, int | float | np.ndarray):
+        if isinstance(other, int | float | np.ndarray | Float32):
             self.x *= other
             self.y *= other
         else:
@@ -49,9 +49,9 @@ class Vec2(Struct):
 
     def __itruediv__(
         self,
-        other: typing.Self | npt.NDArray[np.float32] | float,
+        other: typing.Self | Float32 | npt.NDArray[np.float32] | float,
     ) -> typing.Self:
-        if isinstance(other, int | float | np.ndarray):
+        if isinstance(other, int | float | np.ndarray | Float32):
             self.x /= other
             self.y /= other
         else:
@@ -61,9 +61,9 @@ class Vec2(Struct):
 
     def __ifloordiv__(
         self,
-        other: typing.Self | npt.NDArray[np.float32] | float,
+        other: typing.Self | Float32 | npt.NDArray[np.float32] | float,
     ) -> typing.Self:
-        if isinstance(other, int | float | np.ndarray):
+        if isinstance(other, int | float | np.ndarray | Float32):
             self.x //= other
             self.y //= other
         else:
@@ -73,9 +73,9 @@ class Vec2(Struct):
 
     def __imod__(
         self,
-        other: typing.Self | npt.NDArray[np.float32] | float,
+        other: typing.Self | Float32 | npt.NDArray[np.float32] | float,
     ) -> typing.Self:
-        if isinstance(other, int | float | np.ndarray):
+        if isinstance(other, int | float | np.ndarray | Float32):
             self.x %= other
             self.y %= other
         else:
@@ -85,9 +85,9 @@ class Vec2(Struct):
 
     def __ipow__(
         self,
-        other: typing.Self | npt.NDArray[np.float32] | float,
+        other: typing.Self | Float32 | npt.NDArray[np.float32] | float,
     ) -> typing.Self:
-        if isinstance(other, int | float | np.ndarray):
+        if isinstance(other, int | float | np.ndarray | Float32):
             self.x **= other
             self.y **= other
         else:
