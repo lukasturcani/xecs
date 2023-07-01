@@ -1,6 +1,6 @@
 use crate::error_handlers::cannot_read;
-use crate::getitem_key::GetItemKey;
 use crate::{array_view_indices::ArrayViewIndices, error_handlers::cannot_write};
+use itertools::izip;
 use numpy::PyArray1;
 use pyo3::prelude::*;
 use std::sync::{Arc, RwLock};
@@ -43,6 +43,12 @@ impl Float32 {
             indices: ArrayViewIndices(Arc::clone(&indices.0)),
         })
     }
+    fn p_new_view_with_indices(&self, indices: &ArrayViewIndices) -> Self {
+        Self {
+            array: Arc::clone(&self.array),
+            indices: ArrayViewIndices(Arc::clone(&indices.0)),
+        }
+    }
     fn numpy(&self, py: Python) -> PyResult<Py<PyArray1<f32>>> {
         let array = self.array.read().map_err(cannot_read)?;
         let indices = self.indices.0.read().map_err(cannot_read)?;
@@ -52,12 +58,73 @@ impl Float32 {
             .collect();
         Ok(PyArray1::from_vec(py, vec).into_py(py))
     }
-    fn __getitem__(&self, key: GetItemKey) -> PyResult<Self> {
+    fn __len__(&self) -> PyResult<usize> {
+        Ok(self.indices.0.read().map_err(cannot_read)?.len())
+    }
+    fn __getitem__(&self, key: &PyArray1<bool>) -> PyResult<Self> {
         Ok(Self {
             array: Arc::clone(&self.array),
             indices: self.indices.__getitem__(key)?,
         })
     }
+    fn __setitem__(&mut self, key: &PyArray1<bool>, rhs: Float32Rhs) -> PyResult<()> {
+        let mut array = self.array.write().map_err(cannot_write)?;
+        let indices = self.indices.0.read().map_err(cannot_read)?;
+        let mask = key.readonly();
+        let mask = mask.as_array();
+        match rhs {
+            Float32Rhs::F32(other) => {
+                for (&index, &keep) in indices.iter().zip(mask) {
+                    if keep {
+                        unsafe {
+                            *array.get_unchecked_mut(index as usize) = other;
+                        }
+                    }
+                }
+            }
+            Float32Rhs::Float32(float32) => {
+                if Arc::ptr_eq(&self.array, &float32.array) {
+                    let other_indices = float32.indices.0.read().map_err(cannot_read)?;
+                    for (&index, &other_index, &keep) in
+                        izip!(indices.iter(), other_indices.iter(), mask.iter())
+                    {
+                        if keep {
+                            unsafe {
+                                let other = *array.get_unchecked(other_index as usize);
+                                *array.get_unchecked_mut(index as usize) = other;
+                            }
+                        }
+                    }
+                } else {
+                    let other_array = float32.array.read().map_err(cannot_read)?;
+                    let other_indices = float32.indices.0.read().map_err(cannot_read)?;
+                    for (&index, &other_index, &keep) in
+                        izip!(indices.iter(), other_indices.iter(), mask.iter())
+                    {
+                        if keep {
+                            unsafe {
+                                *array.get_unchecked_mut(index as usize) =
+                                    *other_array.get_unchecked(other_index as usize);
+                            }
+                        }
+                    }
+                }
+            }
+            Float32Rhs::PyArrayF32(py_array) => {
+                for (&index, &value, &keep) in
+                    izip!(indices.iter(), py_array.readonly().as_array(), mask.iter())
+                {
+                    if keep {
+                        unsafe {
+                            *array.get_unchecked_mut(index as usize) = value;
+                        }
+                    }
+                }
+            }
+        }
+        Ok(())
+    }
+
     fn __iadd__(&mut self, rhs: Float32Rhs) -> PyResult<()> {
         let mut array = self.array.write().map_err(cannot_write)?;
         let indices = self.indices.0.read().map_err(cannot_read)?;

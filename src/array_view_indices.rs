@@ -1,6 +1,6 @@
 use crate::error_handlers::{cannot_read, cannot_write};
-use crate::getitem_key::GetItemKey;
 use crate::index::Index;
+use numpy::PyArray1;
 use pyo3::exceptions::PyRuntimeError;
 use pyo3::prelude::*;
 use std::sync::{Arc, RwLock};
@@ -56,33 +56,18 @@ impl ArrayViewIndices {
         Ok(self.0.read().map_err(cannot_read)?.len())
     }
 
-    pub fn __getitem__(&self, key: GetItemKey) -> PyResult<Self> {
+    pub fn __getitem__(&self, key: &PyArray1<bool>) -> PyResult<Self> {
         let indices = self.0.read().map_err(cannot_read)?;
-        let new_indices = match key {
-            GetItemKey::Slice(slice) => {
-                let slice_indices = slice.indices(indices.len() as i64)?;
-                let mut new_indices = Vec::with_capacity(slice_indices.slicelength as usize);
-                for index in
-                    (slice_indices.start..slice_indices.stop).step_by(slice_indices.step as usize)
-                {
-                    new_indices.push(*unsafe { indices.get_unchecked(index as usize) })
-                }
-                new_indices
+        // Ideally the capacity of new_indices would be the number of
+        // true values in key. However, because that would mean we count
+        // them first, we allocate for the worst-case scenario instead -- we
+        // assume all values in the key are true.
+        let mut new_indices = Vec::with_capacity(key.len());
+        for (&keep, &index) in key.readonly().as_array().iter().zip(indices.iter()) {
+            if keep {
+                new_indices.push(index);
             }
-            GetItemKey::ArrayMask(mask) => {
-                // Ideally the capacity if new_indices would be the number of
-                // true values in mask. However, because that would mean we count
-                // them first, we allocate for the worst-case scenario instead -- we
-                // assume all values in the mask are true.
-                let mut new_indices = Vec::with_capacity(mask.len());
-                for (&keep, &index) in mask.readonly().as_array().iter().zip(indices.iter()) {
-                    if keep {
-                        new_indices.push(index);
-                    }
-                }
-                new_indices
-            }
-        };
+        }
         Ok(Self(Arc::new(RwLock::new(new_indices))))
     }
 }

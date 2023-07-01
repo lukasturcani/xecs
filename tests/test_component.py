@@ -8,16 +8,16 @@ def indices(xs: list[int]) -> npt.NDArray[np.uint32]:
 
 
 class StructA(ecs.Struct):
-    a: ecs.Float64
+    a: ecs.Float32
 
 
 class StructB(ecs.Struct):
-    b: ecs.Float64
+    b: ecs.Float32
     c: StructA
 
 
 class MyComponent(ecs.Component):
-    d: ecs.Float64
+    d: ecs.Float32
     e: StructA
     f: StructB
 

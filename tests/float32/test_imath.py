@@ -52,6 +52,27 @@ def test_self_slice(array: ecs.Float32, iop: typing.Any) -> None:
     assert np.all(np.equal(array.numpy(), expected))
 
 
+def test_self_slice_both_sides(array: ecs.Float32, iop: typing.Any) -> None:
+    expected = array.numpy()
+    iop(array[:], array[:])
+    iop(expected, expected)
+    assert np.all(np.equal(array.numpy(), expected))
+
+
+def test_self_key() -> None:
+    array = ecs.Float32.p_from_numpy(np.arange(5, dtype=np.float32))
+    mask = np.array([True, False, False, True, False])
+    array[mask] += array[mask]
+    assert np.all(np.equal(array.numpy(), [0, 1, 2, 6, 4]))
+
+
+def test_works_with_mask() -> None:
+    array = ecs.Float32.p_from_numpy(np.arange(5, dtype=np.float32))
+    mask = np.array([True, False, False, True, False])
+    array[mask] += np.array([10, 20], dtype=np.float32)
+    assert np.all(np.equal(array.numpy(), [10, 1, 2, 23, 4]))
+
+
 @pytest.fixture(
     params=(
         operator.iadd,
