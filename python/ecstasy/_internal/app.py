@@ -9,6 +9,7 @@ from ecstasy._internal.component import (
     ComponentT,
 )
 from ecstasy._internal.query import Query
+from ecstasy._internal.resource import Resource
 from ecstasy.ecstasy import RustApp
 
 if typing.TYPE_CHECKING:
@@ -47,6 +48,7 @@ class App:
     _startup_systems: list[SystemSpec]
     _systems: list[SystemSpec]
     _commands: Commands
+    _resources: dict[type[Resource], Resource]
 
     @classmethod
     def new(cls) -> typing.Self:
@@ -59,7 +61,11 @@ class App:
         app._startup_systems = []
         app._systems = []
         app._commands = Commands()
+        app._resources = {}
         return app
+
+    def add_resource(self, resource: Resource) -> None:
+        self._resources[type(resource)] = resource
 
     def add_startup_system(self, system: System) -> None:
         query_args, other_args = self._get_system_args(system)
