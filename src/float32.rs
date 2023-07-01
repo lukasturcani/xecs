@@ -70,12 +70,22 @@ impl Float32 {
                 }
             }
             Float32Rhs::Float32(float32) => {
-                let other_array = float32.array.read().map_err(cannot_read)?;
-                let other_indices = float32.indices.0.read().map_err(cannot_read)?;
-                for (&index, &other_index) in indices.iter().zip(other_indices.iter()) {
-                    unsafe {
-                        *array.get_unchecked_mut(index as usize) +=
-                            other_array.get_unchecked(other_index as usize);
+                if Arc::ptr_eq(&self.array, &float32.array) {
+                    let other_indices = float32.indices.0.read().map_err(cannot_read)?;
+                    for (&index, &other_index) in indices.iter().zip(other_indices.iter()) {
+                        unsafe {
+                            let other = *array.get_unchecked(other_index as usize);
+                            *array.get_unchecked_mut(index as usize) += other;
+                        }
+                    }
+                } else {
+                    let other_array = float32.array.read().map_err(cannot_read)?;
+                    let other_indices = float32.indices.0.read().map_err(cannot_read)?;
+                    for (&index, &other_index) in indices.iter().zip(other_indices.iter()) {
+                        unsafe {
+                            *array.get_unchecked_mut(index as usize) +=
+                                other_array.get_unchecked(other_index as usize);
+                        }
                     }
                 }
             }
