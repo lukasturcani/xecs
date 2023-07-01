@@ -3,6 +3,7 @@ use crate::{array_view_indices::ArrayViewIndices, error_handlers::cannot_write};
 use itertools::izip;
 use numpy::PyArray1;
 use pyo3::prelude::*;
+use pyo3::pyclass::CompareOp;
 use std::sync::{Arc, RwLock};
 
 #[derive(FromPyObject)]
@@ -419,4 +420,229 @@ impl Float32 {
         }
         Ok(())
     }
+    fn __richcmp__(
+        &self,
+        py: Python,
+        other: Float32Rhs,
+        op: CompareOp,
+    ) -> PyResult<Py<PyArray1<bool>>> {
+        match op {
+            CompareOp::Lt => lt(py, self, other),
+            CompareOp::Le => le(py, self, other),
+            CompareOp::Gt => gt(py, self, other),
+            CompareOp::Ge => ge(py, self, other),
+            CompareOp::Eq => eq(py, self, other),
+            CompareOp::Ne => ne(py, self, other),
+        }
+    }
+}
+
+fn lt(py: Python, lhs: &Float32, rhs: Float32Rhs) -> PyResult<Py<PyArray1<bool>>> {
+    let array = lhs.array.read().map_err(cannot_write)?;
+    let indices = lhs.indices.0.read().map_err(cannot_read)?;
+    let mut result = Vec::with_capacity(indices.len());
+    match rhs {
+        Float32Rhs::F32(other) => {
+            for &index in indices.iter() {
+                unsafe {
+                    result.push(*array.get_unchecked(index as usize) < other);
+                }
+            }
+        }
+        Float32Rhs::Float32(float32) => {
+            let other_array = float32.array.read().map_err(cannot_read)?;
+            let other_indices = float32.indices.0.read().map_err(cannot_read)?;
+            for (&index, &other_index) in indices.iter().zip(other_indices.iter()) {
+                unsafe {
+                    result.push(
+                        array.get_unchecked(index as usize)
+                            < other_array.get_unchecked(other_index as usize),
+                    );
+                }
+            }
+        }
+        Float32Rhs::PyArrayF32(py_array) => {
+            for (&index, value) in indices.iter().zip(py_array.readonly().as_array()) {
+                unsafe {
+                    result.push(array.get_unchecked(index as usize) < value);
+                }
+            }
+        }
+    }
+    Ok(PyArray1::from_vec(py, result).into_py(py))
+}
+
+fn le(py: Python, lhs: &Float32, rhs: Float32Rhs) -> PyResult<Py<PyArray1<bool>>> {
+    let array = lhs.array.read().map_err(cannot_write)?;
+    let indices = lhs.indices.0.read().map_err(cannot_read)?;
+    let mut result = Vec::with_capacity(indices.len());
+    match rhs {
+        Float32Rhs::F32(other) => {
+            for &index in indices.iter() {
+                unsafe {
+                    result.push(*array.get_unchecked(index as usize) <= other);
+                }
+            }
+        }
+        Float32Rhs::Float32(float32) => {
+            let other_array = float32.array.read().map_err(cannot_read)?;
+            let other_indices = float32.indices.0.read().map_err(cannot_read)?;
+            for (&index, &other_index) in indices.iter().zip(other_indices.iter()) {
+                unsafe {
+                    result.push(
+                        array.get_unchecked(index as usize)
+                            <= other_array.get_unchecked(other_index as usize),
+                    );
+                }
+            }
+        }
+        Float32Rhs::PyArrayF32(py_array) => {
+            for (&index, value) in indices.iter().zip(py_array.readonly().as_array()) {
+                unsafe {
+                    result.push(array.get_unchecked(index as usize) <= value);
+                }
+            }
+        }
+    }
+    Ok(PyArray1::from_vec(py, result).into_py(py))
+}
+
+fn gt(py: Python, lhs: &Float32, rhs: Float32Rhs) -> PyResult<Py<PyArray1<bool>>> {
+    let array = lhs.array.read().map_err(cannot_write)?;
+    let indices = lhs.indices.0.read().map_err(cannot_read)?;
+    let mut result = Vec::with_capacity(indices.len());
+    match rhs {
+        Float32Rhs::F32(other) => {
+            for &index in indices.iter() {
+                unsafe {
+                    result.push(*array.get_unchecked(index as usize) > other);
+                }
+            }
+        }
+        Float32Rhs::Float32(float32) => {
+            let other_array = float32.array.read().map_err(cannot_read)?;
+            let other_indices = float32.indices.0.read().map_err(cannot_read)?;
+            for (&index, &other_index) in indices.iter().zip(other_indices.iter()) {
+                unsafe {
+                    result.push(
+                        array.get_unchecked(index as usize)
+                            > other_array.get_unchecked(other_index as usize),
+                    );
+                }
+            }
+        }
+        Float32Rhs::PyArrayF32(py_array) => {
+            for (&index, value) in indices.iter().zip(py_array.readonly().as_array()) {
+                unsafe {
+                    result.push(array.get_unchecked(index as usize) > value);
+                }
+            }
+        }
+    }
+    Ok(PyArray1::from_vec(py, result).into_py(py))
+}
+
+fn ge(py: Python, lhs: &Float32, rhs: Float32Rhs) -> PyResult<Py<PyArray1<bool>>> {
+    let array = lhs.array.read().map_err(cannot_write)?;
+    let indices = lhs.indices.0.read().map_err(cannot_read)?;
+    let mut result = Vec::with_capacity(indices.len());
+    match rhs {
+        Float32Rhs::F32(other) => {
+            for &index in indices.iter() {
+                unsafe {
+                    result.push(*array.get_unchecked(index as usize) >= other);
+                }
+            }
+        }
+        Float32Rhs::Float32(float32) => {
+            let other_array = float32.array.read().map_err(cannot_read)?;
+            let other_indices = float32.indices.0.read().map_err(cannot_read)?;
+            for (&index, &other_index) in indices.iter().zip(other_indices.iter()) {
+                unsafe {
+                    result.push(
+                        array.get_unchecked(index as usize)
+                            >= other_array.get_unchecked(other_index as usize),
+                    );
+                }
+            }
+        }
+        Float32Rhs::PyArrayF32(py_array) => {
+            for (&index, value) in indices.iter().zip(py_array.readonly().as_array()) {
+                unsafe {
+                    result.push(array.get_unchecked(index as usize) >= value);
+                }
+            }
+        }
+    }
+    Ok(PyArray1::from_vec(py, result).into_py(py))
+}
+
+fn eq(py: Python, lhs: &Float32, rhs: Float32Rhs) -> PyResult<Py<PyArray1<bool>>> {
+    let array = lhs.array.read().map_err(cannot_write)?;
+    let indices = lhs.indices.0.read().map_err(cannot_read)?;
+    let mut result = Vec::with_capacity(indices.len());
+    match rhs {
+        Float32Rhs::F32(other) => {
+            for &index in indices.iter() {
+                unsafe {
+                    result.push(*array.get_unchecked(index as usize) == other);
+                }
+            }
+        }
+        Float32Rhs::Float32(float32) => {
+            let other_array = float32.array.read().map_err(cannot_read)?;
+            let other_indices = float32.indices.0.read().map_err(cannot_read)?;
+            for (&index, &other_index) in indices.iter().zip(other_indices.iter()) {
+                unsafe {
+                    result.push(
+                        array.get_unchecked(index as usize)
+                            == other_array.get_unchecked(other_index as usize),
+                    );
+                }
+            }
+        }
+        Float32Rhs::PyArrayF32(py_array) => {
+            for (&index, value) in indices.iter().zip(py_array.readonly().as_array()) {
+                unsafe {
+                    result.push(array.get_unchecked(index as usize) == value);
+                }
+            }
+        }
+    }
+    Ok(PyArray1::from_vec(py, result).into_py(py))
+}
+
+fn ne(py: Python, lhs: &Float32, rhs: Float32Rhs) -> PyResult<Py<PyArray1<bool>>> {
+    let array = lhs.array.read().map_err(cannot_write)?;
+    let indices = lhs.indices.0.read().map_err(cannot_read)?;
+    let mut result = Vec::with_capacity(indices.len());
+    match rhs {
+        Float32Rhs::F32(other) => {
+            for &index in indices.iter() {
+                unsafe {
+                    result.push(*array.get_unchecked(index as usize) != other);
+                }
+            }
+        }
+        Float32Rhs::Float32(float32) => {
+            let other_array = float32.array.read().map_err(cannot_read)?;
+            let other_indices = float32.indices.0.read().map_err(cannot_read)?;
+            for (&index, &other_index) in indices.iter().zip(other_indices.iter()) {
+                unsafe {
+                    result.push(
+                        array.get_unchecked(index as usize)
+                            != other_array.get_unchecked(other_index as usize),
+                    );
+                }
+            }
+        }
+        Float32Rhs::PyArrayF32(py_array) => {
+            for (&index, value) in indices.iter().zip(py_array.readonly().as_array()) {
+                unsafe {
+                    result.push(array.get_unchecked(index as usize) != value);
+                }
+            }
+        }
+    }
+    Ok(PyArray1::from_vec(py, result).into_py(py))
 }

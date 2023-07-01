@@ -1,6 +1,5 @@
-import numpy as np
-
 import ecstasy as ecs
+import numpy as np
 
 
 class Transform(ecs.Component):
@@ -18,12 +17,12 @@ class Separation(ecs.Component):
 
 class Alignment(ecs.Component):
     velocity_sum: ecs.Vec2
-    num_neighbors: ecs.Int
+    num_neighbors: ecs.Float
 
 
 class Cohesion(ecs.Component):
     translation_sum: ecs.Vec2
-    num_neighbors: ecs.Int
+    num_neighbors: ecs.Float
 
 
 class Params(ecs.Resource):
@@ -111,11 +110,13 @@ def spawn_boids(
 
 
 def move_boids(
-    query: ecs.Query[ecs.Mut[Transform], Velocity],
+    query: ecs.Query[tuple[ecs.Mut[Transform], Velocity]],
     time_step: TimeStep,
 ) -> None:
     transforms, velocities = query.result()
-    transforms.mut().translation += velocities.inner * time_step.period.as_secs()
+    transforms.mut().translation += (
+        velocities.inner * time_step.period.as_secs()
+    )
     transforms.mut().rotation = ecs.Quat.from_rotation_z(
         ecs.Vec2(0.0, 1.0).angle_between(velocities.inner)
     )
@@ -123,13 +124,16 @@ def move_boids(
 
 def calculate_separation(
     params: Params,
-    query: ecs.Query[Transform, ecs.Mut[Separation]],
+    query: ecs.Query[tuple[Transform, ecs.Mut[Separation]]],
 ) -> None:
     (separations,) = query.result()
     # TODO: Should i remove the need for [:]?
     separations.mut().displacement_sum[:] = 0.0
 
-    (transforms1, separations1), (transforms2, separations2) = query.combinations(2)
+    (transforms1, separations1), (
+        transforms2,
+        separations2,
+    ) = query.combinations(2)
     displacement = transforms1.translation - transforms2.translation
     distance = displacement.length()
     needs_separation = distance < params.separation_radius
@@ -144,7 +148,7 @@ def calculate_separation(
 
 def calculate_alignment(
     params: Params,
-    query: ecs.Query[Transform, Velocity, ecs.Mut[Alignment]],
+    query: ecs.Query[tuple[Transform, Velocity, ecs.Mut[Alignment]]],
 ) -> None:
     (alignments,) = query.result()
     alignments.mut().velocity_sum[:] = 0.0
@@ -169,13 +173,15 @@ def calculate_alignment(
 
 def calculate_cohesion(
     params: Params,
-    query: ecs.Query[Transform, ecs.Mut[Cohesion]],
+    query: ecs.Query[tuple[Transform, ecs.Mut[Cohesion]]],
 ) -> None:
     (cohesions,) = query.result()
     cohesions.mut().translation_sum[:] = 0.0
     cohesions.mut().num_neighbors[:] = 0
 
-    (transforms1, cohesions1), (transforms2, cohesions2) = query.combinations(2)
+    (transforms1, cohesions1), (transforms2, cohesions2) = query.combinations(
+        2
+    )
     displacement = transforms1.translation - transforms2.translation
     distance = displacement.length()
     needs_cohesion = (
@@ -195,9 +201,17 @@ def calculate_cohesion(
 
 def update_boid_velocity(
     params: Params,
-    query: ecs.Query[Transform, Separation, Alignment, Cohesion, ecs.Mut[Velocity]],
+    query: ecs.Query[
+        tuple[Transform, Separation, Alignment, Cohesion, ecs.Mut[Velocity]]
+    ],
 ) -> None:
-    (transforms, separations, alignments, cohesions, velocities) = query.result()
+    (
+        transforms,
+        separations,
+        alignments,
+        cohesions,
+        velocities,
+    ) = query.result()
 
     alignment_update = alignments.num_neighbors > 0
     alignment_velocities = velocities[alignment_update]
