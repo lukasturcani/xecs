@@ -16,18 +16,18 @@ class Params(ecs.Resource):
 
 def test_query_with_one_component(app: ecs.App) -> None:
     app.add_system(query_with_one_component)
-    app.run()
+    app.update()
 
 
 def test_query_with_two_components(app: ecs.App) -> None:
     app.add_system(query_with_two_components)
-    app.run()
+    app.update()
 
 
 def test_system_with_resource(app: ecs.App) -> None:
     app.add_system(system_with_resource)
     app.add_resource(Params("hi"))
-    app.run()
+    app.update()
 
 
 def query_with_one_component(

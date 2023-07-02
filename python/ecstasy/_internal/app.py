@@ -1,6 +1,7 @@
 import inspect
 import typing
 from collections import abc
+from datetime import timedelta
 
 from ecstasy._internal.commands import Commands
 from ecstasy._internal.component import (
@@ -74,7 +75,11 @@ class App:
     def add_startup_system(self, system: System) -> None:
         self._pending_startup_systems.append(system)
 
-    def add_system(self, system: System) -> None:
+    def add_system(
+        self,
+        system: System,
+        run_condition: timedelta | None = None,
+    ) -> None:
         self._pending_systems.append(system)
 
     def _get_system_args(
@@ -172,10 +177,14 @@ class App:
     def p_run_systems(self) -> None:
         self._run_systems(self._systems)
 
-    def run(self) -> None:
+    def update(self) -> None:
         self.p_process_pending_systems()
         self.p_run_startup_systems()
         self.p_run_systems()
+
+    def run(self) -> None:
+        while True:
+            self.update()
 
     def add_component_pool(self, pool: ComponentPool[ComponentT]) -> None:
         component_id = Component.component_ids[type(pool.p_component)]
