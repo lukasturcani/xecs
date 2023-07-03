@@ -13,6 +13,7 @@ mod map;
 mod query;
 mod query_id;
 mod set;
+mod time;
 
 /// A Python module implemented in Rust.
 #[pymodule]

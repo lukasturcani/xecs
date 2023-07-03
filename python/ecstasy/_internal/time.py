@@ -1,3 +1,8 @@
-from ecstasy._internal.resouce import Resource
+import time
 
-class Time(jkjkj)
+from ecstasy._internal.resource import Resource
+
+
+class Time(Resource):
+    _startup: int
+    _delta: int
