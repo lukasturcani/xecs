@@ -63,3 +63,7 @@ class Float32:
     def __ge__(self, other: Float32Rhs) -> npt.NDArray[np.bool_]: ...
     def __eq__(self, other: Float32Rhs) -> npt.NDArray[np.bool_]: ...  # type: ignore
     def __ne__(self, other: Float32Rhs) -> npt.NDArray[np.bool_]: ...  # type: ignore
+
+class Instant:
+    @staticmethod
+    def now() -> Instant: ...
