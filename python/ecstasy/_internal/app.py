@@ -39,7 +39,7 @@ class SystemSpec:
         function: System,
         query_args: dict[str, Query],
         other_args: dict[str, NonQueryParameter],
-        should_run: typing.Callable[[], bool],
+        should_run: abc.Callable[[], bool],
     ) -> None:
         self.function = function
         self.query_args = query_args
@@ -66,7 +66,7 @@ class App:
     _pools: "dict[ComponentId, ComponentPool[Component]]"
     _pending_startup_systems: list[System]
     _startup_systems: list[StartupSystemSpec]
-    _pending_systems: list[System]
+    _pending_systems: list[tuple[System, Duration | None]]
     _systems: list[SystemSpec]
     _commands: Commands
     _resources: dict[type[Resource], Resource]
@@ -98,7 +98,7 @@ class App:
         system: System,
         run_condition: Duration | None = None,
     ) -> None:
-        self._pending_systems.append(system)
+        self._pending_systems.append((system, run_condition))
 
     def _get_system_args(
         self,
@@ -165,13 +165,24 @@ class App:
                 )
             )
         self._pending_startup_systems = []
-        for system in self._pending_systems:
+        for system, run_condition in self._pending_systems:
             query_args, other_args = self._get_system_args(system)
+
+            match run_condition:
+                case Duration():
+                    should_run = _fixed_time_condition(
+                        time=self._get_resource(Time),
+                        duration=run_condition,
+                    )
+                case None:
+                    should_run = _always
+
             self._systems.append(
                 SystemSpec(
                     function=system,
                     query_args=query_args,
                     other_args=other_args,
+                    should_run=should_run,
                 )
             )
         self._pending_systems = []
@@ -233,3 +244,17 @@ class App:
 
     def _get_resource(self, resource: type[ResourceT]) -> ResourceT:
         return self._resources[resource]  # type: ignore
+
+
+def _always() -> typing.Literal[True]:
+    return True
+
+
+def _fixed_time_condition(
+    time: Time,
+    duration: Duration,
+) -> abc.Callable[[], bool]:
+    def condition() -> bool:
+        return time.delta() > duration
+
+    return condition
