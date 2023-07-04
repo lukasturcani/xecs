@@ -11,11 +11,11 @@ from ecstasy._internal.component import (
 from ecstasy._internal.query import Query
 from ecstasy._internal.resource import Resource
 from ecstasy._internal.time import Time
-from ecstasy.ecstasy import RustApp
+from ecstasy.ecstasy import Duration, RustApp
 from ecstasy.ecstasy import Time as RustTime
 
 if typing.TYPE_CHECKING:
-    from ecstasy.ecstasy import ComponentId, Duration
+    from ecstasy.ecstasy import ComponentId
 
 P = typing.ParamSpec("P")
 R = typing.TypeVar("R")
@@ -80,7 +80,7 @@ class App:
     def add_system(
         self,
         system: System,
-        run_condition: "Duration | None" = None,
+        run_condition: Duration | None = None,
     ) -> None:
         self._pending_systems.append(system)
 
