@@ -32,6 +32,22 @@ System: typing.TypeAlias = abc.Callable
 
 
 class SystemSpec:
+    __slots__ = "function", "query_args", "other_args", "should_run"
+
+    def __init__(
+        self,
+        function: System,
+        query_args: dict[str, Query],
+        other_args: dict[str, NonQueryParameter],
+        should_run: typing.Callable[[], bool],
+    ) -> None:
+        self.function = function
+        self.query_args = query_args
+        self.other_args = other_args
+        self.should_run = should_run
+
+
+class StartupSystemSpec:
     __slots__ = "function", "query_args", "other_args"
 
     def __init__(
@@ -49,7 +65,7 @@ class App:
     _rust_app: RustApp
     _pools: "dict[ComponentId, ComponentPool[Component]]"
     _pending_startup_systems: list[System]
-    _startup_systems: list[SystemSpec]
+    _startup_systems: list[StartupSystemSpec]
     _pending_systems: list[System]
     _systems: list[SystemSpec]
     _commands: Commands
@@ -138,26 +154,11 @@ class App:
             )
         )
 
-    def _run_systems(self, systems: list[SystemSpec]) -> None:
-        for system in systems:
-            for query in system.query_args.values():
-                self._run_query(query)
-
-            system.function(
-                **system.query_args,
-                **system.other_args,
-            )
-
-            self._commands.p_apply(
-                app=self._rust_app,
-                pools=self._pools,
-            )
-
     def p_process_pending_systems(self) -> None:
         for system in self._pending_startup_systems:
             query_args, other_args = self._get_system_args(system)
             self._startup_systems.append(
-                SystemSpec(
+                StartupSystemSpec(
                     function=system,
                     query_args=query_args,
                     other_args=other_args,
@@ -176,10 +177,33 @@ class App:
         self._pending_systems = []
 
     def p_run_startup_systems(self) -> None:
-        self._run_systems(self._startup_systems)
+        for system in self._startup_systems:
+            for query in system.query_args.values():
+                self._run_query(query)
+
+            system.function(
+                **system.query_args,
+                **system.other_args,
+            )
+            self._commands.p_apply(
+                app=self._rust_app,
+                pools=self._pools,
+            )
 
     def p_run_systems(self) -> None:
-        self._run_systems(self._systems)
+        for system in self._systems:
+            for query in system.query_args.values():
+                self._run_query(query)
+
+            if system.should_run():
+                system.function(
+                    **system.query_args,
+                    **system.other_args,
+                )
+                self._commands.p_apply(
+                    app=self._rust_app,
+                    pools=self._pools,
+                )
 
     def update(self) -> None:
         self.p_process_pending_systems()
