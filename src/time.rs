@@ -12,9 +12,39 @@ impl Instant {
     }
     fn checked_duration_since(&self, earlier: &mut Instant) -> PyResult<Duration> {
         let original_ealier = earlier.0.clone();
-        let duration = Duration(self.0.map(|x| x.duration_since(earlier.0.take().unwrap())));
+        let duration = self
+            .0
+            .map(|x| x.checked_duration_since(earlier.0.take().unwrap()))
+            .flatten()
+            .ok_or_else(|| PyRuntimeError::new_err("input was not earlier"))
+            .map(|x| Duration(Some(x)));
         earlier.0 = original_ealier;
         duration
+    }
+    fn elapsed(&self) -> Duration {
+        Duration(Some(self.0.map(|x| x.elapsed()).unwrap()))
+    }
+    fn checked_add(&self, duration: &mut Duration) -> PyResult<Instant> {
+        let original_duration = duration.0.clone();
+        let instant = self
+            .0
+            .map(|x| x.checked_add(duration.0.take().unwrap()))
+            .flatten()
+            .ok_or_else(|| PyRuntimeError::new_err("overflow"))
+            .map(|x| Self(Some(x)));
+        duration.0 = original_duration;
+        instant
+    }
+    fn checked_sub(&self, duration: &mut Duration) -> PyResult<Instant> {
+        let original_duration = duration.0.clone();
+        let instant = self
+            .0
+            .map(|x| x.checked_sub(duration.0.take().unwrap()))
+            .flatten()
+            .ok_or_else(|| PyRuntimeError::new_err("overflow"))
+            .map(|x| Self(Some(x)));
+        duration.0 = original_duration;
+        instant
     }
 }
 
