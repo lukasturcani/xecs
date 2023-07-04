@@ -10,7 +10,7 @@ impl Instant {
     fn now() -> Self {
         Self(Some(time::Instant::now()))
     }
-    fn checked_duration_since(&self, earlier: &mut Instant) -> PyResult<Duration> {
+    fn checked_duration_since(&self, earlier: &mut Self) -> PyResult<Duration> {
         let original_ealier = earlier.0.clone();
         let duration = self
             .0
@@ -24,7 +24,7 @@ impl Instant {
     fn elapsed(&self) -> Duration {
         Duration(Some(self.0.map(|x| x.elapsed()).unwrap()))
     }
-    fn checked_add(&self, duration: &mut Duration) -> PyResult<Instant> {
+    fn checked_add(&self, duration: &mut Duration) -> PyResult<Self> {
         let original_duration = duration.0.clone();
         let instant = self
             .0
@@ -35,7 +35,7 @@ impl Instant {
         duration.0 = original_duration;
         instant
     }
-    fn checked_sub(&self, duration: &mut Duration) -> PyResult<Instant> {
+    fn checked_sub(&self, duration: &mut Duration) -> PyResult<Self> {
         let original_duration = duration.0.clone();
         let instant = self
             .0
@@ -90,7 +90,7 @@ impl Duration {
     fn as_nanos(&self) -> u128 {
         self.0.map(|x| x.as_nanos()).unwrap()
     }
-    fn checked_add(&mut self, rhs: &mut Duration) -> PyResult<()> {
+    fn checked_add(&mut self, rhs: &mut Self) -> PyResult<()> {
         let original_lhs = self.0.clone();
         let original_rhs = rhs.0.clone();
         if let duration @ Some(_) = self.0.take().unwrap().checked_add(rhs.0.take().unwrap()) {
@@ -103,7 +103,7 @@ impl Duration {
             Err(PyRuntimeError::new_err("overflow"))
         }
     }
-    fn checked_sub(&mut self, rhs: &mut Duration) -> PyResult<()> {
+    fn checked_sub(&mut self, rhs: &mut Self) -> PyResult<()> {
         let original_lhs = self.0.clone();
         let original_rhs = rhs.0.clone();
         if let duration @ Some(_) = self.0.take().unwrap().checked_sub(rhs.0.take().unwrap()) {
