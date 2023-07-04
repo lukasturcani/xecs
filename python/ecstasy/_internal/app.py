@@ -14,7 +14,7 @@ from ecstasy._internal.resource import Resource
 from ecstasy.ecstasy import RustApp
 
 if typing.TYPE_CHECKING:
-    from ecstasy.ecstasy import ComponentId
+    from ecstasy.ecstasy import ComponentId, Duration
 
 P = typing.ParamSpec("P")
 R = typing.TypeVar("R")
@@ -78,7 +78,7 @@ class App:
     def add_system(
         self,
         system: System,
-        run_condition: timedelta | None = None,
+        run_condition: "Duration | None" = None,
     ) -> None:
         self._pending_systems.append(system)
 
@@ -161,6 +161,7 @@ class App:
                     other_args=other_args,
                 )
             )
+        self._pending_startup_systems = []
         for system in self._pending_systems:
             query_args, other_args = self._get_system_args(system)
             self._systems.append(
@@ -170,6 +171,7 @@ class App:
                     other_args=other_args,
                 )
             )
+        self._pending_systems = []
 
     def p_run_startup_systems(self) -> None:
         self._run_systems(self._startup_systems)
@@ -179,12 +181,19 @@ class App:
 
     def update(self) -> None:
         self.p_process_pending_systems()
+        self._update()
+
+    def _update(self) -> None:
         self.p_run_startup_systems()
         self.p_run_systems()
 
     def run(self) -> None:
+        self.p_process_pending_systems()
+        self._run()
+
+    def _run(self) -> None:
         while True:
-            self.update()
+            self._update()
 
     def add_component_pool(self, pool: ComponentPool[ComponentT]) -> None:
         component_id = Component.component_ids[type(pool.p_component)]

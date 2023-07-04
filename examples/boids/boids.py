@@ -1,5 +1,3 @@
-from datetime import timedelta
-
 import ecstasy as ecs
 import numpy as np
 
@@ -67,9 +65,9 @@ def main() -> None:
             top_margin=150.0,
         )
     )
-    time_step = timedelta(milliseconds=16)
     app.add_resource(Generator(np.random.default_rng(55)))
     app.add_startup_system(spawn_boids)
+    time_step = ecs.Duration.from_millis(16)
     app.add_system(calculate_separation, time_step)
     app.add_system(calculate_alignment, time_step)
     app.add_system(calculate_cohesion, time_step)
