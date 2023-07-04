@@ -10,13 +10,16 @@ from ecstasy._internal.component import (
 )
 from ecstasy._internal.query import Query
 from ecstasy._internal.resource import Resource
+from ecstasy._internal.time import Time
 from ecstasy.ecstasy import RustApp
+from ecstasy.ecstasy import Time as RustTime
 
 if typing.TYPE_CHECKING:
     from ecstasy.ecstasy import ComponentId, Duration
 
 P = typing.ParamSpec("P")
 R = typing.TypeVar("R")
+ResourceT = typing.TypeVar("ResourceT", bound=Resource)
 
 
 class SystemSignatureError(Exception):
@@ -180,14 +183,19 @@ class App:
 
     def update(self) -> None:
         self.p_process_pending_systems()
+        if Time not in self._resources:
+            self._resources[Time] = Time(RustTime.default())
         self._update()
 
     def _update(self) -> None:
+        self._get_resource(Time).update()
         self.p_run_startup_systems()
         self.p_run_systems()
 
     def run(self) -> None:
         self.p_process_pending_systems()
+        if Time not in self._resources:
+            self._resources[Time] = Time(RustTime.default())
         self._run()
 
     def _run(self) -> None:
@@ -198,3 +206,6 @@ class App:
         component_id = Component.component_ids[type(pool.p_component)]
         self._rust_app.add_component_pool(component_id, pool.p_capacity)
         self._pools[component_id] = pool  # type: ignore
+
+    def _get_resource(self, resource: type[ResourceT]) -> ResourceT:
+        return self._resources[resource]  # type: ignore
