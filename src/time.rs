@@ -2,6 +2,23 @@ use pyo3::{exceptions::PyRuntimeError, prelude::*};
 use std::time;
 
 #[pyclass]
+pub struct Instant(Option<time::Instant>);
+
+#[pymethods]
+impl Instant {
+    #[staticmethod]
+    fn now() -> Self {
+        Self(Some(time::Instant::now()))
+    }
+    fn checked_duration_since(&self, earlier: &mut Instant) -> PyResult<Duration> {
+        let original_ealier = earlier.0.clone();
+        let duration = Duration(self.0.map(|x| x.duration_since(earlier.0.take().unwrap())));
+        earlier.0 = original_ealier;
+        duration
+    }
+}
+
+#[pyclass]
 pub struct Duration(Option<time::Duration>);
 
 #[pymethods]
