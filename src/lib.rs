@@ -23,5 +23,7 @@ fn ecstasy(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<array_view_indices::ArrayViewIndices>()?;
     m.add_class::<array_view_indices::MultipleArrayViewIndices>()?;
     m.add_class::<time::Duration>()?;
+    m.add_class::<time::Instant>()?;
+    m.add_class::<time::Time>()?;
     Ok(())
 }

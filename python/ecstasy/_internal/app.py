@@ -1,7 +1,6 @@
 import inspect
 import typing
 from collections import abc
-from datetime import timedelta
 
 from ecstasy._internal.commands import Commands
 from ecstasy._internal.component import (

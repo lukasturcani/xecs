@@ -1,7 +1,12 @@
+from ecstasy import ecstasy
 from ecstasy._internal.resource import Resource
-from ecstasy.ecstasy import Duration, Instant
 
 
 class Time(Resource):
-    startup: Instant
-    delta: Duration
+    time: ecstasy.Time
+
+    def delta(self) -> ecstasy.Duration:
+        return self.time.delta()
+
+    def update(self) -> None:
+        self.time.update()

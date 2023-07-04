@@ -137,3 +137,30 @@ impl Duration {
         }
     }
 }
+
+#[pyclass]
+pub struct Time {
+    startup: time::Instant,
+    delta: time::Duration,
+    last_update: Option<time::Instant>,
+}
+
+#[pymethods]
+impl Time {
+    #[staticmethod]
+    fn default() -> Self {
+        Self {
+            startup: time::Instant::now(),
+            delta: time::Duration::ZERO,
+            last_update: None,
+        }
+    }
+    fn delta(&self) -> Duration {
+        Duration(Some(self.delta))
+    }
+    fn update(&mut self) {
+        let now = time::Instant::now();
+        self.delta = now - self.last_update.unwrap_or(self.startup);
+        self.last_update = Some(now);
+    }
+}
