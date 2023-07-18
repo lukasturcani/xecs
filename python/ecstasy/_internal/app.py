@@ -1,6 +1,7 @@
 import inspect
 import typing
 from collections import abc
+from typing import Any
 
 from ecstasy._internal.commands import Commands
 from ecstasy._internal.component import (
@@ -28,7 +29,7 @@ class SystemSignatureError(Exception):
 
 SystemParameter: typing.TypeAlias = Query | Commands | Resource
 NonQueryParameter: typing.TypeAlias = Commands | Resource
-System: typing.TypeAlias = abc.Callable
+System: typing.TypeAlias = abc.Callable[..., Any]
 
 
 class SystemSpec:
@@ -37,7 +38,7 @@ class SystemSpec:
     def __init__(
         self,
         function: System,
-        query_args: dict[str, Query],
+        query_args: dict[str, Query[Any]],
         other_args: dict[str, NonQueryParameter],
         should_run: abc.Callable[[], bool],
     ) -> None:
@@ -53,7 +54,7 @@ class StartupSystemSpec:
     def __init__(
         self,
         function: System,
-        query_args: dict[str, Query],
+        query_args: dict[str, Query[Any]],
         other_args: dict[str, NonQueryParameter],
     ) -> None:
         self.function = function
@@ -103,8 +104,8 @@ class App:
     def _get_system_args(
         self,
         system: abc.Callable[P, R],
-    ) -> tuple[dict[str, Query], dict[str, NonQueryParameter]]:
-        query_args: dict[str, Query] = {}
+    ) -> tuple[dict[str, Query[Any]], dict[str, NonQueryParameter]]:
+        query_args: dict[str, Query[Any]] = {}
         other_args: dict[str, NonQueryParameter] = {}
         for name, parameter in inspect.signature(system).parameters.items():
             if typing.get_origin(parameter.annotation) is Query:
@@ -140,7 +141,7 @@ class App:
                 )
         return query_args, other_args
 
-    def _run_query(self, query: Query) -> None:
+    def _run_query(self, query: Query[Any]) -> None:
         component_indices = self._rust_app.run_query(query.p_query_id)
         query.p_result = tuple(
             pool.p_component.p_new_view_with_indices(indices)

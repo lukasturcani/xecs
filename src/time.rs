@@ -1,4 +1,4 @@
-use pyo3::{exceptions::PyRuntimeError, prelude::*};
+use pyo3::{exceptions::PyRuntimeError, prelude::*, pyclass::CompareOp};
 use std::time;
 
 #[pyclass]
@@ -134,6 +134,16 @@ impl Duration {
         } else {
             self.0 = original_lhs;
             Err(PyRuntimeError::new_err("overflow"))
+        }
+    }
+    fn __richcmp__(&self, other: &Self, op: CompareOp) -> bool {
+        match op {
+            CompareOp::Lt => self.0 < other.0,
+            CompareOp::Le => self.0 <= other.0,
+            CompareOp::Gt => self.0 > other.0,
+            CompareOp::Ge => self.0 >= other.0,
+            CompareOp::Eq => self.0 == other.0,
+            CompareOp::Ne => self.0 != other.0,
         }
     }
 }
