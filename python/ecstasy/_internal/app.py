@@ -1,7 +1,7 @@
 import inspect
 import typing
 from collections import abc
-from typing import Any
+from typing import Any, TypeAlias, cast
 
 from ecstasy._internal.commands import Commands
 from ecstasy._internal.component import (
@@ -10,7 +10,7 @@ from ecstasy._internal.component import (
     ComponentT,
 )
 from ecstasy._internal.query import Query
-from ecstasy._internal.resource import Resource
+from ecstasy._internal.resource import Resource, ResourceT
 from ecstasy._internal.time import Time
 from ecstasy.ecstasy import Duration, RustApp
 from ecstasy.ecstasy import Time as RustTime
@@ -20,35 +20,18 @@ if typing.TYPE_CHECKING:
 
 P = typing.ParamSpec("P")
 R = typing.TypeVar("R")
-ResourceT = typing.TypeVar("ResourceT", bound=Resource)
 
 
 class SystemSignatureError(Exception):
     pass
 
 
-SystemParameter: typing.TypeAlias = Query | Commands | Resource
-NonQueryParameter: typing.TypeAlias = Commands | Resource
-System: typing.TypeAlias = abc.Callable[..., Any]
+SystemParameter: TypeAlias = Query[Any] | Commands | Resource
+NonQueryParameter: TypeAlias = Commands | Resource
+System: TypeAlias = abc.Callable[..., Any]
 
 
 class SystemSpec:
-    __slots__ = "function", "query_args", "other_args", "should_run"
-
-    def __init__(
-        self,
-        function: System,
-        query_args: dict[str, Query[Any]],
-        other_args: dict[str, NonQueryParameter],
-        should_run: abc.Callable[[], bool],
-    ) -> None:
-        self.function = function
-        self.query_args = query_args
-        self.other_args = other_args
-        self.should_run = should_run
-
-
-class StartupSystemSpec:
     __slots__ = "function", "query_args", "other_args"
 
     def __init__(
@@ -62,13 +45,30 @@ class StartupSystemSpec:
         self.other_args = other_args
 
 
+class FixedTimeStepSystemSpec:
+    __slots__ = "function", "query_args", "other_args", "time_step"
+
+    def __init__(
+        self,
+        function: System,
+        query_args: dict[str, Query[Any]],
+        other_args: dict[str, NonQueryParameter],
+        time_step: Duration,
+    ) -> None:
+        self.function = function
+        self.query_args = query_args
+        self.other_args = other_args
+        self.time_step = time_step
+
+
 class App:
     _rust_app: RustApp
     _pools: "dict[ComponentId, ComponentPool[Component]]"
     _pending_startup_systems: list[System]
-    _startup_systems: list[StartupSystemSpec]
+    _startup_systems: list[SystemSpec]
     _pending_systems: list[tuple[System, Duration | None]]
     _systems: list[SystemSpec]
+    _fixed_time_step_systems: list[FixedTimeStepSystemSpec]
     _commands: Commands
     _resources: dict[type[Resource], Resource]
 
@@ -84,6 +84,7 @@ class App:
         app._startup_systems = []
         app._pending_systems = []
         app._systems = []
+        app._fixed_time_step_systems = []
         app._commands = Commands()
         app._resources = {}
         return app
@@ -159,7 +160,7 @@ class App:
         for system in self._pending_startup_systems:
             query_args, other_args = self._get_system_args(system)
             self._startup_systems.append(
-                StartupSystemSpec(
+                SystemSpec(
                     function=system,
                     query_args=query_args,
                     other_args=other_args,
@@ -176,16 +177,9 @@ class App:
                         duration=run_condition,
                     )
                 case None:
-                    should_run = _always
-
-            self._systems.append(
-                SystemSpec(
-                    function=system,
-                    query_args=query_args,
-                    other_args=other_args,
-                    should_run=should_run,
-                )
-            )
+                    self._systems.append(
+                        SystemSpec(system, query_args, other_args)
+                    )
         self._pending_systems = []
 
     def p_run_startup_systems(self) -> None:
@@ -207,15 +201,14 @@ class App:
             for query in system.query_args.values():
                 self._run_query(query)
 
-            if system.should_run():
-                system.function(
-                    **system.query_args,
-                    **system.other_args,
-                )
-                self._commands.p_apply(
-                    app=self._rust_app,
-                    pools=self._pools,
-                )
+            system.function(
+                **system.query_args,
+                **system.other_args,
+            )
+            self._commands.p_apply(
+                app=self._rust_app,
+                pools=self._pools,
+            )
 
     def update(self) -> None:
         self.p_process_pending_systems()
@@ -241,21 +234,7 @@ class App:
     def add_component_pool(self, pool: ComponentPool[ComponentT]) -> None:
         component_id = Component.component_ids[type(pool.p_component)]
         self._rust_app.add_component_pool(component_id, pool.p_capacity)
-        self._pools[component_id] = pool  # type: ignore
+        self._pools[component_id] = cast(ComponentPool[Component], pool)
 
     def _get_resource(self, resource: type[ResourceT]) -> ResourceT:
-        return self._resources[resource]  # type: ignore
-
-
-def _always() -> typing.Literal[True]:
-    return True
-
-
-def _fixed_time_condition(
-    time: Time,
-    duration: Duration,
-) -> abc.Callable[[], bool]:
-    def condition() -> bool:
-        return time.delta() > duration
-
-    return condition
+        return cast(ResourceT, self._resources[resource])
