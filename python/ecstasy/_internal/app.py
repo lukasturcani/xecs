@@ -1,6 +1,8 @@
 import inspect
 import typing
 from collections import abc
+from time import sleep
+from typing import Any, TypeAlias, cast
 
 from ecstasy._internal.commands import Commands
 from ecstasy._internal.component import (
@@ -9,8 +11,10 @@ from ecstasy._internal.component import (
     ComponentT,
 )
 from ecstasy._internal.query import Query
-from ecstasy._internal.resource import Resource
-from ecstasy.ecstasy import RustApp
+from ecstasy._internal.resource import Resource, ResourceT
+from ecstasy._internal.time import Time
+from ecstasy.ecstasy import Duration, Instant, RustApp
+from ecstasy.ecstasy import Time as RustTime
 
 if typing.TYPE_CHECKING:
     from ecstasy.ecstasy import ComponentId
@@ -23,9 +27,9 @@ class SystemSignatureError(Exception):
     pass
 
 
-SystemParameter: typing.TypeAlias = Query | Commands | Resource
-NonQueryParameter: typing.TypeAlias = Commands | Resource
-System: typing.TypeAlias = abc.Callable
+SystemParameter: TypeAlias = Query[Any] | Commands | Resource
+NonQueryParameter: TypeAlias = Commands | Resource
+System: TypeAlias = abc.Callable[..., Any]
 
 
 class SystemSpec:
@@ -34,7 +38,7 @@ class SystemSpec:
     def __init__(
         self,
         function: System,
-        query_args: dict[str, Query],
+        query_args: dict[str, Query[Any]],
         other_args: dict[str, NonQueryParameter],
     ) -> None:
         self.function = function
@@ -42,31 +46,53 @@ class SystemSpec:
         self.other_args = other_args
 
 
+class FixedTimeStepSystemSpec:
+    __slots__ = (
+        "function",
+        "query_args",
+        "other_args",
+        "time_step",
+        "time_to_simulate",
+    )
+
+    def __init__(
+        self,
+        function: System,
+        query_args: dict[str, Query[Any]],
+        other_args: dict[str, NonQueryParameter],
+        time_step: Duration,
+    ) -> None:
+        self.function = function
+        self.query_args = query_args
+        self.other_args = other_args
+        self.time_step = time_step
+        self.time_to_simulate = Duration.new(0, 0)
+
+
 class App:
     _rust_app: RustApp
     _pools: "dict[ComponentId, ComponentPool[Component]]"
     _pending_startup_systems: list[System]
     _startup_systems: list[SystemSpec]
-    _pending_systems: list[System]
+    _pending_systems: list[tuple[System, Duration | None]]
     _systems: list[SystemSpec]
+    _fixed_time_step_systems: list[FixedTimeStepSystemSpec]
     _commands: Commands
     _resources: dict[type[Resource], Resource]
 
-    @classmethod
-    def new(cls) -> typing.Self:
-        app = cls()
-        app._rust_app = RustApp(
+    def __init__(self) -> None:
+        self._rust_app = RustApp(
             num_pools=len(Component.component_ids),
             num_queries=Query.p_num_queries,
         )
-        app._pools = {}
-        app._pending_startup_systems = []
-        app._startup_systems = []
-        app._pending_systems = []
-        app._systems = []
-        app._commands = Commands()
-        app._resources = {}
-        return app
+        self._pools = {}
+        self._pending_startup_systems = []
+        self._startup_systems = []
+        self._pending_systems = []
+        self._systems = []
+        self._fixed_time_step_systems = []
+        self._commands = Commands()
+        self._resources = {}
 
     def add_resource(self, resource: Resource) -> None:
         self._resources[type(resource)] = resource
@@ -74,14 +100,18 @@ class App:
     def add_startup_system(self, system: System) -> None:
         self._pending_startup_systems.append(system)
 
-    def add_system(self, system: System) -> None:
-        self._pending_systems.append(system)
+    def add_system(
+        self,
+        system: System,
+        run_condition: Duration | None = None,
+    ) -> None:
+        self._pending_systems.append((system, run_condition))
 
     def _get_system_args(
         self,
         system: abc.Callable[P, R],
-    ) -> tuple[dict[str, Query], dict[str, NonQueryParameter]]:
-        query_args: dict[str, Query] = {}
+    ) -> tuple[dict[str, Query[Any]], dict[str, NonQueryParameter]]:
+        query_args: dict[str, Query[Any]] = {}
         other_args: dict[str, NonQueryParameter] = {}
         for name, parameter in inspect.signature(system).parameters.items():
             if typing.get_origin(parameter.annotation) is Query:
@@ -117,7 +147,7 @@ class App:
                 )
         return query_args, other_args
 
-    def _run_query(self, query: Query) -> None:
+    def _run_query(self, query: Query[Any]) -> None:
         component_indices = self._rust_app.run_query(query.p_query_id)
         query.p_result = tuple(
             pool.p_component.p_new_view_with_indices(indices)
@@ -131,21 +161,6 @@ class App:
             )
         )
 
-    def _run_systems(self, systems: list[SystemSpec]) -> None:
-        for system in systems:
-            for query in system.query_args.values():
-                self._run_query(query)
-
-            system.function(
-                **system.query_args,
-                **system.other_args,
-            )
-
-            self._commands.p_apply(
-                app=self._rust_app,
-                pools=self._pools,
-            )
-
     def p_process_pending_systems(self) -> None:
         for system in self._pending_startup_systems:
             query_args, other_args = self._get_system_args(system)
@@ -156,28 +171,112 @@ class App:
                     other_args=other_args,
                 )
             )
-        for system in self._pending_systems:
+        self._pending_startup_systems = []
+        for system, run_condition in self._pending_systems:
             query_args, other_args = self._get_system_args(system)
-            self._systems.append(
-                SystemSpec(
-                    function=system,
-                    query_args=query_args,
-                    other_args=other_args,
-                )
-            )
+
+            match run_condition:
+                case Duration():
+                    self._fixed_time_step_systems.append(
+                        FixedTimeStepSystemSpec(
+                            system, query_args, other_args, run_condition
+                        )
+                    )
+                case None:
+                    self._systems.append(
+                        SystemSpec(system, query_args, other_args)
+                    )
+        self._pending_systems = []
 
     def p_run_startup_systems(self) -> None:
-        self._run_systems(self._startup_systems)
+        for system in self._startup_systems:
+            for query in system.query_args.values():
+                self._run_query(query)
+
+            system.function(
+                **system.query_args,
+                **system.other_args,
+            )
+            self._commands.p_apply(
+                app=self._rust_app,
+                pools=self._pools,
+            )
 
     def p_run_systems(self) -> None:
-        self._run_systems(self._systems)
+        for system in self._systems:
+            for query in system.query_args.values():
+                self._run_query(query)
 
-    def run(self) -> None:
+            system.function(
+                **system.query_args,
+                **system.other_args,
+            )
+            self._commands.p_apply(
+                app=self._rust_app,
+                pools=self._pools,
+            )
+
+    def p_run_fixed_time_step_systems(
+        self,
+        time_since_last_update: Duration,
+    ) -> None:
+        for system in self._fixed_time_step_systems:
+            system.time_to_simulate += time_since_last_update
+            while system.time_to_simulate >= system.time_step:
+                for query in system.query_args.values():
+                    self._run_query(query)
+
+                system.function(
+                    **system.query_args,
+                    **system.other_args,
+                )
+                self._commands.p_apply(
+                    app=self._rust_app,
+                    pools=self._pools,
+                )
+                system.time_to_simulate -= system.time_step
+
+    def update(self) -> None:
         self.p_process_pending_systems()
+        if Time not in self._resources:
+            self._resources[Time] = Time(RustTime.default())
+        self._update()
+
+    def _update(self) -> None:
+        time = self._get_resource(Time)
+        time.update()
         self.p_run_startup_systems()
         self.p_run_systems()
+        self.p_run_fixed_time_step_systems(time.delta())
+
+    def run(
+        self,
+        frame_time: Duration = Duration.from_nanos(int(1e9 / 60)),
+        max_run_time: Duration | None = None,
+    ) -> None:
+        self.p_process_pending_systems()
+        if Time not in self._resources:
+            self._resources[Time] = Time(RustTime.default())
+        self._run(frame_time, max_run_time)
+
+    def _run(
+        self,
+        frame_time: Duration,
+        max_run_time: Duration | None,
+    ) -> None:
+        time = self._get_resource(Time)
+        while True:
+            start = Instant.now()
+            self._update()
+            if max_run_time is not None and time.elapsed() >= max_run_time:
+                break
+            sleep_time = frame_time - start.elapsed()
+            sleep(sleep_time.as_nanos() / 1e9)
 
     def add_component_pool(self, pool: ComponentPool[ComponentT]) -> None:
         component_id = Component.component_ids[type(pool.p_component)]
         self._rust_app.add_component_pool(component_id, pool.p_capacity)
-        self._pools[component_id] = pool  # type: ignore
+        self._pools[component_id] = cast(ComponentPool[Component], pool)
+
+    def _get_resource(self, resource: type[ResourceT]) -> ResourceT:
+        return cast(ResourceT, self._resources[resource])

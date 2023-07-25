@@ -45,10 +45,6 @@ class Generator(ecs.Resource):
     value: np.random.Generator
 
 
-class TimeStep(ecs.Resource, ecs.FixedTime):
-    pass
-
-
 def main() -> None:
     app = ecs.App()
     num_boids = 100
@@ -69,19 +65,14 @@ def main() -> None:
             top_margin=150.0,
         )
     )
-    time_step = TimeStep.from_secs(1 / 60)
     app.add_resource(Generator(np.random.default_rng(55)))
-    app.add_resource(time_step)
     app.add_startup_system(spawn_boids)
+    time_step = ecs.Duration.from_millis(16)
     app.add_system(calculate_separation, time_step)
     app.add_system(calculate_alignment, time_step)
     app.add_system(calculate_cohesion, time_step)
-    app.add_system(update_boid_velocity, time_step).after(
-        calculate_separation,
-        calculate_alignment,
-        calculate_cohesion,
-    )
-    app.add_system(move_boids, time_step).after(update_boid_velocity)
+    app.add_system(update_boid_velocity, time_step)
+    app.add_system(move_boids, time_step)
     app.add_component_pool(Transform.create_pool(num_boids))
     app.add_component_pool(Velocity.create_pool(num_boids))
     app.add_component_pool(Separation.create_pool(num_boids))
@@ -111,7 +102,6 @@ def spawn_boids(
 
 def move_boids(
     query: ecs.Query[tuple[Transform, Velocity]],
-    time_step: TimeStep,
 ) -> None:
     transforms, velocities = query.result()
     transforms.translation += velocities.inner * time_step.period.as_secs()
@@ -148,7 +138,7 @@ def calculate_alignment(
     params: Params,
     query: ecs.Query[tuple[Transform, Velocity, Alignment]],
 ) -> None:
-    (alignments,) = query.result()
+    (_, _, aligments) = query.result()
     alignments.velocity_sum[:] = 0.0
     alignments.num_neighbors[:] = 0
 
