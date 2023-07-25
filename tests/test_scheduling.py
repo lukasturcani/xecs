@@ -25,6 +25,9 @@ def test_scheduling() -> None:
     app.add_resource(system2_ticks)
     app.add_system(system1)
     app.add_system(system2, ecs.Duration.from_millis(2))
-    app.run(ecs.Duration.from_millis(1), ecs.Duration.from_millis(2))
+    app.run(
+        frame_time=ecs.Duration.from_millis(1),
+        max_run_time=ecs.Duration.from_millis(2),
+    )
     assert system1_ticks.num == 3
     assert system2_ticks.num == 1
