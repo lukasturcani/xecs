@@ -1,7 +1,8 @@
 import typing
+from typing import TypeAlias
 
 from ecstasy._internal.component import Component, ComponentPool
-from ecstasy.ecstasy import RustApp
+from ecstasy._internal.world import World
 
 if typing.TYPE_CHECKING:
     from ecstasy.ecstasy import ComponentId
@@ -9,24 +10,24 @@ if typing.TYPE_CHECKING:
 T = typing.TypeVar("T")
 
 
-ComponentBundle: typing.TypeAlias = (
+ComponentBundle: TypeAlias = (
     list[type[Component]] | tuple[type[Component], ...]
 )
 
 
 class Commands:
-    _spawn_commands: list[tuple[ComponentBundle, int]]
+    __slots__ = "_world",
+    _world: World
 
-    def __init__(self) -> None:
-        self._spawn_commands = []
+    def __init__(self, world: World) -> None:
+        self._world = world
 
     def spawn(
         self,
         components: ComponentBundle,
         num: int,
     ) -> None:
-        # TODO: Commands should not be applied immediately
-        self._spawn_commands.append((components, num))
+
 
     def p_apply(
         self,

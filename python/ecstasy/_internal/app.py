@@ -69,33 +69,36 @@ class FixedTimeStepSystemSpec:
         self.time_to_simulate = Duration.new(0, 0)
 
 
+class StartupSystems(Resource):
+    systems: list[SystemSpec]
+
+
+class Systems(Resource):
+    systems: list[SystemSpec]
+
+
+class FixedTimeStepSystems(Resource):
+    systems: list[FixedTimeStepSystemSpec]
+
+
 class App:
+    world: World
     _rust_app: RustApp
-    _pools: "dict[ComponentId, ComponentPool[Component]]"
     _pending_startup_systems: list[System]
-    _startup_systems: list[SystemSpec]
     _pending_systems: list[tuple[System, Duration | None]]
-    _systems: list[SystemSpec]
-    _fixed_time_step_systems: list[FixedTimeStepSystemSpec]
     _commands: Commands
-    _resources: dict[type[Resource], Resource]
 
     def __init__(self) -> None:
         self._rust_app = RustApp(
             num_pools=len(Component.component_ids),
             num_queries=Query.p_num_queries,
         )
-        self._pools = {}
         self._pending_startup_systems = []
-        self._startup_systems = []
         self._pending_systems = []
-        self._systems = []
-        self._fixed_time_step_systems = []
         self._commands = Commands()
-        self._resources = {}
 
     def add_resource(self, resource: Resource) -> None:
-        self._resources[type(resource)] = resource
+        self.world.resources[type(resource)] = resource
 
     def add_startup_system(self, system: System) -> None:
         self._pending_startup_systems.append(system)
