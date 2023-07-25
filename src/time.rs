@@ -146,6 +146,22 @@ impl Duration {
             CompareOp::Ne => self.0 != other.0,
         }
     }
+    fn __add__(&mut self, rhs: &mut Self) -> PyResult<Self> {
+        let mut clone = Self(self.0.clone());
+        clone.checked_add(rhs)?;
+        Ok(clone)
+    }
+    fn __iadd__(&mut self, rhs: &mut Self) -> PyResult<()> {
+        self.checked_add(rhs)
+    }
+    fn __sub__(&mut self, rhs: &mut Self) -> PyResult<Self> {
+        let mut clone = Self(self.0.clone());
+        clone.checked_sub(rhs)?;
+        Ok(clone)
+    }
+    fn __isub__(&mut self, rhs: &mut Self) -> PyResult<()> {
+        self.checked_sub(rhs)
+    }
 }
 
 #[pyclass]

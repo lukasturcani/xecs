@@ -1,6 +1,7 @@
 import inspect
 import typing
 from collections import abc
+from time import sleep
 from typing import Any, TypeAlias, cast
 
 from ecstasy._internal.commands import Commands
@@ -12,7 +13,7 @@ from ecstasy._internal.component import (
 from ecstasy._internal.query import Query
 from ecstasy._internal.resource import Resource, ResourceT
 from ecstasy._internal.time import Time
-from ecstasy.ecstasy import Duration, RustApp
+from ecstasy.ecstasy import Duration, Instant, RustApp
 from ecstasy.ecstasy import Time as RustTime
 
 if typing.TYPE_CHECKING:
@@ -46,7 +47,13 @@ class SystemSpec:
 
 
 class FixedTimeStepSystemSpec:
-    __slots__ = "function", "query_args", "other_args", "time_step"
+    __slots__ = (
+        "function",
+        "query_args",
+        "other_args",
+        "time_step",
+        "time_to_simulate",
+    )
 
     def __init__(
         self,
@@ -59,6 +66,7 @@ class FixedTimeStepSystemSpec:
         self.query_args = query_args
         self.other_args = other_args
         self.time_step = time_step
+        self.time_to_simulate = Duration.new(0, 0)
 
 
 class App:
@@ -172,9 +180,10 @@ class App:
 
             match run_condition:
                 case Duration():
-                    should_run = _fixed_time_condition(
-                        time=self._get_resource(Time),
-                        duration=run_condition,
+                    self._fixed_time_step_systems.append(
+                        FixedTimeStepSystemSpec(
+                            system, query_args, other_args, run_condition
+                        )
                     )
                 case None:
                     self._systems.append(
@@ -210,6 +219,26 @@ class App:
                 pools=self._pools,
             )
 
+    def p_run_fixed_time_step_systems(
+        self,
+        time_since_last_update: Duration,
+    ) -> None:
+        for system in self._fixed_time_step_systems:
+            system.time_to_simulate += time_since_last_update
+            while system.time_to_simulate >= system.time_step:
+                for query in system.query_args.values():
+                    self._run_query(query)
+
+                system.function(
+                    **system.query_args,
+                    **system.other_args,
+                )
+                self._commands.p_apply(
+                    app=self._rust_app,
+                    pools=self._pools,
+                )
+                system.time_to_simulate -= system.time_step
+
     def update(self) -> None:
         self.p_process_pending_systems()
         if Time not in self._resources:
@@ -217,19 +246,27 @@ class App:
         self._update()
 
     def _update(self) -> None:
-        self._get_resource(Time).update()
+        time = self._get_resource(Time)
+        time.update()
         self.p_run_startup_systems()
         self.p_run_systems()
+        self.p_run_fixed_time_step_systems(time.delta())
 
-    def run(self) -> None:
+    def run(
+        self,
+        frame_time: Duration = Duration.from_nanos(int(1e9 / 60)),
+    ) -> None:
         self.p_process_pending_systems()
         if Time not in self._resources:
             self._resources[Time] = Time(RustTime.default())
-        self._run()
+        self._run(frame_time)
 
-    def _run(self) -> None:
+    def _run(self, frame_time: Duration) -> None:
         while True:
+            start = Instant.now()
             self._update()
+            sleep_time = frame_time - start.elapsed()
+            sleep(sleep_time.as_nanos() / 1e9)
 
     def add_component_pool(self, pool: ComponentPool[ComponentT]) -> None:
         component_id = Component.component_ids[type(pool.p_component)]
