@@ -64,7 +64,7 @@ def spawn_entities(commands: ecs.Commands) -> None:
 
 @pytest.fixture
 def app() -> ecs.App:
-    app = ecs.App.new()
+    app = ecs.App()
     app.add_component_pool(One.create_pool(10))
     app.add_component_pool(Two.create_pool(5))
     app.add_startup_system(spawn_entities)

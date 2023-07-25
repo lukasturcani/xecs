@@ -80,22 +80,19 @@ class App:
     _commands: Commands
     _resources: dict[type[Resource], Resource]
 
-    @classmethod
-    def new(cls) -> typing.Self:
-        app = cls()
-        app._rust_app = RustApp(
+    def __init__(self) -> None:
+        self._rust_app = RustApp(
             num_pools=len(Component.component_ids),
             num_queries=Query.p_num_queries,
         )
-        app._pools = {}
-        app._pending_startup_systems = []
-        app._startup_systems = []
-        app._pending_systems = []
-        app._systems = []
-        app._fixed_time_step_systems = []
-        app._commands = Commands()
-        app._resources = {}
-        return app
+        self._pools = {}
+        self._pending_startup_systems = []
+        self._startup_systems = []
+        self._pending_systems = []
+        self._systems = []
+        self._fixed_time_step_systems = []
+        self._commands = Commands()
+        self._resources = {}
 
     def add_resource(self, resource: Resource) -> None:
         self._resources[type(resource)] = resource
@@ -255,16 +252,24 @@ class App:
     def run(
         self,
         frame_time: Duration = Duration.from_nanos(int(1e9 / 60)),
+        max_run_time: Duration | None = None,
     ) -> None:
         self.p_process_pending_systems()
         if Time not in self._resources:
             self._resources[Time] = Time(RustTime.default())
-        self._run(frame_time)
+        self._run(frame_time, max_run_time)
 
-    def _run(self, frame_time: Duration) -> None:
+    def _run(
+        self,
+        frame_time: Duration,
+        max_run_time: Duration | None,
+    ) -> None:
+        time = self._get_resource(Time)
         while True:
             start = Instant.now()
             self._update()
+            if max_run_time is not None and time.elapsed() >= max_run_time:
+                break
             sleep_time = frame_time - start.elapsed()
             sleep(sleep_time.as_nanos() / 1e9)
 

@@ -166,9 +166,10 @@ impl Duration {
 
 #[pyclass]
 pub struct Time {
-    startup: time::Instant,
     delta: time::Duration,
+    elapsed: time::Duration,
     last_update: Option<time::Instant>,
+    startup: time::Instant,
 }
 
 #[pymethods]
@@ -176,9 +177,10 @@ impl Time {
     #[staticmethod]
     fn default() -> Self {
         Self {
-            startup: time::Instant::now(),
             delta: time::Duration::ZERO,
+            elapsed: time::Duration::ZERO,
             last_update: None,
+            startup: time::Instant::now(),
         }
     }
     fn delta(&self) -> Duration {
@@ -188,5 +190,9 @@ impl Time {
         let now = time::Instant::now();
         self.delta = now - self.last_update.unwrap_or(self.startup);
         self.last_update = Some(now);
+        self.elapsed += self.delta;
+    }
+    fn elapsed(&self) -> Duration {
+        Duration(Some(self.elapsed))
     }
 }

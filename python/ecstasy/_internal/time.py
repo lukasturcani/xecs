@@ -10,3 +10,6 @@ class Time(Resource):
 
     def update(self) -> None:
         self.time.update()
+
+    def elapsed(self) -> ecstasy.Duration:
+        return self.time.elapsed()
