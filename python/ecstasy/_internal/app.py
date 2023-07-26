@@ -161,7 +161,7 @@ class App:
     def _run_query(self, query: Query[Any]) -> None:
         component_indices = self._rust_app.run_query(query.p_query_id)
         query.p_result = tuple(
-            pool.p_component.p_new_view_with_indices(indices)
+            pool.component.p_new_view_with_indices(indices)
             for pool, indices in zip(
                 (
                     self.world.get_component_pool(component)
@@ -283,6 +283,6 @@ class App:
             sleep(sleep_time.as_nanos() / 1e9)
 
     def add_component_pool(self, pool: ComponentPool[ComponentT]) -> None:
-        component_id = Component.component_ids[type(pool.p_component)]
+        component_id = Component.component_ids[type(pool.component)]
         self._rust_app.add_component_pool(component_id, pool.p_capacity)
         self.world.add_component_pool(pool)

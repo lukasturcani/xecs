@@ -1,11 +1,8 @@
-import typing
 from typing import cast
 
 from ecstasy._internal.component import Component, ComponentPool, ComponentT
 from ecstasy._internal.resource import Resource, ResourceT
-
-if typing.TYPE_CHECKING:
-    from ecstasy.ecstasy import ComponentId
+from ecstasy.ecstasy import ArrayViewIndices
 
 
 class World:
@@ -32,5 +29,14 @@ class World:
         )
 
     def add_component_pool(self, pool: ComponentPool[ComponentT]) -> None:
-        component = type(pool.p_component)
+        component = type(pool.component)
         self._pools[component] = cast(ComponentPool[Component], pool)
+
+    def get_view(
+        self,
+        component: type[ComponentT],
+        indices: ArrayViewIndices,
+    ) -> ComponentT:
+        return self.get_component_pool(
+            component
+        ).component.p_new_view_with_indices(indices)

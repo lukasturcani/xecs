@@ -13,17 +13,17 @@ ComponentT = typing.TypeVar("ComponentT", bound="Component")
 
 
 class ComponentPool(typing.Generic[ComponentT]):
-    __slots__ = "p_component", "p_capacity"
+    __slots__ = "component", "p_capacity"
 
-    p_component: ComponentT
+    component: ComponentT
     p_capacity: int
 
     def __init__(self, component: ComponentT, capacity: int) -> None:
-        self.p_component = component
+        self.component = component
         self.p_capacity = capacity
 
     def p_spawn(self, num: int) -> ArrayViewIndices:
-        return self.p_component.p_indices.spawn(num)
+        return self.component.p_indices.spawn(num)
 
 
 class Component:

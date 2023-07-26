@@ -66,7 +66,7 @@ def spawning_sytem(world: ecs.World, commands: ecs.Commands) -> None:
     (one_indices, two_indices) = commands.spawn((One, Two), 2)
     assert len(one_indices) == 2
     assert len(two_indices) == 2
-    one_pool = world.get_component_pool(One)
+    one = world.get_view(One, one_indices)
 
 
 def spawn_entities(commands: ecs.Commands) -> None:
