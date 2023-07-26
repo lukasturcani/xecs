@@ -35,8 +35,10 @@ class World:
     def get_view(
         self,
         component: type[ComponentT],
-        indices: ArrayViewIndices,
+        indices: ArrayViewIndices | None = None,
     ) -> ComponentT:
+        if indices is None:
+            return self.p_get_component_pool(component).p_component
         return self.p_get_component_pool(
             component
         ).p_component.p_new_view_with_indices(indices)

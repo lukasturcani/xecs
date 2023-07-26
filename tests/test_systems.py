@@ -1,4 +1,5 @@
 import ecstasy as ecs
+import numpy as np
 import pytest
 
 
@@ -64,9 +65,26 @@ def system_with_resource(params: Params, query: ecs.Query[tuple[One]]) -> None:
 
 def spawning_sytem(world: ecs.World, commands: ecs.Commands) -> None:
     (one_indices, two_indices) = commands.spawn((One, Two), 2)
-    assert len(one_indices) == 2
-    assert len(two_indices) == 2
     one = world.get_view(One, one_indices)
+    two = world.get_view(Two, two_indices)
+    one.x[np.ones(len(one_indices), dtype=np.bool_)] = np.array(
+        [10, 20],
+        dtype=np.float32,
+    )
+    two.y[np.ones(len(two_indices), dtype=np.bool_)] = np.array(
+        [30, 40],
+        dtype=np.float32,
+    )
+
+    all_ones = world.get_view(One)
+    expected_ones = np.zeros(12, dtype=np.float32)
+    expected_ones[[10, 11]] = [10, 20]
+    assert np.all(all_ones.x == expected_ones)
+
+    all_twos = world.get_view(Two)
+    expected_twos = np.zeros(7, dtype=np.float32)
+    expected_twos[[5, 6]] = [30, 40]
+    assert np.all(all_twos.y == expected_twos)
 
 
 def spawn_entities(commands: ecs.Commands) -> None:
