@@ -164,7 +164,7 @@ class App:
             pool.p_component.p_new_view_with_indices(indices)
             for pool, indices in zip(
                 (
-                    self.world.p_get_component_pool(component)
+                    self.world.p_get_pool(component)
                     for component in query.p_components
                 ),
                 iter(lambda: component_indices.next(), None),
@@ -282,7 +282,7 @@ class App:
             sleep_time = frame_time - start.elapsed()
             sleep(sleep_time.as_nanos() / 1e9)
 
-    def add_component_pool(self, pool: ComponentPool[ComponentT]) -> None:
+    def add_pool(self, pool: ComponentPool[ComponentT]) -> None:
         component_id = Component.component_ids[type(pool.p_component)]
-        self._rust_app.add_component_pool(component_id, pool.p_capacity)
-        self.world.add_component_pool(pool)
+        self._rust_app.add_pool(component_id, pool.p_capacity)
+        self.world.add_pool(pool)

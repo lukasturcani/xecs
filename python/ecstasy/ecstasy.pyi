@@ -12,7 +12,7 @@ class MultipleArrayInidices:
 class RustApp:
     def __init__(self, num_pools: int, num_queries: int) -> None: ...
     def spawn(self, components: list[ComponentId], num: int) -> None: ...
-    def add_component_pool(
+    def add_pool(
         self,
         component_id: ComponentId,
         capacity: int,
@@ -31,7 +31,9 @@ class ArrayViewIndices:
     def __len__(self) -> int: ...
     def __getitem__(self, key: npt.NDArray[np.bool_]) -> ArrayViewIndices: ...
 
-Float32Rhs: typing.TypeAlias = float | Float32 | npt.NDArray[np.float32]
+Float32Rhs: typing.TypeAlias = (
+    float | Float32 | npt.NDArray[np.float32] | list[float] | tuple[float]
+)
 
 class Float32:
     @staticmethod

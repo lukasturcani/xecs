@@ -42,7 +42,7 @@ impl RustApp {
         }
     }
 
-    fn add_component_pool(&mut self, component_id: ComponentId, capacity: usize) {
+    fn add_pool(&mut self, component_id: ComponentId, capacity: usize) {
         self.pools
             .insert(component_id, ComponentPool::with_capacity(capacity));
     }

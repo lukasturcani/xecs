@@ -34,6 +34,6 @@ def app(request: pytest.FixtureRequest) -> ecs.App:
     app = ecs.App()
     app.add_startup_system(startup_system)
     app.add_system(system)
-    app.add_component_pool(One.create_pool(request.param))
+    app.add_pool(One.create_pool(request.param))
     app.p_run_startup_systems()
     return app

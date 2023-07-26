@@ -19,7 +19,7 @@ class World:
     def add_resource(self, resource: Resource) -> None:
         self._resources[type(resource)] = resource
 
-    def p_get_component_pool(
+    def p_get_pool(
         self,
         component: type[ComponentT],
     ) -> ComponentPool[ComponentT]:
@@ -28,7 +28,7 @@ class World:
             self._pools[component],
         )
 
-    def add_component_pool(self, pool: ComponentPool[ComponentT]) -> None:
+    def add_pool(self, pool: ComponentPool[ComponentT]) -> None:
         component = type(pool.p_component)
         self._pools[component] = cast(ComponentPool[Component], pool)
 
@@ -38,7 +38,7 @@ class World:
         indices: ArrayViewIndices | None = None,
     ) -> ComponentT:
         if indices is None:
-            return self.p_get_component_pool(component).p_component
-        return self.p_get_component_pool(
-            component
-        ).p_component.p_new_view_with_indices(indices)
+            return self.p_get_pool(component).p_component
+        return self.p_get_pool(component).p_component.p_new_view_with_indices(
+            indices
+        )
