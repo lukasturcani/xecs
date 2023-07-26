@@ -67,14 +67,8 @@ def spawning_sytem(world: ecs.World, commands: ecs.Commands) -> None:
     (one_indices, two_indices) = commands.spawn((One, Two), 2)
     one = world.get_view(One, one_indices)
     two = world.get_view(Two, two_indices)
-    one.x[np.ones(len(one_indices), dtype=np.bool_)] = np.array(
-        [10, 20],
-        dtype=np.float32,
-    )
-    two.y[np.ones(len(two_indices), dtype=np.bool_)] = np.array(
-        [30, 40],
-        dtype=np.float32,
-    )
+    one.x.fill([10, 20])
+    two.y.fill([30, 40])
 
     all_ones = world.get_view(One)
     expected_ones = np.zeros(12, dtype=np.float32)

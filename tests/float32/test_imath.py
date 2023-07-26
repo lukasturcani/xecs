@@ -40,6 +40,17 @@ def test_ioperator_array(
     assert np.all(np.equal(array.numpy(), expected))
 
 
+def test_ioperator_list(
+    array: ecs.Float32,
+    other_list: list[float],
+    iop: typing.Any,
+) -> None:
+    expected = array.numpy()
+    iop(array, other_list)
+    iop(expected, other_list)
+    assert np.all(np.equal(array.numpy(), expected))
+
+
 def test_self(array: ecs.Float32, iop: typing.Any) -> None:
     with pytest.raises(TypeError):
         iop(array, array)
@@ -103,6 +114,11 @@ def other_array() -> ecs.Float32:
 @pytest.fixture
 def other_numpy() -> npt.NDArray[np.float32]:
     return np.arange(5, 10, dtype=np.float32)
+
+
+@pytest.fixture
+def other_list() -> list[float]:
+    return list(range(5, 10))
 
 
 @pytest.fixture(
