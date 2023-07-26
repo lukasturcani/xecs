@@ -58,7 +58,7 @@ def test_length_of_sub_array_is_accurate() -> None:
 
 
 def test_spawning_increases_length() -> None:
-    indices = ecs.ecstasy.ArrayViewIndices.with_capacity(10)
+    indices = ecs.ArrayViewIndices.with_capacity(10)
     array = ecs.Float32.p_with_indices(indices)
     assert len(array) == 0
     indices.spawn(2)
@@ -68,7 +68,7 @@ def test_spawning_increases_length() -> None:
 
 
 def test_view_indices_are_shared_between_arrays() -> None:
-    indices = ecs.ecstasy.ArrayViewIndices.with_capacity(10)
+    indices = ecs.ArrayViewIndices.with_capacity(10)
     array_1 = ecs.Float32.p_with_indices(indices)
     array_2 = ecs.Float32.p_with_indices(indices)
     assert len(array_1) == len(array_2) == 0
@@ -77,7 +77,7 @@ def test_view_indices_are_shared_between_arrays() -> None:
 
 
 def test_spawning_to_a_full_array_causes_error() -> None:
-    indices = ecs.ecstasy.ArrayViewIndices.with_capacity(10)
+    indices = ecs.ArrayViewIndices.with_capacity(10)
     array = ecs.Float32.p_with_indices(indices)
     indices.spawn(6)
     indices.spawn(4)
@@ -93,7 +93,7 @@ def test_spawning_to_a_full_array_causes_error() -> None:
 
 def test_new_view_uses_same_array() -> None:
     array_1 = ecs.Float32.p_from_numpy(np.zeros(10, dtype=np.float32))
-    array_indices = ecs.ecstasy.ArrayViewIndices.with_capacity(10)
+    array_indices = ecs.ArrayViewIndices.with_capacity(10)
     array_2 = array_1.p_new_view_with_indices(array_indices)
     array_indices.spawn(5)
 

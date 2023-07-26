@@ -744,7 +744,7 @@ fn eq(py: Python, lhs: &Float32, rhs: Float32Rhs) -> PyResult<Py<PyArray1<bool>>
         Float32Rhs::VecF32(vec) => {
             for (&index, value) in indices.iter().zip(vec) {
                 unsafe {
-                    result.push(*array.get_unchecked(index as usize) < value);
+                    result.push(*array.get_unchecked(index as usize) == value);
                 }
             }
         }
