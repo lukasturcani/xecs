@@ -1,48 +1,28 @@
-import typing
+from collections.abc import Iterable
 
-from ecstasy._internal.component import Component, ComponentPool
-from ecstasy.ecstasy import RustApp
-
-if typing.TYPE_CHECKING:
-    from ecstasy.ecstasy import ComponentId
-
-T = typing.TypeVar("T")
-
-
-ComponentBundle: typing.TypeAlias = (
-    list[type[Component]] | tuple[type[Component], ...]
-)
+from ecstasy._internal.component import Component
+from ecstasy._internal.world import World
+from ecstasy.ecstasy import ArrayViewIndices, RustApp
 
 
 class Commands:
-    _spawn_commands: list[tuple[ComponentBundle, int]]
+    __slots__ = "_app", "_world"
 
-    def __init__(self) -> None:
-        self._spawn_commands = []
+    def __init__(self, app: RustApp, world: World) -> None:
+        self._app = app
+        self._world = world
 
     def spawn(
         self,
-        components: ComponentBundle,
+        components: Iterable[type[Component]],
         num: int,
-    ) -> None:
-        # TODO: Commands should not be applied immediately
-        self._spawn_commands.append((components, num))
-
-    def p_apply(
-        self,
-        app: RustApp,
-        pools: "dict[ComponentId, ComponentPool[typing.Any]]",
-    ) -> None:
-        # TODO: This function will probably need to be removed
-        # once a World object is added.
-
-        for components, num in self._spawn_commands:
-            entity_component_ids = []
-            for component in components:
-                component_id = Component.component_ids[component]
-                pool = pools[component_id]
-                pool.p_spawn(num)
-                entity_component_ids.append(component_id)
-            app.spawn(entity_component_ids, num)
-
-        self._spawn_commands = []
+    ) -> list[ArrayViewIndices]:
+        indices = []
+        component_ids = []
+        for component in components:
+            component_id = Component.component_ids[component]
+            pool = self._world.p_get_pool(component)
+            indices.append(pool.p_spawn(num))
+            component_ids.append(component_id)
+        self._app.spawn(component_ids, num)
+        return indices

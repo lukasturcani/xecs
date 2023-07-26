@@ -28,9 +28,9 @@ def app(request: pytest.FixtureRequest) -> ecs.App:
     def startup_system(commands: ecs.Commands) -> None:
         commands.spawn(components=(One,), num=request.param)
 
-    app = ecs.App.new()
+    app = ecs.App()
     app.add_startup_system(startup_system)
     app.add_system(system)
-    app.add_component_pool(One.create_pool(request.param))
+    app.add_pool(One.create_pool(request.param))
     app.p_run_startup_systems()
     return app

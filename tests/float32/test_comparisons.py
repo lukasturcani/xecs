@@ -37,6 +37,16 @@ def test_ioperator_array(
     assert np.all(np.equal(result, expected))
 
 
+def test_ioperator_list(
+    array: ecs.Float32,
+    other_list: list[float],
+    op: typing.Any,
+) -> None:
+    result = op(array, other_list)
+    expected = op(array.numpy(), other_list)
+    assert np.all(np.equal(result, expected))
+
+
 def test_self(array: ecs.Float32, op: typing.Any) -> None:
     result = op(array, array)
     expected = op(array.numpy(), array.numpy())
@@ -84,6 +94,11 @@ def other_array() -> ecs.Float32:
 @pytest.fixture
 def other_numpy() -> npt.NDArray[np.float32]:
     return np.array([1, 5, 3, 11], dtype=np.float32)
+
+
+@pytest.fixture
+def other_list() -> list[float]:
+    return [1, 5, 3, 11]
 
 
 @pytest.fixture(

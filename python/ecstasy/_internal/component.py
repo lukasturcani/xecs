@@ -22,8 +22,8 @@ class ComponentPool(typing.Generic[ComponentT]):
         self.p_component = component
         self.p_capacity = capacity
 
-    def p_spawn(self, num: int) -> None:
-        self.p_component.p_indices.spawn(num)
+    def p_spawn(self, num: int) -> ArrayViewIndices:
+        return self.p_component.p_indices.spawn(num)
 
 
 class Component:
