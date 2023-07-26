@@ -1,7 +1,10 @@
 import typing
+from collections.abc import Sequence
+
+from ecstasy._internal.component import Component
 
 if typing.TYPE_CHECKING:
-    from ecstasy.ecstasy import ComponentId, QueryId
+    from ecstasy.ecstasy import QueryId
 
 T = typing.TypeVar("T")
 
@@ -10,17 +13,17 @@ class Query(typing.Generic[T]):
     p_num_queries: typing.ClassVar[int] = 0
     p_query_id: "QueryId"
     p_result: T
-    p_component_ids: "list[ComponentId]"
+    p_components: Sequence[type[Component]]
 
     @classmethod
     def p_new(
         cls,
         query_id: int,
-        component_ids: "list[ComponentId]",
+        components: Sequence[type[Component]],
     ) -> typing.Self:
         query = cls()
         query.p_query_id = query_id
-        query.p_component_ids = component_ids
+        query.p_components = components
         return query
 
     def result(self) -> T:

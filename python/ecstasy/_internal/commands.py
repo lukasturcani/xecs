@@ -21,7 +21,7 @@ class Commands:
         component_ids = []
         for component in components:
             component_id = Component.component_ids[component]
-            pool = self._world.pools[component_id]
+            pool = self._world.get_component_pool(component)
             indices.append(pool.p_spawn(num))
             component_ids.append(component_id)
         self._app.spawn(component_ids, num)

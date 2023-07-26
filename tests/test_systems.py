@@ -30,6 +30,11 @@ def test_system_with_resource(app: ecs.App) -> None:
     app.update()
 
 
+def test_spawning(app: ecs.App) -> None:
+    app.add_system(spawning_sytem)
+    app.update()
+
+
 def query_with_one_component(
     query_one: ecs.Query[tuple[One]],
     query_two: ecs.Query[tuple[Two]],
@@ -57,6 +62,13 @@ def system_with_resource(params: Params, query: ecs.Query[tuple[One]]) -> None:
     assert params.z == "hi"
 
 
+def spawning_sytem(world: ecs.World, commands: ecs.Commands) -> None:
+    (one_indices, two_indices) = commands.spawn((One, Two), 2)
+    assert len(one_indices) == 2
+    assert len(two_indices) == 2
+    one_pool = world.get_component_pool(One)
+
+
 def spawn_entities(commands: ecs.Commands) -> None:
     commands.spawn((One,), 5)
     commands.spawn((One, Two), 5)
@@ -65,7 +77,7 @@ def spawn_entities(commands: ecs.Commands) -> None:
 @pytest.fixture
 def app() -> ecs.App:
     app = ecs.App()
-    app.add_component_pool(One.create_pool(10))
-    app.add_component_pool(Two.create_pool(5))
+    app.add_component_pool(One.create_pool(20))
+    app.add_component_pool(Two.create_pool(10))
     app.add_startup_system(spawn_entities)
     return app

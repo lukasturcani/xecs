@@ -71,7 +71,7 @@ def fixed_overlap_app_one_grows(request: pytest.FixtureRequest) -> ecs.App:
         commands.spawn(components=(Two,), num=5)
         commands.spawn(components=(One, Two), num=5)
 
-    app = ecs.App.new()
+    app = ecs.App()
     app.add_startup_system(startup_system)
     app.add_system(system)
     app.add_component_pool(One.create_pool(request.param))
@@ -90,7 +90,7 @@ def fixed_overlap_app_both_grow(request: pytest.FixtureRequest) -> ecs.App:
         commands.spawn(components=(Two,), num=request.param - 5)
         commands.spawn(components=(One, Two), num=5)
 
-    app = ecs.App.new()
+    app = ecs.App()
     app.add_startup_system(startup_system)
     app.add_system(system)
     app.add_component_pool(One.create_pool(request.param))
@@ -109,7 +109,7 @@ def increasing_overlap_app(request: pytest.FixtureRequest) -> ecs.App:
         commands.spawn(components=(Two,), num=5)
         commands.spawn(components=(One, Two), num=request.param - 10)
 
-    app = ecs.App.new()
+    app = ecs.App()
     app.add_startup_system(startup_system)
     app.add_system(system)
     app.add_component_pool(One.create_pool(request.param))

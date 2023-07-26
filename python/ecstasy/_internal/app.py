@@ -2,7 +2,7 @@ import inspect
 import typing
 from collections import abc
 from time import sleep
-from typing import Any, TypeAlias, cast
+from typing import Any, TypeAlias
 
 from ecstasy._internal.commands import Commands
 from ecstasy._internal.component import (
@@ -25,7 +25,7 @@ class SystemSignatureError(Exception):
 
 
 SystemParameter: TypeAlias = Query[Any] | Commands | Resource
-NonQueryParameter: TypeAlias = Commands | Resource
+NonQueryParameter: TypeAlias = Commands | Resource | World
 System: TypeAlias = abc.Callable[..., Any]
 
 
@@ -125,24 +125,23 @@ class App:
         other_args: dict[str, NonQueryParameter] = {}
         for name, parameter in inspect.signature(system).parameters.items():
             if typing.get_origin(parameter.annotation) is Query:
-                (components,) = typing.get_args(parameter.annotation)
-                first_component, *other_components = typing.get_args(
-                    components
-                )
-                component_ids = [Component.component_ids[first_component]]
-                component_ids.extend(
+                (component_tuple,) = typing.get_args(parameter.annotation)
+                components = typing.get_args(component_tuple)
+                component_ids = [
                     Component.component_ids[component]
-                    for component in other_components
-                )
+                    for component in components
+                ]
 
                 query_id = self._rust_app.add_query(
                     first_component=component_ids[0],
                     other_components=component_ids[1:],
                 )
-                query_args[name] = Query.p_new(query_id, component_ids)
+                query_args[name] = Query.p_new(query_id, components)
 
             elif parameter.annotation is Commands:
                 other_args[name] = self._commands
+            elif parameter.annotation is World:
+                other_args[name] = self.world
             elif issubclass(parameter.annotation, Resource):
                 other_args[name] = self.world.get_resource(
                     parameter.annotation
@@ -165,8 +164,8 @@ class App:
             pool.p_component.p_new_view_with_indices(indices)
             for pool, indices in zip(
                 (
-                    self.world.pools[component_id]
-                    for component_id in query.p_component_ids
+                    self.world.get_component_pool(component)
+                    for component in query.p_components
                 ),
                 iter(lambda: component_indices.next(), None),
                 strict=True,
@@ -286,4 +285,4 @@ class App:
     def add_component_pool(self, pool: ComponentPool[ComponentT]) -> None:
         component_id = Component.component_ids[type(pool.p_component)]
         self._rust_app.add_component_pool(component_id, pool.p_capacity)
-        self.world.pools[component_id] = cast(ComponentPool[Component], pool)
+        self.world.add_component_pool(pool)
