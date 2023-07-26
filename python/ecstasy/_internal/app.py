@@ -13,11 +13,9 @@ from ecstasy._internal.component import (
 from ecstasy._internal.query import Query
 from ecstasy._internal.resource import Resource, ResourceT
 from ecstasy._internal.time import Time
+from ecstasy._internal.world import World
 from ecstasy.ecstasy import Duration, Instant, RustApp
 from ecstasy.ecstasy import Time as RustTime
-
-if typing.TYPE_CHECKING:
-    from ecstasy.ecstasy import ComponentId
 
 P = typing.ParamSpec("P")
 R = typing.TypeVar("R")

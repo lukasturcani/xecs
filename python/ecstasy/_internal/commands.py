@@ -1,5 +1,4 @@
 import typing
-from typing import TypeAlias
 
 from ecstasy._internal.component import Component, ComponentPool
 from ecstasy._internal.world import World
@@ -7,16 +6,9 @@ from ecstasy._internal.world import World
 if typing.TYPE_CHECKING:
     from ecstasy.ecstasy import ComponentId
 
-T = typing.TypeVar("T")
-
-
-ComponentBundle: TypeAlias = (
-    list[type[Component]] | tuple[type[Component], ...]
-)
-
 
 class Commands:
-    __slots__ = "_world",
+    __slots__ = ("_world",)
     _world: World
 
     def __init__(self, world: World) -> None:
@@ -24,10 +16,11 @@ class Commands:
 
     def spawn(
         self,
-        components: ComponentBundle,
+        component: type[Component],
         num: int,
-    ) -> None:
-
+    ) -> Component:
+        component_id = Component.component_ids[component]
+        self._world.pools[component_id].p_spawn(num)
 
     def p_apply(
         self,
