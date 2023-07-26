@@ -40,7 +40,7 @@ impl ArrayViewIndices {
     pub fn with_capacity(capacity: usize) -> Self {
         Self(Arc::new(RwLock::new(Vec::with_capacity(capacity))))
     }
-    pub fn spawn(&mut self, num: Index) -> PyResult<()> {
+    pub fn spawn(&mut self, num: Index) -> PyResult<Self> {
         let mut indices = self.0.write().map_err(cannot_write)?;
         let num_indices = indices.len() as Index;
         if num_indices + num > (indices.capacity() as Index) {
@@ -49,7 +49,9 @@ impl ArrayViewIndices {
             ))
         } else {
             indices.extend(num_indices..num_indices + num);
-            Ok(())
+            Ok(Self(Arc::new(RwLock::new(Vec::from_iter(
+                num_indices..num_indices + num,
+            )))))
         }
     }
     pub fn __len__(&self) -> PyResult<usize> {
