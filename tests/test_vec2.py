@@ -80,9 +80,9 @@ def vec1() -> ecs.Vec2:
     pool = VecContainer.create_pool(10)
     pool.p_spawn(10)
     all_mask = np.ones(10, dtype=np.bool_)
-    pool.component.vec.x[all_mask] = generator.random(10, dtype=np.float32)
-    pool.component.vec.y[all_mask] = generator.random(10, dtype=np.float32)
-    return pool.component.vec
+    pool.p_component.vec.x[all_mask] = generator.random(10, dtype=np.float32)
+    pool.p_component.vec.y[all_mask] = generator.random(10, dtype=np.float32)
+    return pool.p_component.vec
 
 
 @pytest.fixture
@@ -91,9 +91,9 @@ def vec2() -> ecs.Vec2:
     pool = VecContainer.create_pool(10)
     pool.p_spawn(10)
     all_mask = np.ones(10, dtype=np.bool_)
-    pool.component.vec.x[all_mask] = generator.random(10, dtype=np.float32)
-    pool.component.vec.y[all_mask] = generator.random(10, dtype=np.float32)
-    return pool.component.vec
+    pool.p_component.vec.x[all_mask] = generator.random(10, dtype=np.float32)
+    pool.p_component.vec.y[all_mask] = generator.random(10, dtype=np.float32)
+    return pool.p_component.vec
 
 
 @pytest.fixture

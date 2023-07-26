@@ -28,7 +28,7 @@ def test_spawning_entities_updates_views_of_children() -> None:
     pool = MyComponent.create_pool(100)
     pool.p_spawn(50)
 
-    component = pool.component
+    component = pool.p_component
     assert len(component) == 50
     assert len(component.d) == 50
     assert len(component.e) == 50
@@ -72,7 +72,7 @@ def test_struct_getitem_creates_shared_view() -> None:
     pool = MyComponent.create_pool(10)
     pool.p_spawn(10)
 
-    struct = pool.component.f
+    struct = pool.p_component.f
     assert len(struct) == 10
     assert len(struct.b) == 10
     assert len(struct.c) == 10
