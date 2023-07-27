@@ -6,9 +6,23 @@ class Transform(ecs.Component):
     translation: ecs.Vec2
     rotation: ecs.Float
 
+    def fill_random(
+        self,
+        generator: np.random.Generator,
+        scale: float,
+    ) -> None:
+        pass
+
 
 class Velocity(ecs.Component):
     inner: ecs.Vec2
+
+    def fill_random(
+        self,
+        generator: np.random.Generator,
+        scale: float,
+    ) -> None:
+        pass
 
 
 class Separation(ecs.Component):
@@ -73,31 +87,30 @@ def main() -> None:
     app.add_system(calculate_cohesion, time_step)
     app.add_system(update_boid_velocity, time_step)
     app.add_system(move_boids, time_step)
-    app.add_component_pool(Transform.create_pool(num_boids))
-    app.add_component_pool(Velocity.create_pool(num_boids))
-    app.add_component_pool(Separation.create_pool(num_boids))
-    app.add_component_pool(Alignment.create_pool(num_boids))
-    app.add_component_pool(Cohesion.create_pool(num_boids))
+    app.add_pool(Transform.create_pool(num_boids))
+    app.add_pool(Velocity.create_pool(num_boids))
+    app.add_pool(Separation.create_pool(num_boids))
+    app.add_pool(Alignment.create_pool(num_boids))
+    app.add_pool(Cohesion.create_pool(num_boids))
     app.run()
 
 
 def spawn_boids(
     params: Params,
     generator: Generator,
+    world: ecs.World,
     commands: ecs.Commands,
 ) -> None:
-    transforms = commands.spawn(Transform, params.num_boids)
-    generator.value.random(out=transforms.translation.matrix)
-    # TODO: should i remove the need for .matrix?
-    transforms.translation.matrix *= params.max_translation
-
-    velocities = commands.spawn(Velocity, params.num_boids)
-    generator.value.random(out=velocities.inner.matrix),
-    velocities.inner.matrix *= params.max_speed
-
-    commands.spawn(Separation, params.num_boids)
-    commands.spawn(Alignment, params.num_boids)
-    commands.spawn(Cohesion, params.num_boids)
+    transformi, velocityi, *_ = commands.spawn(
+        components=(Transform, Velocity, Separation, Alignment, Cohesion),
+        num=params.num_boids,
+    )
+    world.get_view(Transform, transformi).fill_random(
+        generator.value, params.max_translation
+    )
+    world.get_view(Velocity, velocityi).fill_random(
+        generator.value, params.max_speed
+    )
 
 
 def move_boids(
@@ -115,8 +128,7 @@ def calculate_separation(
     query: ecs.Query[tuple[Transform, Separation]],
 ) -> None:
     (_, separations) = query.result()
-    # TODO: Should i remove the need for [:]?
-    separations.displacement_sum[:] = 0.0
+    separations.displacement_sum.fill(0)
 
     (transforms1, separations1), (
         transforms2,
@@ -138,9 +150,9 @@ def calculate_alignment(
     params: Params,
     query: ecs.Query[tuple[Transform, Velocity, Alignment]],
 ) -> None:
-    (_, _, aligments) = query.result()
-    alignments.velocity_sum[:] = 0.0
-    alignments.num_neighbors[:] = 0
+    (_, _, alignments) = query.result()
+    alignments.velocity_sum.fill(0)
+    alignments.num_neighbors.fill(0)
 
     boids1, boids2 = query.combinations(2)
 
@@ -164,8 +176,8 @@ def calculate_cohesion(
     query: ecs.Query[tuple[Transform, Cohesion]],
 ) -> None:
     (_, cohesions) = query.result()
-    cohesions.translation_sum[:] = 0.0
-    cohesions.num_neighbors[:] = 0
+    cohesions.translation_sum.fill(0)
+    cohesions.num_neighbors.fill(0)
 
     (transforms1, cohesions1), (transforms2, cohesions2) = query.combinations(
         2

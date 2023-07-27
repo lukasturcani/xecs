@@ -16,6 +16,13 @@ class Vec2(Struct):
     x: Float32
     y: Float32
 
+    def numpy(self) -> npt.NDArray[np.float32]:
+        return np.array([self.x.numpy(), self.y.numpy()], dtype=np.float32)
+
+    def fill(self, rhs: Rhs) -> None:
+        self.x.fill(rhs)
+        self.y.fill(rhs)
+
     def _init(self, x: Float32, y: Float32) -> None:
         self.x = x
         self.y = y
@@ -166,6 +173,3 @@ class Vec2(Struct):
             self.x **= other.x
             self.y **= other.y
         return self
-
-    def numpy(self) -> npt.NDArray[np.float32]:
-        return np.array([self.x.numpy(), self.y.numpy()], dtype=np.float32)

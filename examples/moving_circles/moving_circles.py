@@ -29,7 +29,7 @@ class Velocity(ecs.Component):
 
 
 class Generator(ecs.Resource):
-    inner: np.random.Generator
+    value: np.random.Generator
 
 
 class Params(ecs.Resource):
@@ -49,10 +49,10 @@ def spawn_circles(
         num=params.num_circles,
     )
     world.get_view(Position, positioni).fill_random(
-        generator.inner, params.max_position
+        generator.value, params.max_position
     )
     world.get_view(Velocity, velocityi).fill_random(
-        generator.inner, params.max_velocity
+        generator.value, params.max_velocity
     )
 
 
