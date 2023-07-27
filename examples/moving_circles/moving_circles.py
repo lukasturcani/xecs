@@ -3,29 +3,29 @@ import numpy as np
 
 
 class Position(ecs.Component):
-    inner: ecs.Vec2
+    value: ecs.Vec2
 
     def fill_random(
         self,
         generator: np.random.Generator,
         scale: float,
     ) -> None:
-        num = len(self.inner.x)
-        self.inner.x.fill(generator.random(num, dtype=np.float32) * scale)
-        self.inner.y.fill(generator.random(num, dtype=np.float32) * scale)
+        num = len(self.value.x)
+        self.value.x.fill(generator.random(num, dtype=np.float32) * scale)
+        self.value.y.fill(generator.random(num, dtype=np.float32) * scale)
 
 
 class Velocity(ecs.Component):
-    inner: ecs.Vec2
+    value: ecs.Vec2
 
     def fill_random(
         self,
         generator: np.random.Generator,
         scale: float,
     ) -> None:
-        num = len(self.inner.x)
-        self.inner.x.fill(generator.random(num, dtype=np.float32) * scale)
-        self.inner.y.fill(generator.random(num, dtype=np.float32) * scale)
+        num = len(self.value.x)
+        self.value.x.fill(generator.random(num, dtype=np.float32) * scale)
+        self.value.y.fill(generator.random(num, dtype=np.float32) * scale)
 
 
 class Generator(ecs.Resource):
@@ -58,7 +58,7 @@ def spawn_circles(
 
 def move_circles(query: ecs.Query[tuple[Position, Velocity]]) -> None:
     (position, velocity) = query.result()
-    position += velocity * ecs.Duration.from_millis(16).as_secs()
+    position.value += velocity.value * ecs.Duration.from_millis(16).as_secs()
 
 
 def main() -> None:
