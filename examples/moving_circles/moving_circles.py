@@ -3,15 +3,33 @@ import numpy as np
 
 
 class Position(ecs.Component):
-    inner: ecs.Vec2
+    value: ecs.Vec2
+
+    def fill_random(
+        self,
+        generator: np.random.Generator,
+        scale: float,
+    ) -> None:
+        num = len(self.value.x)
+        self.value.x.fill(generator.random(num, dtype=np.float32) * scale)
+        self.value.y.fill(generator.random(num, dtype=np.float32) * scale)
 
 
 class Velocity(ecs.Component):
-    inner: ecs.Vec2
+    value: ecs.Vec2
+
+    def fill_random(
+        self,
+        generator: np.random.Generator,
+        scale: float,
+    ) -> None:
+        num = len(self.value.x)
+        self.value.x.fill(generator.random(num, dtype=np.float32) * scale)
+        self.value.y.fill(generator.random(num, dtype=np.float32) * scale)
 
 
 class Generator(ecs.Resource):
-    inner: np.random.Generator
+    value: np.random.Generator
 
 
 class Params(ecs.Resource):
@@ -23,14 +41,24 @@ class Params(ecs.Resource):
 def spawn_circles(
     params: Params,
     generator: Generator,
+    world: ecs.World,
     commands: ecs.Commands,
 ) -> None:
-    positions = commands.spawn(Position, params.num_circles)
-    velocities = commands.spawn(Velocity, params.num_circles)
+    positioni, velocityi = commands.spawn(
+        components=(Position, Velocity),
+        num=params.num_circles,
+    )
+    world.get_view(Position, positioni).fill_random(
+        generator.value, params.max_position
+    )
+    world.get_view(Velocity, velocityi).fill_random(
+        generator.value, params.max_velocity
+    )
 
 
 def move_circles(query: ecs.Query[tuple[Position, Velocity]]) -> None:
     (position, velocity) = query.result()
+    position.value += velocity.value * ecs.Duration.from_millis(16).as_secs()
 
 
 def main() -> None:
@@ -46,8 +74,8 @@ def main() -> None:
     app.add_resource(Generator(np.random.default_rng(55)))
     app.add_startup_system(spawn_circles)
     app.add_system(move_circles, ecs.Duration.from_millis(16))
-    app.add_component_pool(Position.create_pool(num_circles))
-    app.add_component_pool(Velocity.create_pool(num_circles))
+    app.add_pool(Position.create_pool(num_circles))
+    app.add_pool(Velocity.create_pool(num_circles))
     app.run()
 
 

@@ -28,12 +28,19 @@ def test_numpy(vec1: ecs.Vec2) -> None:
 
 @pytest.fixture(
     params=(
+        operator.add,
         operator.iadd,
+        operator.sub,
         operator.isub,
+        operator.mul,
         operator.imul,
+        operator.truediv,
         operator.itruediv,
+        operator.floordiv,
         operator.ifloordiv,
+        operator.mod,
         operator.imod,
+        operator.pow,
         operator.ipow,
     )
 )
@@ -46,9 +53,7 @@ def test_operators_vec2(
     vec2: ecs.Vec2,
     math_operator: typing.Any,
 ) -> None:
-    array1 = vec1.numpy()
-    array2 = vec2.numpy()
-    expected = math_operator(array1, array2)
+    expected = math_operator(vec1.numpy(), vec2.numpy())
     result = math_operator(vec1, vec2)
     assert np.all(np.equal(result.numpy(), expected))
 
@@ -57,8 +62,7 @@ def test_operators_float(
     vec1: ecs.Vec2,
     math_operator: typing.Any,
 ) -> None:
-    array1 = vec1.numpy()
-    expected = math_operator(array1, 2)
+    expected = math_operator(vec1.numpy(), 2)
     result = math_operator(vec1, 2)
     assert np.all(np.equal(result.numpy(), expected))
 
@@ -68,8 +72,7 @@ def test_operators_array(
     array: npt.NDArray[np.float32],
     math_operator: typing.Any,
 ) -> None:
-    array1 = vec1.numpy()
-    expected = math_operator(array1, array)
+    expected = math_operator(vec1.numpy(), array)
     result = math_operator(vec1, array)
     assert np.all(np.equal(result.numpy(), expected))
 
