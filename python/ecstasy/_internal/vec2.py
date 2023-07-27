@@ -146,6 +146,16 @@ class Vec2(Struct):
             self.y %= other.y
         return self
 
+    def __pow__(self, other: Self | Rhs) -> Self:
+        obj = type(self).__new__(type(self))
+        if isinstance(
+            other, int | float | np.ndarray | Float32 | list | tuple
+        ):
+            obj._init(self.x**other, self.y**other)
+            return obj
+        obj._init(self.x**other.x, self.y**other.y)
+        return obj
+
     def __ipow__(self, other: Self | Rhs) -> Self:
         if isinstance(
             other, int | float | np.ndarray | Float32 | list | tuple
