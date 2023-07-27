@@ -43,6 +43,27 @@ class Display(ecs.Resource):
     surface: pygame.Surface
 
 
+def main() -> None:
+    pygame.init()
+    app = ecs.App()
+    num_circles = 10
+    app.add_resource(
+        Params(
+            num_circles=num_circles,
+            max_position=200,
+            max_velocity=50,
+        )
+    )
+    app.add_resource(Generator(np.random.default_rng(55)))
+    app.add_resource(Display(pygame.display.set_mode((640, 640))))
+    app.add_startup_system(spawn_circles)
+    app.add_system(move_circles, ecs.Duration.from_millis(16))
+    app.add_system(show_circles)
+    app.add_pool(Position.create_pool(num_circles))
+    app.add_pool(Velocity.create_pool(num_circles))
+    app.run()
+
+
 def spawn_circles(
     params: Params,
     generator: Generator,
@@ -61,11 +82,18 @@ def spawn_circles(
     )
 
 
-def move_circles(query: ecs.Query[tuple[Position, Velocity]]) -> None:
+def move_circles(
+    params: Params,
+    query: ecs.Query[tuple[Position, Velocity]],
+) -> None:
     (position, velocity) = query.result()
     position.value += velocity.value * (
         ecs.Duration.from_millis(16).as_nanos() / 1e9
     )
+    velocity.value.x[position.value.x > params.max_position] *= -1
+    velocity.value.y[position.value.y > params.max_position] *= -1
+    velocity.value.x[position.value.x < 0] *= -1
+    velocity.value.y[position.value.y < 0] *= -1
 
 
 def show_circles(
@@ -79,27 +107,6 @@ def show_circles(
         x, y = map(float, position[:, i])
         pygame.draw.circle(display.surface, "green", (x, y), 10)
     pygame.display.flip()
-
-
-def main() -> None:
-    pygame.init()
-    app = ecs.App()
-    num_circles = 10
-    app.add_resource(
-        Params(
-            num_circles=num_circles,
-            max_position=200,
-            max_velocity=20,
-        )
-    )
-    app.add_resource(Generator(np.random.default_rng(55)))
-    app.add_resource(Display(pygame.display.set_mode((640, 640))))
-    app.add_startup_system(spawn_circles)
-    app.add_system(move_circles, ecs.Duration.from_millis(16))
-    app.add_system(show_circles)
-    app.add_pool(Position.create_pool(num_circles))
-    app.add_pool(Velocity.create_pool(num_circles))
-    app.run()
 
 
 if __name__ == "__main__":
