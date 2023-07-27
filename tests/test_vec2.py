@@ -28,6 +28,7 @@ def test_numpy(vec1: ecs.Vec2) -> None:
 
 @pytest.fixture(
     params=(
+        operator.add,
         operator.iadd,
         operator.isub,
         operator.imul,

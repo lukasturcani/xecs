@@ -12,9 +12,8 @@ def test_ioperator_value(
     other_value: float,
     iop: typing.Any,
 ) -> None:
-    expected = array.numpy()
+    expected = iop(array.numpy(), other_value)
     iop(array, other_value)
-    iop(expected, other_value)
     assert np.all(np.equal(array.numpy(), expected))
 
 
@@ -23,9 +22,8 @@ def test_ioperator_numpy(
     other_numpy: npt.NDArray[np.float32],
     iop: typing.Any,
 ) -> None:
-    expected = array.numpy()
+    expected = iop(array.numpy(), other_numpy)
     iop(array, other_numpy)
-    iop(expected, other_numpy)
     assert np.all(np.equal(array.numpy(), expected))
 
 
@@ -34,9 +32,8 @@ def test_ioperator_array(
     other_array: ecs.Float32,
     iop: typing.Any,
 ) -> None:
-    expected = array.numpy()
+    expected = iop(array.numpy(), other_array.numpy())
     iop(array, other_array)
-    iop(expected, other_array.numpy())
     assert np.all(np.equal(array.numpy(), expected))
 
 
@@ -45,9 +42,8 @@ def test_ioperator_list(
     other_list: list[float],
     iop: typing.Any,
 ) -> None:
-    expected = array.numpy()
+    expected = iop(array.numpy(), other_list)
     iop(array, other_list)
-    iop(expected, other_list)
     assert np.all(np.equal(array.numpy(), expected))
 
 
@@ -57,18 +53,16 @@ def test_self(array: ecs.Float32, iop: typing.Any) -> None:
 
 
 def test_self_mask(array: ecs.Float32, iop: typing.Any) -> None:
-    expected = array.numpy()
+    expected = iop(array.numpy(), array.numpy())
     all_mask = np.ones(len(array), dtype=np.bool_)
     iop(array, array[all_mask])
-    iop(expected, expected)
     assert np.all(np.equal(array.numpy(), expected))
 
 
 def test_self_slice_both_sides(array: ecs.Float32, iop: typing.Any) -> None:
-    expected = array.numpy()
+    expected = iop(array.numpy(), array.numpy())
     all_mask = np.ones(len(array), dtype=np.bool_)
     iop(array[all_mask], array[all_mask])
-    iop(expected, expected)
     assert np.all(np.equal(array.numpy(), expected))
 
 

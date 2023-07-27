@@ -12,8 +12,8 @@ def test_operator_value(
     other_value: float,
     op: typing.Any,
 ) -> None:
-    result = op(array, other_value)
     expected = op(array.numpy(), other_value)
+    result = op(array, other_value)
     assert np.all(np.equal(result.numpy(), expected))
 
 
@@ -22,8 +22,8 @@ def test_operator_numpy(
     other_numpy: npt.NDArray[np.float32],
     op: typing.Any,
 ) -> None:
-    result = op(array, other_numpy)
     expected = op(array.numpy(), other_numpy)
+    result = op(array, other_numpy)
     assert np.all(np.equal(result.numpy(), expected))
 
 
@@ -32,8 +32,8 @@ def test_operator_array(
     other_array: ecs.Float32,
     op: typing.Any,
 ) -> None:
-    result = op(array, other_array)
     expected = op(array.numpy(), other_array.numpy())
+    result = op(array, other_array)
     assert np.all(np.equal(result.numpy(), expected))
 
 
@@ -42,8 +42,8 @@ def test_operator_list(
     other_list: list[float],
     op: typing.Any,
 ) -> None:
-    result = op(array, other_list)
     expected = op(array.numpy(), other_list)
+    result = op(array, other_list)
     assert np.all(np.equal(result.numpy(), expected))
 
 

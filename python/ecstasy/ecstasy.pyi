@@ -32,7 +32,7 @@ class ArrayViewIndices:
     def __getitem__(self, key: npt.NDArray[np.bool_]) -> ArrayViewIndices: ...
 
 Float32Rhs: typing.TypeAlias = (
-    float | Float32 | npt.NDArray[np.float32] | list[float] | tuple[float]
+    float | Float32 | npt.NDArray[np.float32] | list[float] | tuple[float, ...]
 )
 
 class Float32:
