@@ -36,6 +36,7 @@ def test_numpy(vec1: ecs.Vec2) -> None:
         operator.imul,
         operator.truediv,
         operator.itruediv,
+        operator.floordiv,
         operator.ifloordiv,
         operator.imod,
         operator.ipow,

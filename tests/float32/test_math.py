@@ -58,7 +58,7 @@ def test_self(array: ecs.Float32, op: typing.Any) -> None:
         operator.sub,
         operator.mul,
         operator.truediv,
-        # operator.floordiv,
+        operator.floordiv,
         # operator.mod,
         # operator.pow,
     ),
