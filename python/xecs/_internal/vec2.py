@@ -15,12 +15,19 @@ class Vec2(Struct):
     x: Float32
     y: Float32
 
+    @staticmethod
+    def from_float(x: float, y: float, size: int) -> "Vec2":
+        pass
+
+    def angle_between(self, other: "Vec2", out: Float32) -> None:
+        pass
+
     def numpy(self) -> npt.NDArray[np.float32]:
         return np.array([self.x.numpy(), self.y.numpy()], dtype=np.float32)
 
-    def fill(self, rhs: Rhs) -> None:
-        self.x.fill(rhs)
-        self.y.fill(rhs)
+    def fill(self, value: Rhs) -> None:
+        self.x.fill(value)
+        self.y.fill(value)
 
     def _init(self, x: Float32, y: Float32) -> None:
         self.x = x

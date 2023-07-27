@@ -11,18 +11,27 @@ class Transform(xx.Component):
         generator: np.random.Generator,
         scale: float,
     ) -> None:
-        pass
+        num = len(self.rotation)
+        self.translation.x.fill(
+            generator.random(num, dtype=np.float32) * scale
+        )
+        self.translation.y.fill(
+            generator.random(num, dtype=np.float32) * scale
+        )
+        self.rotation.fill(generator.random(num, dtype=np.float32) * 2 * np.pi)
 
 
 class Velocity(xx.Component):
-    inner: xx.Vec2
+    value: xx.Vec2
 
     def fill_random(
         self,
         generator: np.random.Generator,
         scale: float,
     ) -> None:
-        pass
+        num = len(self.value.x)
+        self.value.x.fill(generator.random(num, dtype=np.float32) * scale)
+        self.value.y.fill(generator.random(num, dtype=np.float32) * scale)
 
 
 class Separation(xx.Component):
@@ -117,9 +126,9 @@ def move_boids(
     query: xx.Query[tuple[Transform, Velocity]],
 ) -> None:
     transforms, velocities = query.result()
-    transforms.translation += velocities.inner * time_step.period.as_secs()
-    transforms.rotation = xx.Quat.from_rotation_z(
-        xx.Vec2(0.0, 1.0).angle_between(velocities.inner)
+    transforms.translation += velocities.value * 16 / 1e3
+    xx.Vec2.from_float(0.0, 1.0, len(transforms)).angle_between(
+        velocities.value, out=transforms.rotation
     )
 
 
@@ -217,28 +226,28 @@ def update_boid_velocity(
     alignment_velocities = velocities[alignment_update]
     alignments = alignments[alignment_update]
     alignments.velocity_sum /= alignments.num_neighbors
-    alignments.velocity_sum -= alignment_velocities.inner
+    alignments.velocity_sum -= alignment_velocities.value
     alignments.velocity_sum *= params.alignment_coefficient
-    alignment_velocities.inner += alignments.velocity_sum
+    alignment_velocities.value += alignments.velocity_sum
 
     cohesion_update = cohesions.num_neighbors > 0
     cohesions = cohesions[cohesion_update]
     cohesions.translation_sum /= cohesions.num_neighbors
     cohesions.translation_sum -= transforms[cohesion_update].translation
     cohesions.translation_sum *= params.cohesion_coefficient
-    velocities[cohesion_update].inner += cohesions.translation_sum
+    velocities[cohesion_update].value += cohesions.translation_sum
 
     left_bounds = transforms.translation.x < params.left_margin
-    velocities[left_bounds].inner.x += params.box_bound_coefficient
+    velocities[left_bounds].value.x += params.box_bound_coefficient
 
     right_bounds = transforms.translation.x > params.right_margin
-    velocities[right_bounds].inner.x -= params.box_bound_coefficient
+    velocities[right_bounds].value.x -= params.box_bound_coefficient
 
     bottom_bounds = transforms.translation.y < params.bottom_margin
-    velocities[bottom_bounds].inner.y += params.box_bound_coefficient
+    velocities[bottom_bounds].value.y += params.box_bound_coefficient
 
     top_bounds = transforms.translation.y > params.top_margin
-    velocities[top_bounds].inner.y += params.box_bound_coefficient
+    velocities[top_bounds].value.y += params.box_bound_coefficient
 
     separations.displacement_sum *= params.separation_coefficient
-    velocities.inner += separations.displacement_sum
+    velocities.value += separations.displacement_sum
