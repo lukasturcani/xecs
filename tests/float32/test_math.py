@@ -48,8 +48,9 @@ def test_operator_list(
 
 
 def test_self(array: ecs.Float32, op: typing.Any) -> None:
-    with pytest.raises(TypeError):
-        op(array, array)
+    expected = op(array.numpy(), array.numpy())
+    result = op(array, array)
+    assert np.all(np.equal(result.numpy(), expected))
 
 
 @pytest.fixture(
@@ -60,7 +61,7 @@ def test_self(array: ecs.Float32, op: typing.Any) -> None:
         operator.truediv,
         operator.floordiv,
         operator.mod,
-        # operator.pow,
+        operator.pow,
     ),
 )
 def op(request: pytest.FixtureRequest) -> typing.Any:

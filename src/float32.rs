@@ -15,7 +15,7 @@ enum Float32Rhs<'a> {
 }
 
 #[derive(FromPyObject)]
-enum IPowRhs<'a> {
+enum PowRhs<'a> {
     I32(i32),
     F32(f32),
     Float32(PyRef<'a, Float32>),
@@ -186,15 +186,15 @@ impl Float32 {
         }
         Ok(())
     }
-    fn __add__(&mut self, rhs: Float32Rhs) -> PyResult<Self> {
-        let mut array = self.array.write().map_err(cannot_write)?;
+    fn __add__(&self, rhs: Float32Rhs) -> PyResult<Self> {
+        let array = self.array.read().map_err(cannot_read)?;
         let indices = self.indices.0.read().map_err(cannot_read)?;
         let mut result = Vec::with_capacity(indices.len());
         match rhs {
             Float32Rhs::F32(other) => {
                 for &index in indices.iter() {
                     unsafe {
-                        result.push(*array.get_unchecked_mut(index as usize) + other);
+                        result.push(*array.get_unchecked(index as usize) + other);
                     }
                 }
             }
@@ -204,7 +204,7 @@ impl Float32 {
                     for (&index, &other_index) in indices.iter().zip(other_indices.iter()) {
                         unsafe {
                             let other = *array.get_unchecked(other_index as usize);
-                            result.push(*array.get_unchecked_mut(index as usize) + other);
+                            result.push(*array.get_unchecked(index as usize) + other);
                         }
                     }
                 } else {
@@ -213,7 +213,7 @@ impl Float32 {
                     for (&index, &other_index) in indices.iter().zip(other_indices.iter()) {
                         unsafe {
                             result.push(
-                                *array.get_unchecked_mut(index as usize)
+                                *array.get_unchecked(index as usize)
                                     + other_array.get_unchecked(other_index as usize),
                             );
                         }
@@ -223,14 +223,14 @@ impl Float32 {
             Float32Rhs::PyArrayF32(py_array) => {
                 for (&index, value) in indices.iter().zip(py_array.readonly().as_array()) {
                     unsafe {
-                        result.push(*array.get_unchecked_mut(index as usize) + value);
+                        result.push(*array.get_unchecked(index as usize) + value);
                     }
                 }
             }
             Float32Rhs::VecF32(vec) => {
                 for (&index, value) in indices.iter().zip(vec) {
                     unsafe {
-                        result.push(*array.get_unchecked_mut(index as usize) + value);
+                        result.push(*array.get_unchecked(index as usize) + value);
                     }
                 }
             }
@@ -290,15 +290,15 @@ impl Float32 {
         }
         Ok(())
     }
-    fn __sub__(&mut self, rhs: Float32Rhs) -> PyResult<Self> {
-        let mut array = self.array.write().map_err(cannot_write)?;
+    fn __sub__(&self, rhs: Float32Rhs) -> PyResult<Self> {
+        let array = self.array.read().map_err(cannot_read)?;
         let indices = self.indices.0.read().map_err(cannot_read)?;
         let mut result = Vec::with_capacity(indices.len());
         match rhs {
             Float32Rhs::F32(other) => {
                 for &index in indices.iter() {
                     unsafe {
-                        result.push(*array.get_unchecked_mut(index as usize) - other);
+                        result.push(*array.get_unchecked(index as usize) - other);
                     }
                 }
             }
@@ -308,7 +308,7 @@ impl Float32 {
                     for (&index, &other_index) in indices.iter().zip(other_indices.iter()) {
                         unsafe {
                             let other = *array.get_unchecked(other_index as usize);
-                            result.push(*array.get_unchecked_mut(index as usize) - other);
+                            result.push(*array.get_unchecked(index as usize) - other);
                         }
                     }
                 } else {
@@ -317,7 +317,7 @@ impl Float32 {
                     for (&index, &other_index) in indices.iter().zip(other_indices.iter()) {
                         unsafe {
                             result.push(
-                                *array.get_unchecked_mut(index as usize)
+                                *array.get_unchecked(index as usize)
                                     - other_array.get_unchecked(other_index as usize),
                             );
                         }
@@ -327,14 +327,14 @@ impl Float32 {
             Float32Rhs::PyArrayF32(py_array) => {
                 for (&index, value) in indices.iter().zip(py_array.readonly().as_array()) {
                     unsafe {
-                        result.push(*array.get_unchecked_mut(index as usize) - value);
+                        result.push(*array.get_unchecked(index as usize) - value);
                     }
                 }
             }
             Float32Rhs::VecF32(vec) => {
                 for (&index, value) in indices.iter().zip(vec) {
                     unsafe {
-                        result.push(*array.get_unchecked_mut(index as usize) - value);
+                        result.push(*array.get_unchecked(index as usize) - value);
                     }
                 }
             }
@@ -394,15 +394,15 @@ impl Float32 {
         }
         Ok(())
     }
-    fn __mul__(&mut self, rhs: Float32Rhs) -> PyResult<Self> {
-        let mut array = self.array.write().map_err(cannot_write)?;
+    fn __mul__(&self, rhs: Float32Rhs) -> PyResult<Self> {
+        let array = self.array.read().map_err(cannot_read)?;
         let indices = self.indices.0.read().map_err(cannot_read)?;
         let mut result = Vec::with_capacity(indices.len());
         match rhs {
             Float32Rhs::F32(other) => {
                 for &index in indices.iter() {
                     unsafe {
-                        result.push(*array.get_unchecked_mut(index as usize) * other);
+                        result.push(*array.get_unchecked(index as usize) * other);
                     }
                 }
             }
@@ -412,7 +412,7 @@ impl Float32 {
                     for (&index, &other_index) in indices.iter().zip(other_indices.iter()) {
                         unsafe {
                             let other = *array.get_unchecked(other_index as usize);
-                            result.push(*array.get_unchecked_mut(index as usize) * other);
+                            result.push(*array.get_unchecked(index as usize) * other);
                         }
                     }
                 } else {
@@ -421,7 +421,7 @@ impl Float32 {
                     for (&index, &other_index) in indices.iter().zip(other_indices.iter()) {
                         unsafe {
                             result.push(
-                                *array.get_unchecked_mut(index as usize)
+                                *array.get_unchecked(index as usize)
                                     * other_array.get_unchecked(other_index as usize),
                             );
                         }
@@ -431,14 +431,14 @@ impl Float32 {
             Float32Rhs::PyArrayF32(py_array) => {
                 for (&index, value) in indices.iter().zip(py_array.readonly().as_array()) {
                     unsafe {
-                        result.push(*array.get_unchecked_mut(index as usize) * value);
+                        result.push(*array.get_unchecked(index as usize) * value);
                     }
                 }
             }
             Float32Rhs::VecF32(vec) => {
                 for (&index, value) in indices.iter().zip(vec) {
                     unsafe {
-                        result.push(*array.get_unchecked_mut(index as usize) * value);
+                        result.push(*array.get_unchecked(index as usize) * value);
                     }
                 }
             }
@@ -498,15 +498,15 @@ impl Float32 {
         }
         Ok(())
     }
-    fn __truediv__(&mut self, rhs: Float32Rhs) -> PyResult<Self> {
-        let mut array = self.array.write().map_err(cannot_write)?;
+    fn __truediv__(&self, rhs: Float32Rhs) -> PyResult<Self> {
+        let array = self.array.read().map_err(cannot_read)?;
         let indices = self.indices.0.read().map_err(cannot_read)?;
         let mut result = Vec::with_capacity(indices.len());
         match rhs {
             Float32Rhs::F32(other) => {
                 for &index in indices.iter() {
                     unsafe {
-                        result.push(*array.get_unchecked_mut(index as usize) / other);
+                        result.push(*array.get_unchecked(index as usize) / other);
                     }
                 }
             }
@@ -516,7 +516,7 @@ impl Float32 {
                     for (&index, &other_index) in indices.iter().zip(other_indices.iter()) {
                         unsafe {
                             let other = *array.get_unchecked(other_index as usize);
-                            result.push(*array.get_unchecked_mut(index as usize) / other);
+                            result.push(*array.get_unchecked(index as usize) / other);
                         }
                     }
                 } else {
@@ -525,7 +525,7 @@ impl Float32 {
                     for (&index, &other_index) in indices.iter().zip(other_indices.iter()) {
                         unsafe {
                             result.push(
-                                *array.get_unchecked_mut(index as usize)
+                                *array.get_unchecked(index as usize)
                                     / other_array.get_unchecked(other_index as usize),
                             );
                         }
@@ -535,14 +535,14 @@ impl Float32 {
             Float32Rhs::PyArrayF32(py_array) => {
                 for (&index, value) in indices.iter().zip(py_array.readonly().as_array()) {
                     unsafe {
-                        result.push(*array.get_unchecked_mut(index as usize) / value);
+                        result.push(*array.get_unchecked(index as usize) / value);
                     }
                 }
             }
             Float32Rhs::VecF32(vec) => {
                 for (&index, value) in indices.iter().zip(vec) {
                     unsafe {
-                        result.push(*array.get_unchecked_mut(index as usize) / value);
+                        result.push(*array.get_unchecked(index as usize) / value);
                     }
                 }
             }
@@ -602,15 +602,15 @@ impl Float32 {
         }
         Ok(())
     }
-    fn __floordiv__(&mut self, rhs: Float32Rhs) -> PyResult<Self> {
-        let mut array = self.array.write().map_err(cannot_write)?;
+    fn __floordiv__(&self, rhs: Float32Rhs) -> PyResult<Self> {
+        let array = self.array.read().map_err(cannot_read)?;
         let indices = self.indices.0.read().map_err(cannot_read)?;
         let mut result = Vec::with_capacity(indices.len());
         match rhs {
             Float32Rhs::F32(other) => {
                 for &index in indices.iter() {
                     unsafe {
-                        result.push(array.get_unchecked_mut(index as usize).div_euclid(other));
+                        result.push(array.get_unchecked(index as usize).div_euclid(other));
                     }
                 }
             }
@@ -620,7 +620,7 @@ impl Float32 {
                     for (&index, &other_index) in indices.iter().zip(other_indices.iter()) {
                         unsafe {
                             let other = *array.get_unchecked(other_index as usize);
-                            result.push(*array.get_unchecked_mut(index as usize) * other);
+                            result.push(array.get_unchecked(index as usize).div_euclid(other));
                         }
                     }
                 } else {
@@ -630,7 +630,7 @@ impl Float32 {
                         unsafe {
                             result.push(
                                 array
-                                    .get_unchecked_mut(index as usize)
+                                    .get_unchecked(index as usize)
                                     .div_euclid(*other_array.get_unchecked(other_index as usize)),
                             );
                         }
@@ -640,14 +640,14 @@ impl Float32 {
             Float32Rhs::PyArrayF32(py_array) => {
                 for (&index, &value) in indices.iter().zip(py_array.readonly().as_array()) {
                     unsafe {
-                        result.push(array.get_unchecked_mut(index as usize).div_euclid(value));
+                        result.push(array.get_unchecked(index as usize).div_euclid(value));
                     }
                 }
             }
             Float32Rhs::VecF32(vec) => {
                 for (&index, value) in indices.iter().zip(vec) {
                     unsafe {
-                        result.push(array.get_unchecked_mut(index as usize).div_euclid(value));
+                        result.push(array.get_unchecked(index as usize).div_euclid(value));
                     }
                 }
             }
@@ -702,15 +702,15 @@ impl Float32 {
         }
         Ok(())
     }
-    fn __mod__(&mut self, rhs: Float32Rhs) -> PyResult<Self> {
-        let mut array = self.array.write().map_err(cannot_write)?;
+    fn __mod__(&self, rhs: Float32Rhs) -> PyResult<Self> {
+        let array = self.array.read().map_err(cannot_read)?;
         let indices = self.indices.0.read().map_err(cannot_read)?;
         let mut result = Vec::with_capacity(indices.len());
         match rhs {
             Float32Rhs::F32(other) => {
                 for &index in indices.iter() {
                     unsafe {
-                        result.push(*array.get_unchecked_mut(index as usize) % other);
+                        result.push(*array.get_unchecked(index as usize) % other);
                     }
                 }
             }
@@ -720,7 +720,7 @@ impl Float32 {
                     for (&index, &other_index) in indices.iter().zip(other_indices.iter()) {
                         unsafe {
                             let other = *array.get_unchecked(other_index as usize);
-                            result.push(*array.get_unchecked_mut(index as usize) % other);
+                            result.push(*array.get_unchecked(index as usize) % other);
                         }
                     }
                 } else {
@@ -729,7 +729,7 @@ impl Float32 {
                     for (&index, &other_index) in indices.iter().zip(other_indices.iter()) {
                         unsafe {
                             result.push(
-                                *array.get_unchecked_mut(index as usize)
+                                *array.get_unchecked(index as usize)
                                     % other_array.get_unchecked(other_index as usize),
                             );
                         }
@@ -739,14 +739,14 @@ impl Float32 {
             Float32Rhs::PyArrayF32(py_array) => {
                 for (&index, value) in indices.iter().zip(py_array.readonly().as_array()) {
                     unsafe {
-                        result.push(*array.get_unchecked_mut(index as usize) % value);
+                        result.push(*array.get_unchecked(index as usize) % value);
                     }
                 }
             }
             Float32Rhs::VecF32(vec) => {
                 for (&index, value) in indices.iter().zip(vec) {
                     unsafe {
-                        result.push(*array.get_unchecked_mut(index as usize) % value);
+                        result.push(*array.get_unchecked(index as usize) % value);
                     }
                 }
             }
@@ -806,24 +806,93 @@ impl Float32 {
         }
         Ok(())
     }
-    #[args(modulo = "None")]
-    fn __ipow__(&mut self, rhs: IPowRhs, _modulo: &PyAny) -> PyResult<()> {
+    #[args(_modulo = "None")]
+    fn __pow__(&self, rhs: PowRhs, _modulo: &PyAny) -> PyResult<Self> {
+        let array = self.array.read().map_err(cannot_read)?;
+        let indices = self.indices.0.read().map_err(cannot_read)?;
+        let mut result = Vec::with_capacity(indices.len());
+        match rhs {
+            PowRhs::I32(other) => {
+                for &index in indices.iter() {
+                    unsafe {
+                        result.push(array.get_unchecked(index as usize).powi(other));
+                    }
+                }
+            }
+            PowRhs::F32(other) => {
+                for &index in indices.iter() {
+                    unsafe {
+                        result.push(array.get_unchecked(index as usize).powf(other));
+                    }
+                }
+            }
+            PowRhs::Float32(float32) => {
+                if Arc::ptr_eq(&self.array, &float32.array) {
+                    let other_indices = float32.indices.0.read().map_err(cannot_read)?;
+                    for (&index, &other_index) in indices.iter().zip(other_indices.iter()) {
+                        unsafe {
+                            let other = *array.get_unchecked(other_index as usize);
+                            result.push(array.get_unchecked(index as usize).powf(other));
+                        }
+                    }
+                } else {
+                    let other_array = float32.array.read().map_err(cannot_read)?;
+                    let other_indices = float32.indices.0.read().map_err(cannot_read)?;
+                    for (&index, &other_index) in indices.iter().zip(other_indices.iter()) {
+                        unsafe {
+                            let other = other_array.get_unchecked(other_index as usize);
+                            result.push(array.get_unchecked(index as usize).powf(*other));
+                        }
+                    }
+                }
+            }
+            PowRhs::PyArrayF32(py_array) => {
+                for (&index, value) in indices.iter().zip(py_array.readonly().as_array()) {
+                    unsafe {
+                        result.push(array.get_unchecked(index as usize).powf(*value));
+                    }
+                }
+            }
+            PowRhs::VecI32(vec) => {
+                for (&index, value) in indices.iter().zip(vec) {
+                    unsafe {
+                        result.push(array.get_unchecked(index as usize).powi(value));
+                    }
+                }
+            }
+            PowRhs::VecF32(vec) => {
+                for (&index, value) in indices.iter().zip(vec) {
+                    unsafe {
+                        result.push(array.get_unchecked(index as usize).powf(value));
+                    }
+                }
+            }
+        }
+        Ok(Self {
+            indices: ArrayViewIndices(Arc::new(RwLock::new(
+                (0_u32..(result.len() as u32)).collect(),
+            ))),
+            array: Arc::new(RwLock::new(result)),
+        })
+    }
+    #[args(_modulo = "None")]
+    fn __ipow__(&mut self, rhs: PowRhs, _modulo: &PyAny) -> PyResult<()> {
         let mut array = self.array.write().map_err(cannot_write)?;
         let indices = self.indices.0.read().map_err(cannot_read)?;
         match rhs {
-            IPowRhs::I32(other) => {
+            PowRhs::I32(other) => {
                 for &index in indices.iter() {
                     let a = unsafe { array.get_unchecked_mut(index as usize) };
                     *a = a.powi(other);
                 }
             }
-            IPowRhs::F32(other) => {
+            PowRhs::F32(other) => {
                 for &index in indices.iter() {
                     let a = unsafe { array.get_unchecked_mut(index as usize) };
                     *a = a.powf(other);
                 }
             }
-            IPowRhs::Float32(float32) => {
+            PowRhs::Float32(float32) => {
                 if Arc::ptr_eq(&self.array, &float32.array) {
                     let other_indices = float32.indices.0.read().map_err(cannot_read)?;
                     for (&index, &other_index) in indices.iter().zip(other_indices.iter()) {
@@ -841,19 +910,19 @@ impl Float32 {
                     }
                 }
             }
-            IPowRhs::PyArrayF32(py_array) => {
+            PowRhs::PyArrayF32(py_array) => {
                 for (&index, value) in indices.iter().zip(py_array.readonly().as_array()) {
                     let a = unsafe { array.get_unchecked_mut(index as usize) };
                     *a = a.powf(*value);
                 }
             }
-            IPowRhs::VecI32(vec) => {
+            PowRhs::VecI32(vec) => {
                 for (&index, value) in indices.iter().zip(vec) {
                     let a = unsafe { array.get_unchecked_mut(index as usize) };
                     *a = a.powi(value);
                 }
             }
-            IPowRhs::VecF32(vec) => {
+            PowRhs::VecF32(vec) => {
                 for (&index, value) in indices.iter().zip(vec) {
                     let a = unsafe { array.get_unchecked_mut(index as usize) };
                     *a = a.powf(value);

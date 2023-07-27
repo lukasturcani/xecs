@@ -48,8 +48,9 @@ def test_ioperator_list(
 
 
 def test_self(array: ecs.Float32, iop: typing.Any) -> None:
-    with pytest.raises(TypeError):
-        iop(array, array)
+    expected = iop(array.numpy(), array.numpy())
+    result = iop(array, array)
+    assert np.all(np.equal(result.numpy(), expected))
 
 
 def test_self_mask(array: ecs.Float32, iop: typing.Any) -> None:
