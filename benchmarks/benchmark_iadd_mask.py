@@ -35,8 +35,8 @@ def benchmark_iadd_numpy(
     benchmark(iadd_numpy, first, first_key, second)
 
 
-@pytest.mark.benchmark(group="ecstasy-iadd-mask")
-def benchmark_iadd_ecstasy(
+@pytest.mark.benchmark(group="xecs-iadd-mask")
+def benchmark_iadd_xecs(
     benchmark: typing.Any,
     size: int,
     key_size: float,
@@ -45,7 +45,7 @@ def benchmark_iadd_ecstasy(
     first = xx.Float32.p_from_numpy(generator.random(size, dtype=np.float32))
     first_key = generator.random(len(first)) < key_size
     second = xx.Float32.p_from_numpy(generator.random(size, dtype=np.float32))
-    benchmark(iadd_ecstasy, first, first_key, second[first_key])
+    benchmark(iadd_xecs, first, first_key, second[first_key])
 
 
 def iadd_numpy(
@@ -56,7 +56,7 @@ def iadd_numpy(
     np.add(first, second, where=first_key, out=first)
 
 
-def iadd_ecstasy(
+def iadd_xecs(
     first: xx.Float32,
     first_key: npt.NDArray[np.bool_],
     second: xx.Float32,

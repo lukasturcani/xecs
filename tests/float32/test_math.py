@@ -1,14 +1,14 @@
 import operator
 import typing
 
-import ecstasy as ecs
 import numpy as np
 import numpy.typing as npt
 import pytest
+import xecs as xx
 
 
 def test_operator_value(
-    array: ecs.Float32,
+    array: xx.Float32,
     other_value: float,
     op: typing.Any,
 ) -> None:
@@ -18,7 +18,7 @@ def test_operator_value(
 
 
 def test_operator_numpy(
-    array: ecs.Float32,
+    array: xx.Float32,
     other_numpy: npt.NDArray[np.float32],
     op: typing.Any,
 ) -> None:
@@ -28,8 +28,8 @@ def test_operator_numpy(
 
 
 def test_operator_array(
-    array: ecs.Float32,
-    other_array: ecs.Float32,
+    array: xx.Float32,
+    other_array: xx.Float32,
     op: typing.Any,
 ) -> None:
     expected = op(array.numpy(), other_array.numpy())
@@ -38,7 +38,7 @@ def test_operator_array(
 
 
 def test_operator_list(
-    array: ecs.Float32,
+    array: xx.Float32,
     other_list: list[float],
     op: typing.Any,
 ) -> None:
@@ -47,7 +47,7 @@ def test_operator_list(
     assert np.allclose(result.numpy(), expected)
 
 
-def test_self(array: ecs.Float32, op: typing.Any) -> None:
+def test_self(array: xx.Float32, op: typing.Any) -> None:
     expected = op(array.numpy(), array.numpy())
     result = op(array, array)
     assert np.all(np.equal(result.numpy(), expected))
@@ -69,13 +69,13 @@ def op(request: pytest.FixtureRequest) -> typing.Any:
 
 
 @pytest.fixture
-def array() -> ecs.Float32:
-    return ecs.Float32.p_from_numpy(np.arange(1, 6, dtype=np.float32))
+def array() -> xx.Float32:
+    return xx.Float32.p_from_numpy(np.arange(1, 6, dtype=np.float32))
 
 
 @pytest.fixture
-def other_array() -> ecs.Float32:
-    return ecs.Float32.p_from_numpy(np.arange(6, 11, dtype=np.float32))
+def other_array() -> xx.Float32:
+    return xx.Float32.p_from_numpy(np.arange(6, 11, dtype=np.float32))
 
 
 @pytest.fixture

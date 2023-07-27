@@ -26,8 +26,8 @@ def benchmark_numpy_setitem_mask_many(
     benchmark(setitem, numpy_array, key, value)
 
 
-@pytest.mark.benchmark(group="ecstasy-setitem-mask-many")
-def benchmark_ecstasy_setitem_mask_many(
+@pytest.mark.benchmark(group="xecs-setitem-mask-many")
+def benchmark_xecs_setitem_mask_many(
     benchmark: typing.Any,
     ecs_array: xx.Float32,
     key_size: float,
