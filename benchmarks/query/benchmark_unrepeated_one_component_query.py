@@ -1,22 +1,22 @@
 import typing
 
-import ecstasy as ecs
 import pytest
+import xecs as xx
 
 
-class One(ecs.Component):
-    x: ecs.Float32
+class One(xx.Component):
+    x: xx.Float32
 
 
 @pytest.mark.benchmark(group="unrepeated-one-component-query")
 def benchmark_query(
     benchmark: typing.Any,
-    app: ecs.App,
+    app: xx.App,
 ) -> None:
     benchmark(app.p_run_systems)
 
 
-def system(query: ecs.Query[tuple[One]]) -> None:
+def system(query: xx.Query[tuple[One]]) -> None:
     pass
 
 
@@ -24,11 +24,11 @@ def system(query: ecs.Query[tuple[One]]) -> None:
     params=(10, 100, 1_000, 1_000_000),
     ids=("10", "100", "1_000", "1_000_000"),
 )
-def app(request: pytest.FixtureRequest) -> ecs.App:
-    def startup_system(commands: ecs.Commands) -> None:
+def app(request: pytest.FixtureRequest) -> xx.App:
+    def startup_system(commands: xx.Commands) -> None:
         commands.spawn(components=(One,), num=request.param)
 
-    app = ecs.App()
+    app = xx.App()
     app.add_startup_system(startup_system)
     app.add_system(system)
     app.add_pool(One.create_pool(request.param))

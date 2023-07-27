@@ -1,21 +1,10 @@
-import ecstasy as ecs
 import numpy as np
+import xecs as xx
 
 
-class Transform(ecs.Component):
-    translation: ecs.Vec2
-    rotation: ecs.Float
-
-    def fill_random(
-        self,
-        generator: np.random.Generator,
-        scale: float,
-    ) -> None:
-        pass
-
-
-class Velocity(ecs.Component):
-    inner: ecs.Vec2
+class Transform(xx.Component):
+    translation: xx.Vec2
+    rotation: xx.Float
 
     def fill_random(
         self,
@@ -25,21 +14,32 @@ class Velocity(ecs.Component):
         pass
 
 
-class Separation(ecs.Component):
-    displacement_sum: ecs.Vec2
+class Velocity(xx.Component):
+    inner: xx.Vec2
+
+    def fill_random(
+        self,
+        generator: np.random.Generator,
+        scale: float,
+    ) -> None:
+        pass
 
 
-class Alignment(ecs.Component):
-    velocity_sum: ecs.Vec2
-    num_neighbors: ecs.Float
+class Separation(xx.Component):
+    displacement_sum: xx.Vec2
 
 
-class Cohesion(ecs.Component):
-    translation_sum: ecs.Vec2
-    num_neighbors: ecs.Float
+class Alignment(xx.Component):
+    velocity_sum: xx.Vec2
+    num_neighbors: xx.Float
 
 
-class Params(ecs.Resource):
+class Cohesion(xx.Component):
+    translation_sum: xx.Vec2
+    num_neighbors: xx.Float
+
+
+class Params(xx.Resource):
     num_boids: int
     max_translation: float
     max_speed: float
@@ -55,12 +55,12 @@ class Params(ecs.Resource):
     top_margin: float
 
 
-class Generator(ecs.Resource):
+class Generator(xx.Resource):
     value: np.random.Generator
 
 
 def main() -> None:
-    app = ecs.App()
+    app = xx.App()
     num_boids = 100
     app.add_resource(
         Params(
@@ -81,7 +81,7 @@ def main() -> None:
     )
     app.add_resource(Generator(np.random.default_rng(55)))
     app.add_startup_system(spawn_boids)
-    time_step = ecs.Duration.from_millis(16)
+    time_step = xx.Duration.from_millis(16)
     app.add_system(calculate_separation, time_step)
     app.add_system(calculate_alignment, time_step)
     app.add_system(calculate_cohesion, time_step)
@@ -98,8 +98,8 @@ def main() -> None:
 def spawn_boids(
     params: Params,
     generator: Generator,
-    world: ecs.World,
-    commands: ecs.Commands,
+    world: xx.World,
+    commands: xx.Commands,
 ) -> None:
     transformi, velocityi, *_ = commands.spawn(
         components=(Transform, Velocity, Separation, Alignment, Cohesion),
@@ -114,18 +114,18 @@ def spawn_boids(
 
 
 def move_boids(
-    query: ecs.Query[tuple[Transform, Velocity]],
+    query: xx.Query[tuple[Transform, Velocity]],
 ) -> None:
     transforms, velocities = query.result()
     transforms.translation += velocities.inner * time_step.period.as_secs()
-    transforms.rotation = ecs.Quat.from_rotation_z(
-        ecs.Vec2(0.0, 1.0).angle_between(velocities.inner)
+    transforms.rotation = xx.Quat.from_rotation_z(
+        xx.Vec2(0.0, 1.0).angle_between(velocities.inner)
     )
 
 
 def calculate_separation(
     params: Params,
-    query: ecs.Query[tuple[Transform, Separation]],
+    query: xx.Query[tuple[Transform, Separation]],
 ) -> None:
     (_, separations) = query.result()
     separations.displacement_sum.fill(0)
@@ -148,7 +148,7 @@ def calculate_separation(
 
 def calculate_alignment(
     params: Params,
-    query: ecs.Query[tuple[Transform, Velocity, Alignment]],
+    query: xx.Query[tuple[Transform, Velocity, Alignment]],
 ) -> None:
     (_, _, alignments) = query.result()
     alignments.velocity_sum.fill(0)
@@ -173,7 +173,7 @@ def calculate_alignment(
 
 def calculate_cohesion(
     params: Params,
-    query: ecs.Query[tuple[Transform, Cohesion]],
+    query: xx.Query[tuple[Transform, Cohesion]],
 ) -> None:
     (_, cohesions) = query.result()
     cohesions.translation_sum.fill(0)
@@ -201,7 +201,7 @@ def calculate_cohesion(
 
 def update_boid_velocity(
     params: Params,
-    query: ecs.Query[
+    query: xx.Query[
         tuple[Transform, Separation, Alignment, Cohesion, Velocity]
     ],
 ) -> None:

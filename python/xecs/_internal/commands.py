@@ -1,8 +1,8 @@
 from collections.abc import Iterable
 
-from ecstasy._internal.component import Component
-from ecstasy._internal.world import World
-from ecstasy.ecstasy import ArrayViewIndices, RustApp
+from xecs._internal.component import Component
+from xecs._internal.world import World
+from xecs.xecs import ArrayViewIndices, RustApp
 
 
 class Commands:

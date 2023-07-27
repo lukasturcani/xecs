@@ -4,7 +4,7 @@ import typing
 import numpy as np
 import numpy.typing as npt
 
-from ecstasy.ecstasy import ArrayViewIndices
+from xecs.xecs import ArrayViewIndices
 
 
 class Struct:

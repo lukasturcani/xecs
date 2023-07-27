@@ -1,10 +1,10 @@
 import typing
 from collections.abc import Sequence
 
-from ecstasy._internal.component import Component
+from xecs._internal.component import Component
 
 if typing.TYPE_CHECKING:
-    from ecstasy.ecstasy import QueryId
+    from xecs.xecs import QueryId
 
 T = typing.TypeVar("T")
 

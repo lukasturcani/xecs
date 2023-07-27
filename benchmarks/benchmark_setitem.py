@@ -1,13 +1,13 @@
 import typing
 
-import ecstasy as ecs
 import numpy as np
 import numpy.typing as npt
 import pytest
+import xecs as xx
 
 
 def setitem(
-    array: ecs.Float32 | npt.NDArray[np.float32],
+    array: xx.Float32 | npt.NDArray[np.float32],
     key: npt.NDArray[np.bool_],
     value: npt.NDArray[np.float32],
 ) -> None:
@@ -29,7 +29,7 @@ def benchmark_numpy_setitem_mask_many(
 @pytest.mark.benchmark(group="ecstasy-setitem-mask-many")
 def benchmark_ecstasy_setitem_mask_many(
     benchmark: typing.Any,
-    ecs_array: ecs.Float32,
+    ecs_array: xx.Float32,
     key_size: float,
 ) -> None:
     generator = np.random.default_rng(55)
@@ -57,8 +57,8 @@ def numpy_array(request: pytest.FixtureRequest) -> npt.NDArray[np.float32]:
 
 
 @pytest.fixture
-def ecs_array(numpy_array: npt.NDArray[np.float32]) -> ecs.Float32:
-    return ecs.Float32.p_from_numpy(numpy_array)
+def ecs_array(numpy_array: npt.NDArray[np.float32]) -> xx.Float32:
+    return xx.Float32.p_from_numpy(numpy_array)
 
 
 @pytest.fixture(

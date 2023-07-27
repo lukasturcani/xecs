@@ -1,9 +1,9 @@
 import typing
 
-import ecstasy as ecs
 import numpy as np
 import numpy.typing as npt
 import pytest
+import xecs as xx
 
 
 @pytest.mark.benchmark(group="numpy-getitem-mask")
@@ -20,7 +20,7 @@ def benchmark_numpy_getitem_mask(
 @pytest.mark.benchmark(group="ecstasy-getitem-mask")
 def benchmark_ecstasy_getitem_mask(
     benchmark: typing.Any,
-    ecs_array: ecs.Float32,
+    ecs_array: xx.Float32,
     key_size: float,
 ) -> None:
     generator = np.random.default_rng(55)
@@ -29,7 +29,7 @@ def benchmark_ecstasy_getitem_mask(
 
 
 def getitem(
-    array: ecs.Float32 | npt.NDArray[np.float32],
+    array: xx.Float32 | npt.NDArray[np.float32],
     key: npt.NDArray[np.bool_],
 ) -> None:
     array[key]
@@ -54,8 +54,8 @@ def numpy_array(request: pytest.FixtureRequest) -> npt.NDArray[np.float32]:
 
 
 @pytest.fixture
-def ecs_array(numpy_array: npt.NDArray[np.float32]) -> ecs.Float32:
-    return ecs.Float32.p_from_numpy(numpy_array)
+def ecs_array(numpy_array: npt.NDArray[np.float32]) -> xx.Float32:
+    return xx.Float32.p_from_numpy(numpy_array)
 
 
 @pytest.fixture(
