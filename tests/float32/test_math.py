@@ -44,7 +44,7 @@ def test_operator_list(
 ) -> None:
     expected = op(array.numpy(), other_list)
     result = op(array, other_list)
-    assert np.all(np.equal(result.numpy(), expected))
+    assert np.allclose(result.numpy(), expected)
 
 
 def test_self(array: ecs.Float32, op: typing.Any) -> None:
@@ -57,7 +57,7 @@ def test_self(array: ecs.Float32, op: typing.Any) -> None:
         operator.add,
         operator.sub,
         operator.mul,
-        # operator.truediv,
+        operator.truediv,
         # operator.floordiv,
         # operator.mod,
         # operator.pow,
