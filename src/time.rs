@@ -116,6 +116,14 @@ impl Duration {
             Err(PyRuntimeError::new_err("overflow"))
         }
     }
+    fn saturating_sub(&mut self, rhs: &mut Self) -> Self {
+        let original_lhs = self.0.clone();
+        let original_rhs = rhs.0.clone();
+        let result = self.0.take().unwrap().saturating_sub(rhs.0.take().unwrap());
+        self.0 = original_lhs;
+        rhs.0 = original_rhs;
+        Self(Some(result))
+    }
     fn checked_mul(&mut self, rhs: u32) -> PyResult<()> {
         let original_lhs = self.0.clone();
         if let duration @ Some(_) = self.0.take().unwrap().checked_mul(rhs) {

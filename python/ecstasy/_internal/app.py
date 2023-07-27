@@ -279,7 +279,7 @@ class App:
             self._update()
             if max_run_time is not None and time.elapsed() >= max_run_time:
                 break
-            sleep_time = frame_time - start.elapsed()
+            sleep_time = frame_time.saturating_sub(start.elapsed())
             sleep(sleep_time.as_nanos() / 1e9)
 
     def add_pool(self, pool: ComponentPool[ComponentT]) -> None:
