@@ -7,7 +7,7 @@ import numpy.typing as npt
 import pytest
 
 
-def test_ioperator_value(
+def test_operator_value(
     array: ecs.Float32,
     other_value: float,
     op: typing.Any,
@@ -17,7 +17,7 @@ def test_ioperator_value(
     assert np.all(np.equal(result.numpy(), expected))
 
 
-def test_ioperator_numpy(
+def test_operator_numpy(
     array: ecs.Float32,
     other_numpy: npt.NDArray[np.float32],
     op: typing.Any,
@@ -27,7 +27,7 @@ def test_ioperator_numpy(
     assert np.all(np.equal(result.numpy(), expected))
 
 
-def test_ioperator_array(
+def test_operator_array(
     array: ecs.Float32,
     other_array: ecs.Float32,
     op: typing.Any,
@@ -37,7 +37,7 @@ def test_ioperator_array(
     assert np.all(np.equal(result.numpy(), expected))
 
 
-def test_ioperator_list(
+def test_operator_list(
     array: ecs.Float32,
     other_list: list[float],
     op: typing.Any,
