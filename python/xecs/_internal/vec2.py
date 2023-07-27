@@ -3,8 +3,8 @@ from typing import Self, TypeAlias
 import numpy as np
 import numpy.typing as npt
 
-from ecstasy._internal.struct import Struct
-from ecstasy.ecstasy import Float32
+from xecs._internal.struct import Struct
+from xecs.xecs import Float32
 
 Rhs: TypeAlias = (
     Float32 | npt.NDArray[np.float32] | float | list[float] | tuple[float, ...]

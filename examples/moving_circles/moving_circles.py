@@ -1,23 +1,10 @@
-import ecstasy as ecs
 import numpy as np
 import pygame
+import xecs as xx
 
 
-class Position(ecs.Component):
-    value: ecs.Vec2
-
-    def fill_random(
-        self,
-        generator: np.random.Generator,
-        scale: float,
-    ) -> None:
-        num = len(self.value.x)
-        self.value.x.fill(generator.random(num, dtype=np.float32) * scale)
-        self.value.y.fill(generator.random(num, dtype=np.float32) * scale)
-
-
-class Velocity(ecs.Component):
-    value: ecs.Vec2
+class Position(xx.Component):
+    value: xx.Vec2
 
     def fill_random(
         self,
@@ -29,23 +16,36 @@ class Velocity(ecs.Component):
         self.value.y.fill(generator.random(num, dtype=np.float32) * scale)
 
 
-class Generator(ecs.Resource):
+class Velocity(xx.Component):
+    value: xx.Vec2
+
+    def fill_random(
+        self,
+        generator: np.random.Generator,
+        scale: float,
+    ) -> None:
+        num = len(self.value.x)
+        self.value.x.fill(generator.random(num, dtype=np.float32) * scale)
+        self.value.y.fill(generator.random(num, dtype=np.float32) * scale)
+
+
+class Generator(xx.Resource):
     value: np.random.Generator
 
 
-class Params(ecs.Resource):
+class Params(xx.Resource):
     num_circles: int
     max_position: float
     max_velocity: float
 
 
-class Display(ecs.Resource):
+class Display(xx.Resource):
     surface: pygame.Surface
 
 
 def main() -> None:
     pygame.init()
-    app = ecs.App()
+    app = xx.App()
     num_circles = 10
     app.add_resource(
         Params(
@@ -57,7 +57,7 @@ def main() -> None:
     app.add_resource(Generator(np.random.default_rng(55)))
     app.add_resource(Display(pygame.display.set_mode((640, 640))))
     app.add_startup_system(spawn_circles)
-    app.add_system(move_circles, ecs.Duration.from_millis(16))
+    app.add_system(move_circles, xx.Duration.from_millis(16))
     app.add_system(show_circles)
     app.add_pool(Position.create_pool(num_circles))
     app.add_pool(Velocity.create_pool(num_circles))
@@ -67,8 +67,8 @@ def main() -> None:
 def spawn_circles(
     params: Params,
     generator: Generator,
-    world: ecs.World,
-    commands: ecs.Commands,
+    world: xx.World,
+    commands: xx.Commands,
 ) -> None:
     positioni, velocityi = commands.spawn(
         components=(Position, Velocity),
@@ -84,11 +84,11 @@ def spawn_circles(
 
 def move_circles(
     params: Params,
-    query: ecs.Query[tuple[Position, Velocity]],
+    query: xx.Query[tuple[Position, Velocity]],
 ) -> None:
     (position, velocity) = query.result()
     position.value += velocity.value * (
-        ecs.Duration.from_millis(16).as_nanos() / 1e9
+        xx.Duration.from_millis(16).as_nanos() / 1e9
     )
     velocity.value.x[position.value.x > params.max_position] *= -1
     velocity.value.y[position.value.y > params.max_position] *= -1
@@ -98,7 +98,7 @@ def move_circles(
 
 def show_circles(
     display: Display,
-    query: ecs.Query[tuple[Position]],
+    query: xx.Query[tuple[Position]],
 ) -> None:
     (position_,) = query.result()
     display.surface.fill("purple")

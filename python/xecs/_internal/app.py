@@ -4,17 +4,17 @@ from collections import abc
 from time import sleep
 from typing import Any, TypeAlias
 
-from ecstasy._internal.commands import Commands
-from ecstasy._internal.component import (
+from xecs._internal.commands import Commands
+from xecs._internal.component import (
     Component,
     ComponentPool,
     ComponentT,
 )
-from ecstasy._internal.query import Query
-from ecstasy._internal.resource import Resource
-from ecstasy._internal.time import Time
-from ecstasy._internal.world import World
-from ecstasy.ecstasy import Duration, Instant, RustApp
+from xecs._internal.query import Query
+from xecs._internal.resource import Resource
+from xecs._internal.time import Time
+from xecs._internal.world import World
+from xecs.xecs import Duration, Instant, RustApp
 
 P = typing.ParamSpec("P")
 R = typing.TypeVar("R")

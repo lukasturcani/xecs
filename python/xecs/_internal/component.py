@@ -4,10 +4,10 @@ import typing
 import numpy as np
 import numpy.typing as npt
 
-from ecstasy.ecstasy import ArrayViewIndices
+from xecs.xecs import ArrayViewIndices
 
 if typing.TYPE_CHECKING:
-    from ecstasy.ecstasy import ComponentId
+    from xecs.xecs import ComponentId
 
 ComponentT = typing.TypeVar("ComponentT", bound="Component")
 

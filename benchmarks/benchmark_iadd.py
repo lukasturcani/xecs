@@ -1,9 +1,9 @@
 import typing
 
-import ecstasy as ecs
 import numpy as np
 import numpy.typing as npt
 import pytest
+import xecs as xx
 
 
 @pytest.fixture(
@@ -35,12 +35,12 @@ def benchmark_iadd_numpy(benchmark: typing.Any, size: int) -> None:
 @pytest.mark.benchmark(group="ecstasy-iadd")
 def benchmark_iadd_ecstasy(benchmark: typing.Any, size: int) -> None:
     generator = np.random.default_rng(55)
-    first = ecs.Float32.p_from_numpy(generator.random(size, dtype=np.float32))
-    second = ecs.Float32.p_from_numpy(generator.random(size, dtype=np.float32))
+    first = xx.Float32.p_from_numpy(generator.random(size, dtype=np.float32))
+    second = xx.Float32.p_from_numpy(generator.random(size, dtype=np.float32))
     benchmark(iadd, first, second)
 
 
-T = typing.TypeVar("T", ecs.Float32, npt.NDArray[np.float32])
+T = typing.TypeVar("T", xx.Float32, npt.NDArray[np.float32])
 
 
 def iadd(first: T, second: T) -> None:

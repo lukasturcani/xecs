@@ -3,7 +3,7 @@ requires = ["maturin>=0.14,<0.15"]
 build-backend = "maturin"
 
 [project]
-name = "ecstasy"
+name = "xecs"
 dependencies = [
   "numpy",
 ]
@@ -19,6 +19,7 @@ dev = [
   "black",
   "ruff",
   "mypy",
+  "pygame",
   "pytest",
   "pytest-benchmark",
 ]

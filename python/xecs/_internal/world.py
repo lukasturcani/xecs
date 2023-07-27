@@ -1,8 +1,8 @@
 from typing import cast
 
-from ecstasy._internal.component import Component, ComponentPool, ComponentT
-from ecstasy._internal.resource import Resource, ResourceT
-from ecstasy.ecstasy import ArrayViewIndices
+from xecs._internal.component import Component, ComponentPool, ComponentT
+from xecs._internal.resource import Resource, ResourceT
+from xecs.xecs import ArrayViewIndices
 
 
 class World:
