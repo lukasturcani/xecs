@@ -308,7 +308,7 @@ impl Float32 {
                     for (&index, &other_index) in indices.iter().zip(other_indices.iter()) {
                         unsafe {
                             let other = *array.get_unchecked(other_index as usize);
-                            result.push(*array.get_unchecked_mut(index as usize) + other);
+                            result.push(*array.get_unchecked_mut(index as usize) - other);
                         }
                     }
                 } else {
@@ -393,6 +393,62 @@ impl Float32 {
             }
         }
         Ok(())
+    }
+    fn __mul__(&mut self, rhs: Float32Rhs) -> PyResult<Self> {
+        let mut array = self.array.write().map_err(cannot_write)?;
+        let indices = self.indices.0.read().map_err(cannot_read)?;
+        let mut result = Vec::with_capacity(indices.len());
+        match rhs {
+            Float32Rhs::F32(other) => {
+                for &index in indices.iter() {
+                    unsafe {
+                        result.push(*array.get_unchecked_mut(index as usize) * other);
+                    }
+                }
+            }
+            Float32Rhs::Float32(float32) => {
+                if Arc::ptr_eq(&self.array, &float32.array) {
+                    let other_indices = float32.indices.0.read().map_err(cannot_read)?;
+                    for (&index, &other_index) in indices.iter().zip(other_indices.iter()) {
+                        unsafe {
+                            let other = *array.get_unchecked(other_index as usize);
+                            result.push(*array.get_unchecked_mut(index as usize) * other);
+                        }
+                    }
+                } else {
+                    let other_array = float32.array.read().map_err(cannot_read)?;
+                    let other_indices = float32.indices.0.read().map_err(cannot_read)?;
+                    for (&index, &other_index) in indices.iter().zip(other_indices.iter()) {
+                        unsafe {
+                            result.push(
+                                *array.get_unchecked_mut(index as usize)
+                                    * other_array.get_unchecked(other_index as usize),
+                            );
+                        }
+                    }
+                }
+            }
+            Float32Rhs::PyArrayF32(py_array) => {
+                for (&index, value) in indices.iter().zip(py_array.readonly().as_array()) {
+                    unsafe {
+                        result.push(*array.get_unchecked_mut(index as usize) * value);
+                    }
+                }
+            }
+            Float32Rhs::VecF32(vec) => {
+                for (&index, value) in indices.iter().zip(vec) {
+                    unsafe {
+                        result.push(*array.get_unchecked_mut(index as usize) * value);
+                    }
+                }
+            }
+        }
+        Ok(Self {
+            indices: ArrayViewIndices(Arc::new(RwLock::new(
+                (0_u32..(result.len() as u32)).collect(),
+            ))),
+            array: Arc::new(RwLock::new(result)),
+        })
     }
     fn __imul__(&mut self, rhs: Float32Rhs) -> PyResult<()> {
         let mut array = self.array.write().map_err(cannot_write)?;
