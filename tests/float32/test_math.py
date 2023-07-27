@@ -55,7 +55,7 @@ def test_self(array: ecs.Float32, op: typing.Any) -> None:
 @pytest.fixture(
     params=(
         operator.add,
-        # operator.sub,
+        operator.sub,
         # operator.mul,
         # operator.truediv,
         # operator.floordiv,
