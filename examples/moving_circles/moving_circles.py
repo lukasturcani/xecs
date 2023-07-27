@@ -1,5 +1,6 @@
 import ecstasy as ecs
 import numpy as np
+import pygame
 
 
 class Position(ecs.Component):
@@ -38,6 +39,10 @@ class Params(ecs.Resource):
     max_velocity: float
 
 
+class Display(ecs.Resource):
+    surface: pygame.Surface
+
+
 def spawn_circles(
     params: Params,
     generator: Generator,
@@ -58,22 +63,40 @@ def spawn_circles(
 
 def move_circles(query: ecs.Query[tuple[Position, Velocity]]) -> None:
     (position, velocity) = query.result()
-    position.value += velocity.value * ecs.Duration.from_millis(16).as_secs()
+    position.value += velocity.value * (
+        ecs.Duration.from_millis(16).as_nanos() / 1e9
+    )
+
+
+def show_circles(
+    display: Display,
+    query: ecs.Query[tuple[Position]],
+) -> None:
+    (position_,) = query.result()
+    display.surface.fill("purple")
+    position = position_.value.numpy()
+    for i in range(position.shape[1]):
+        x, y = map(float, position[:, i])
+        pygame.draw.circle(display.surface, "green", (x, y), 10)
+    pygame.display.update()
 
 
 def main() -> None:
+    pygame.init()
     app = ecs.App()
     num_circles = 10
     app.add_resource(
         Params(
             num_circles=num_circles,
-            max_position=10,
-            max_velocity=2,
+            max_position=200,
+            max_velocity=20,
         )
     )
     app.add_resource(Generator(np.random.default_rng(55)))
+    app.add_resource(Display(pygame.display.set_mode((640, 640))))
     app.add_startup_system(spawn_circles)
     app.add_system(move_circles, ecs.Duration.from_millis(16))
+    app.add_system(show_circles)
     app.add_pool(Position.create_pool(num_circles))
     app.add_pool(Velocity.create_pool(num_circles))
     app.run()

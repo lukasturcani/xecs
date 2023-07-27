@@ -1,4 +1,3 @@
-import typing
 from typing import Self, TypeAlias
 
 import numpy as np
