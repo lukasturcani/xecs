@@ -1,17 +1,17 @@
 import operator
 import typing
 
-import ecstasy as ecs
 import numpy as np
 import numpy.typing as npt
 import pytest
+import xecs as xx
 
 
-class VecContainer(ecs.Component):
-    vec: ecs.Vec2
+class VecContainer(xx.Component):
+    vec: xx.Vec2
 
 
-def test_numpy(vec1: ecs.Vec2) -> None:
+def test_numpy(vec1: xx.Vec2) -> None:
     generator = np.random.default_rng(54)
     xs = generator.random(10, dtype=np.float32)
     ys = generator.random(10, dtype=np.float32)
@@ -49,8 +49,8 @@ def math_operator(request: pytest.FixtureRequest) -> typing.Any:
 
 
 def test_operators_vec2(
-    vec1: ecs.Vec2,
-    vec2: ecs.Vec2,
+    vec1: xx.Vec2,
+    vec2: xx.Vec2,
     math_operator: typing.Any,
 ) -> None:
     expected = math_operator(vec1.numpy(), vec2.numpy())
@@ -59,7 +59,7 @@ def test_operators_vec2(
 
 
 def test_operators_float(
-    vec1: ecs.Vec2,
+    vec1: xx.Vec2,
     math_operator: typing.Any,
 ) -> None:
     expected = math_operator(vec1.numpy(), 2)
@@ -68,7 +68,7 @@ def test_operators_float(
 
 
 def test_operators_array(
-    vec1: ecs.Vec2,
+    vec1: xx.Vec2,
     array: npt.NDArray[np.float32],
     math_operator: typing.Any,
 ) -> None:
@@ -78,7 +78,7 @@ def test_operators_array(
 
 
 @pytest.fixture
-def vec1() -> ecs.Vec2:
+def vec1() -> xx.Vec2:
     generator = np.random.default_rng(55)
     pool = VecContainer.create_pool(10)
     pool.p_spawn(10)
@@ -89,7 +89,7 @@ def vec1() -> ecs.Vec2:
 
 
 @pytest.fixture
-def vec2() -> ecs.Vec2:
+def vec2() -> xx.Vec2:
     generator = np.random.default_rng(56)
     pool = VecContainer.create_pool(10)
     pool.p_spawn(10)

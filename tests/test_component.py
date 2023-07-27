@@ -1,6 +1,6 @@
-import ecstasy as ecs
 import numpy as np
 import numpy.typing as npt
+import xecs as xx
 
 
 def indices(length: int, indices: list[int]) -> npt.NDArray[np.bool_]:
@@ -9,17 +9,17 @@ def indices(length: int, indices: list[int]) -> npt.NDArray[np.bool_]:
     return mask
 
 
-class StructA(ecs.Struct):
-    a: ecs.Float32
+class StructA(xx.Struct):
+    a: xx.Float32
 
 
-class StructB(ecs.Struct):
-    b: ecs.Float32
+class StructB(xx.Struct):
+    b: xx.Float32
     c: StructA
 
 
-class MyComponent(ecs.Component):
-    d: ecs.Float32
+class MyComponent(xx.Component):
+    d: xx.Float32
     e: StructA
     f: StructB
 

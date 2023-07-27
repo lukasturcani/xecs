@@ -17,8 +17,8 @@ def benchmark_numpy_getitem_mask(
     benchmark(getitem, numpy_array, key)
 
 
-@pytest.mark.benchmark(group="ecstasy-getitem-mask")
-def benchmark_ecstasy_getitem_mask(
+@pytest.mark.benchmark(group="xecs-getitem-mask")
+def benchmark_xecs_getitem_mask(
     benchmark: typing.Any,
     ecs_array: xx.Float32,
     key_size: float,

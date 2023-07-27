@@ -32,8 +32,8 @@ def benchmark_iadd_numpy(benchmark: typing.Any, size: int) -> None:
     benchmark(iadd, first, second)
 
 
-@pytest.mark.benchmark(group="ecstasy-iadd")
-def benchmark_iadd_ecstasy(benchmark: typing.Any, size: int) -> None:
+@pytest.mark.benchmark(group="xecs-iadd")
+def benchmark_iadd_xecs(benchmark: typing.Any, size: int) -> None:
     generator = np.random.default_rng(55)
     first = xx.Float32.p_from_numpy(generator.random(size, dtype=np.float32))
     second = xx.Float32.p_from_numpy(generator.random(size, dtype=np.float32))

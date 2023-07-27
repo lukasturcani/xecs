@@ -1,44 +1,44 @@
-import ecstasy as ecs
 import numpy as np
 import pytest
+import xecs as xx
 
 
-class One(ecs.Component):
-    x: ecs.Float32
+class One(xx.Component):
+    x: xx.Float32
 
 
-class Two(ecs.Component):
-    y: ecs.Float32
+class Two(xx.Component):
+    y: xx.Float32
 
 
-class Params(ecs.Resource):
+class Params(xx.Resource):
     z: str
 
 
-def test_query_with_one_component(app: ecs.App) -> None:
+def test_query_with_one_component(app: xx.App) -> None:
     app.add_system(query_with_one_component)
     app.update()
 
 
-def test_query_with_two_components(app: ecs.App) -> None:
+def test_query_with_two_components(app: xx.App) -> None:
     app.add_system(query_with_two_components)
     app.update()
 
 
-def test_system_with_resource(app: ecs.App) -> None:
+def test_system_with_resource(app: xx.App) -> None:
     app.add_system(system_with_resource)
     app.add_resource(Params("hi"))
     app.update()
 
 
-def test_spawning(app: ecs.App) -> None:
+def test_spawning(app: xx.App) -> None:
     app.add_system(spawning_sytem)
     app.update()
 
 
 def query_with_one_component(
-    query_one: ecs.Query[tuple[One]],
-    query_two: ecs.Query[tuple[Two]],
+    query_one: xx.Query[tuple[One]],
+    query_two: xx.Query[tuple[Two]],
 ) -> None:
     (one,) = query_one.result()
     assert isinstance(one, One)
@@ -49,21 +49,21 @@ def query_with_one_component(
     assert len(two) == 5
 
 
-def query_with_two_components(query: ecs.Query[tuple[One, Two]]) -> None:
+def query_with_two_components(query: xx.Query[tuple[One, Two]]) -> None:
     one, two = query.result()
     assert len(one) == len(two) == 5
     assert isinstance(one, One)
     assert isinstance(two, Two)
 
 
-def system_with_resource(params: Params, query: ecs.Query[tuple[One]]) -> None:
+def system_with_resource(params: Params, query: xx.Query[tuple[One]]) -> None:
     (one,) = query.result()
     assert isinstance(one, One)
     assert len(one) == 10
     assert params.z == "hi"
 
 
-def spawning_sytem(world: ecs.World, commands: ecs.Commands) -> None:
+def spawning_sytem(world: xx.World, commands: xx.Commands) -> None:
     (one_indices, two_indices) = commands.spawn((One, Two), 2)
     one = world.get_view(One, one_indices)
     two = world.get_view(Two, two_indices)
@@ -81,14 +81,14 @@ def spawning_sytem(world: ecs.World, commands: ecs.Commands) -> None:
     assert np.all(all_twos.y == expected_twos)
 
 
-def spawn_entities(commands: ecs.Commands) -> None:
+def spawn_entities(commands: xx.Commands) -> None:
     commands.spawn((One,), 5)
     commands.spawn((One, Two), 5)
 
 
 @pytest.fixture
-def app() -> ecs.App:
-    app = ecs.App()
+def app() -> xx.App:
+    app = xx.App()
     app.add_pool(One.create_pool(20))
     app.add_pool(Two.create_pool(10))
     app.add_startup_system(spawn_entities)

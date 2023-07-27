@@ -1,7 +1,7 @@
-import ecstasy as ecs
+import xecs as xx
 
 
-class MyResource(ecs.Resource):
+class MyResource(xx.Resource):
     first: int
     second: float
     third: str
