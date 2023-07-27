@@ -14,6 +14,13 @@ class Vec2(Struct):
     x: Float32
     y: Float32
 
+    def __add__(self, other: Self | Rhs) -> Self:
+        if isinstance(other, int | float | np.ndarray | Float32):
+            self.x += other
+            self.y += other
+            return Vec2(self.x + other, self.y + other)
+        return Vec2(self.x + other.x, self.y + other.y)
+
     def __iadd__(self, other: Self | Rhs) -> Self:
         if isinstance(other, int | float | np.ndarray | Float32):
             self.x += other
@@ -59,7 +66,7 @@ class Vec2(Struct):
             self.y //= other.y
         return self
 
-    def __imod__(self, other: Self | Rhs) -> typing.Self:
+    def __imod__(self, other: Self | Rhs) -> Self:
         if isinstance(other, int | float | np.ndarray | Float32):
             self.x %= other
             self.y %= other
