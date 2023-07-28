@@ -70,6 +70,31 @@ def test_ioperators_array(
     assert np.all(np.equal(result.numpy(), expected))
 
 
+# @pytest.fixture(
+#     params=(
+#         operator.add,
+#         # operator.sub,
+#         # operator.mul,
+#         # operator.truediv,
+#         # operator.floordiv,
+#         # operator.mod,
+#         # operator.pow,
+#     )
+# )
+# def math_operator(request: pytest.FixtureRequest) -> typing.Any:
+#     return request.param
+
+
+# def test_operators_array(
+#     vec1: xx.Vec2,
+#     array: npt.NDArray[np.float32],
+#     math_operator: typing.Any,
+# ) -> None:
+#     expected = math_operator(vec1.numpy(), array)
+#     result = math_operator(vec1, array)
+#     assert np.all(np.equal(result, expected))
+
+
 @pytest.fixture
 def vec1() -> xx.Vec2:
     generator = np.random.default_rng(55)
@@ -92,7 +117,12 @@ def vec2() -> xx.Vec2:
     return pool.p_component.vec
 
 
-@pytest.fixture
-def array() -> npt.NDArray[np.float32]:
+@pytest.fixture(
+    params=(
+        10,
+        (2, 10),
+    ),
+)
+def array(request: pytest.FixtureRequest) -> npt.NDArray[np.float32]:
     generator = np.random.default_rng(57)
-    return generator.random(10, dtype=np.float32)
+    return generator.random(request.param, dtype=np.float32)

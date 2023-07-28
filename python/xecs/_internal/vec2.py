@@ -51,9 +51,13 @@ class Vec2(Struct):
         return self
 
     def __isub__(self, other: Self | Rhs) -> Self:
-        if isinstance(
-            other, int | float | np.ndarray | Float32 | list | tuple
-        ):
+        if isinstance(other, int | float | Float32 | list | tuple):
+            self.x -= other
+            self.y -= other
+        elif isinstance(other, np.ndarray) and other.ndim == 2:
+            self.x -= other[0]
+            self.y -= other[1]
+        elif isinstance(other, np.ndarray):
             self.x -= other
             self.y -= other
         else:
@@ -62,9 +66,13 @@ class Vec2(Struct):
         return self
 
     def __imul__(self, other: Self | Rhs) -> Self:
-        if isinstance(
-            other, int | float | np.ndarray | Float32 | list | tuple
-        ):
+        if isinstance(other, int | float | Float32 | list | tuple):
+            self.x *= other
+            self.y *= other
+        elif isinstance(other, np.ndarray) and other.ndim == 2:
+            self.x *= other[0]
+            self.y *= other[1]
+        elif isinstance(other, np.ndarray):
             self.x *= other
             self.y *= other
         else:
@@ -73,9 +81,13 @@ class Vec2(Struct):
         return self
 
     def __itruediv__(self, other: Self | Rhs) -> Self:
-        if isinstance(
-            other, int | float | np.ndarray | Float32 | list | tuple
-        ):
+        if isinstance(other, int | float | Float32 | list | tuple):
+            self.x /= other
+            self.y /= other
+        elif isinstance(other, np.ndarray) and other.ndim == 2:
+            self.x /= other[0]
+            self.y /= other[1]
+        elif isinstance(other, np.ndarray):
             self.x /= other
             self.y /= other
         else:
@@ -84,9 +96,13 @@ class Vec2(Struct):
         return self
 
     def __ifloordiv__(self, other: Self | Rhs) -> Self:
-        if isinstance(
-            other, int | float | np.ndarray | Float32 | list | tuple
-        ):
+        if isinstance(other, int | float | Float32 | list | tuple):
+            self.x //= other
+            self.y //= other
+        elif isinstance(other, np.ndarray) and other.ndim == 2:
+            self.x //= other[0]
+            self.y //= other[1]
+        elif isinstance(other, np.ndarray):
             self.x //= other
             self.y //= other
         else:
@@ -95,9 +111,13 @@ class Vec2(Struct):
         return self
 
     def __imod__(self, other: Self | Rhs) -> Self:
-        if isinstance(
-            other, int | float | np.ndarray | Float32 | list | tuple
-        ):
+        if isinstance(other, int | float | Float32 | list | tuple):
+            self.x %= other
+            self.y %= other
+        elif isinstance(other, np.ndarray) and other.ndim == 2:
+            self.x %= other[0]
+            self.y %= other[1]
+        elif isinstance(other, np.ndarray):
             self.x %= other
             self.y %= other
         else:
@@ -106,9 +126,13 @@ class Vec2(Struct):
         return self
 
     def __ipow__(self, other: Self | Rhs) -> Self:
-        if isinstance(
-            other, int | float | np.ndarray | Float32 | list | tuple
-        ):
+        if isinstance(other, int | float | Float32 | list | tuple):
+            self.x **= other
+            self.y **= other
+        elif isinstance(other, np.ndarray) and other.ndim == 2:
+            self.x **= other[0]
+            self.y **= other[1]
+        elif isinstance(other, np.ndarray):
             self.x **= other
             self.y **= other
         else:
