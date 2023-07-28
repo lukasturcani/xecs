@@ -77,6 +77,16 @@ def math_operator(request: pytest.FixtureRequest) -> typing.Any:
     return request.param
 
 
+def test_operators_vec2(
+    vec1: xx.Vec2,
+    vec2: xx.Vec2,
+    math_operator: typing.Any,
+) -> None:
+    expected = math_operator(vec1.numpy(), vec2.numpy())
+    result = math_operator(vec1, vec2)
+    assert np.all(np.equal(result, expected))
+
+
 def test_operators_array(
     vec1: xx.Vec2,
     array: npt.NDArray[np.float32],
