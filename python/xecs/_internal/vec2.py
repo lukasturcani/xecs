@@ -1,3 +1,4 @@
+import typing
 from typing import Self, TypeAlias
 
 import numpy as np
@@ -6,9 +7,11 @@ import numpy.typing as npt
 from xecs._internal.struct import Struct
 from xecs.xecs import Float32
 
-Rhs: TypeAlias = (
-    Float32 | npt.NDArray[np.float32] | float | list[float] | tuple[float, ...]
-)
+if typing.TYPE_CHECKING:
+    from xecs.xecs import Float32Rhs
+
+
+Rhs: TypeAlias = "Vec2 | Float32 | npt.NDArray[np.float32] | float | list[float] | tuple[float, ...]"
 
 
 class Vec2(Struct):
@@ -27,7 +30,7 @@ class Vec2(Struct):
     def numpy(self) -> npt.NDArray[np.float32]:
         return np.array([self.x.numpy(), self.y.numpy()], dtype=np.float32)
 
-    def fill(self, value: Rhs) -> None:
+    def fill(self, value: "Float32Rhs") -> None:
         self.x.fill(value)
         self.y.fill(value)
 
@@ -35,7 +38,7 @@ class Vec2(Struct):
         self.x = x
         self.y = y
 
-    def __iadd__(self, other: Self | Rhs) -> Self:
+    def __iadd__(self, other: Rhs) -> Self:
         if isinstance(other, int | float | Float32 | list | tuple):
             self.x += other
             self.y += other
@@ -50,7 +53,7 @@ class Vec2(Struct):
             self.y += other.y
         return self
 
-    def __isub__(self, other: Self | Rhs) -> Self:
+    def __isub__(self, other: Rhs) -> Self:
         if isinstance(other, int | float | Float32 | list | tuple):
             self.x -= other
             self.y -= other
@@ -65,7 +68,7 @@ class Vec2(Struct):
             self.y -= other.y
         return self
 
-    def __imul__(self, other: Self | Rhs) -> Self:
+    def __imul__(self, other: Rhs) -> Self:
         if isinstance(other, int | float | Float32 | list | tuple):
             self.x *= other
             self.y *= other
@@ -80,7 +83,7 @@ class Vec2(Struct):
             self.y *= other.y
         return self
 
-    def __itruediv__(self, other: Self | Rhs) -> Self:
+    def __itruediv__(self, other: Rhs) -> Self:
         if isinstance(other, int | float | Float32 | list | tuple):
             self.x /= other
             self.y /= other
@@ -95,7 +98,7 @@ class Vec2(Struct):
             self.y /= other.y
         return self
 
-    def __ifloordiv__(self, other: Self | Rhs) -> Self:
+    def __ifloordiv__(self, other: Rhs) -> Self:
         if isinstance(other, int | float | Float32 | list | tuple):
             self.x //= other
             self.y //= other
@@ -110,7 +113,7 @@ class Vec2(Struct):
             self.y //= other.y
         return self
 
-    def __imod__(self, other: Self | Rhs) -> Self:
+    def __imod__(self, other: Rhs) -> Self:
         if isinstance(other, int | float | Float32 | list | tuple):
             self.x %= other
             self.y %= other
@@ -125,7 +128,7 @@ class Vec2(Struct):
             self.y %= other.y
         return self
 
-    def __ipow__(self, other: Self | Rhs) -> Self:
+    def __ipow__(self, other: Rhs) -> Self:
         if isinstance(other, int | float | Float32 | list | tuple):
             self.x **= other
             self.y **= other
