@@ -84,12 +84,12 @@ class Vec2(Struct):
         return self
 
     def __mul__(self, other: Rhs) -> npt.NDArray[np.float32]:
-        # if isinstance(other, Vec2):
-        #     result = self.numpy()
-        #     Float32.inplace_mul(result[0], other.x)
-        #     Float32.inplace_mul(result[1], other.y)
-        #     return result
-        if isinstance(other, Vec2 | Float32):
+        if isinstance(other, Vec2):
+            result = self.numpy()
+            Float32.imul(result[0], other.x)
+            Float32.imul(result[1], other.y)
+            return result
+        if isinstance(other, Float32):
             other = other.numpy()
         result = self.numpy()
         result *= other

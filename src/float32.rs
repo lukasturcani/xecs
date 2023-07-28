@@ -70,6 +70,17 @@ impl Float32 {
             indices: ArrayViewIndices(Arc::clone(&indices.0)),
         }
     }
+    #[staticmethod]
+    fn imul(lhs: &PyArray1<f32>, rhs: &Self) -> PyResult<()> {
+        let mut lhs_array = lhs.readwrite();
+        let mut lhs_array = lhs_array.as_array_mut();
+        let rhs_array = rhs.array.read().map_err(cannot_read)?;
+        let indices = rhs.indices.0.read().map_err(cannot_read)?;
+        for (value, &index) in lhs_array.iter_mut().zip(indices.iter()) {
+            *value *= unsafe { rhs_array.get_unchecked(index as usize) };
+        }
+        Ok(())
+    }
     fn numpy(&self, py: Python) -> PyResult<Py<PyArray1<f32>>> {
         let array = self.array.read().map_err(cannot_read)?;
         let indices = self.indices.0.read().map_err(cannot_read)?;
