@@ -28,19 +28,12 @@ def test_numpy(vec1: xx.Vec2) -> None:
 
 @pytest.fixture(
     params=(
-        operator.add,
         operator.iadd,
-        operator.sub,
         operator.isub,
-        operator.mul,
         operator.imul,
-        operator.truediv,
         operator.itruediv,
-        operator.floordiv,
         operator.ifloordiv,
-        operator.mod,
         operator.imod,
-        operator.pow,
         operator.ipow,
     )
 )
