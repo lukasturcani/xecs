@@ -18,7 +18,7 @@ class Vec2(Struct):
     @staticmethod
     def from_xy(x: float, y: float, num: int) -> "Vec2":
         obj = Vec2.__new__(Vec2)
-        Vec2._init(Float32.p_from_value(x, num), Float32.p_from_value(y, num))
+        obj._init(Float32.p_from_value(x, num), Float32.p_from_value(y, num))
         return obj
 
     def angle_between(self, other: "Vec2", out: Float32) -> None:
