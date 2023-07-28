@@ -19,6 +19,17 @@ class Vec2(Struct):
     y: Float32
 
     @staticmethod
+    def from_numpy(array: npt.NDArray[np.float32]) -> "Vec2":
+        obj = Vec2.__new__(Vec2)
+        if isinstance(array, np.ndarray) and array.ndim == 2:
+            obj.x = Float32.p_from_numpy(array[0])
+            obj.y = Float32.p_from_numpy(array[1])
+        else:
+            obj.x = Float32.p_from_numpy(array)
+            obj.y = Float32.p_from_numpy(array)
+        return obj
+
+    @staticmethod
     def from_xy(x: float, y: float, num: int) -> "Vec2":
         obj = Vec2.__new__(Vec2)
         obj._init(Float32.p_from_value(x, num), Float32.p_from_value(y, num))
