@@ -34,6 +34,14 @@ pub struct Float32 {
 #[pymethods]
 impl Float32 {
     #[staticmethod]
+    fn p_from_value(value: f32, num: usize) -> PyResult<Self> {
+        Ok(Self {
+            array: Arc::new(RwLock::new(vec![value; num])),
+            indices: ArrayViewIndices(Arc::new(RwLock::new((0_u32..(num as u32)).collect()))),
+        })
+    }
+
+    #[staticmethod]
     fn p_from_numpy(array: &PyArray1<f32>) -> PyResult<Self> {
         Ok(Self {
             array: Arc::new(RwLock::new(array.to_vec()?)),
