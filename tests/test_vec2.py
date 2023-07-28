@@ -70,29 +70,29 @@ def test_ioperators_array(
     assert np.all(np.equal(result.numpy(), expected))
 
 
-# @pytest.fixture(
-#     params=(
-#         operator.add,
-#         # operator.sub,
-#         # operator.mul,
-#         # operator.truediv,
-#         # operator.floordiv,
-#         # operator.mod,
-#         # operator.pow,
-#     )
-# )
-# def math_operator(request: pytest.FixtureRequest) -> typing.Any:
-#     return request.param
+@pytest.fixture(
+    params=(
+        operator.add,
+        # operator.sub,
+        # operator.mul,
+        # operator.truediv,
+        # operator.floordiv,
+        # operator.mod,
+        # operator.pow,
+    )
+)
+def math_operator(request: pytest.FixtureRequest) -> typing.Any:
+    return request.param
 
 
-# def test_operators_array(
-#     vec1: xx.Vec2,
-#     array: npt.NDArray[np.float32],
-#     math_operator: typing.Any,
-# ) -> None:
-#     expected = math_operator(vec1.numpy(), array)
-#     result = math_operator(vec1, array)
-#     assert np.all(np.equal(result, expected))
+def test_operators_array(
+    vec1: xx.Vec2,
+    array: npt.NDArray[np.float32],
+    math_operator: typing.Any,
+) -> None:
+    expected = math_operator(vec1.numpy(), array)
+    result = math_operator(vec1, array)
+    assert np.all(np.equal(result, expected))
 
 
 @pytest.fixture
@@ -100,9 +100,7 @@ def vec1() -> xx.Vec2:
     generator = np.random.default_rng(55)
     pool = VecContainer.create_pool(10)
     pool.p_spawn(10)
-    all_mask = np.ones(10, dtype=np.bool_)
-    pool.p_component.vec.x[all_mask] = generator.random(10, dtype=np.float32)
-    pool.p_component.vec.y[all_mask] = generator.random(10, dtype=np.float32)
+    pool.p_component.vec.fill(generator.random((2, 10), dtype=np.float32))
     return pool.p_component.vec
 
 
@@ -111,9 +109,7 @@ def vec2() -> xx.Vec2:
     generator = np.random.default_rng(56)
     pool = VecContainer.create_pool(10)
     pool.p_spawn(10)
-    all_mask = np.ones(10, dtype=np.bool_)
-    pool.p_component.vec.x[all_mask] = generator.random(10, dtype=np.float32)
-    pool.p_component.vec.y[all_mask] = generator.random(10, dtype=np.float32)
+    pool.p_component.vec.fill(generator.random((2, 10), dtype=np.float32))
     return pool.p_component.vec
 
 
