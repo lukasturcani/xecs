@@ -13,17 +13,9 @@ class VecContainer(xx.Component):
 
 def test_numpy(vec1: xx.Vec2) -> None:
     generator = np.random.default_rng(54)
-    xs = generator.random(10, dtype=np.float32)
-    ys = generator.random(10, dtype=np.float32)
-    all_mask = np.ones(10, dtype=np.bool_)
-    vec1.x[all_mask] = xs
-    vec1.y[all_mask] = ys
-    assert np.all(
-        np.equal(
-            vec1.numpy(),
-            np.array([xs, ys], dtype=np.float32),
-        ),
-    )
+    expected = generator.random((2, 10), dtype=np.float32)
+    vec1.fill(expected)
+    assert np.all(np.equal(vec1.numpy(), expected))
 
 
 @pytest.fixture(
