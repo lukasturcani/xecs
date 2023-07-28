@@ -64,9 +64,9 @@ def test_ioperators_array(
 
 @pytest.fixture(
     params=(
-        operator.add,
+        # operator.add,
         # operator.sub,
-        # operator.mul,
+        operator.mul,
         # operator.truediv,
         # operator.floordiv,
         # operator.mod,
@@ -83,6 +83,7 @@ def test_operators_array(
     math_operator: typing.Any,
 ) -> None:
     expected = math_operator(vec1.numpy(), array)
+    result = vec1 * array
     result = math_operator(vec1, array)
     assert np.all(np.equal(result, expected))
 
