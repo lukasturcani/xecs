@@ -37,36 +37,36 @@ def test_numpy(vec1: xx.Vec2) -> None:
         operator.ipow,
     )
 )
-def math_operator(request: pytest.FixtureRequest) -> typing.Any:
+def math_ioperator(request: pytest.FixtureRequest) -> typing.Any:
     return request.param
 
 
-def test_operators_vec2(
+def test_ioperators_vec2(
     vec1: xx.Vec2,
     vec2: xx.Vec2,
-    math_operator: typing.Any,
+    math_ioperator: typing.Any,
 ) -> None:
-    expected = math_operator(vec1.numpy(), vec2.numpy())
-    result = math_operator(vec1, vec2)
+    expected = math_ioperator(vec1.numpy(), vec2.numpy())
+    result = math_ioperator(vec1, vec2)
     assert np.all(np.equal(result.numpy(), expected))
 
 
-def test_operators_float(
+def test_ioperators_float(
     vec1: xx.Vec2,
-    math_operator: typing.Any,
+    math_ioperator: typing.Any,
 ) -> None:
-    expected = math_operator(vec1.numpy(), 2)
-    result = math_operator(vec1, 2)
+    expected = math_ioperator(vec1.numpy(), 2)
+    result = math_ioperator(vec1, 2)
     assert np.all(np.equal(result.numpy(), expected))
 
 
-def test_operators_array(
+def test_ioperators_array(
     vec1: xx.Vec2,
     array: npt.NDArray[np.float32],
-    math_operator: typing.Any,
+    math_ioperator: typing.Any,
 ) -> None:
-    expected = math_operator(vec1.numpy(), array)
-    result = math_operator(vec1, array)
+    expected = math_ioperator(vec1.numpy(), array)
+    result = math_ioperator(vec1, array)
     assert np.all(np.equal(result.numpy(), expected))
 
 

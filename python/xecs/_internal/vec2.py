@@ -36,9 +36,13 @@ class Vec2(Struct):
         self.y = y
 
     def __iadd__(self, other: Self | Rhs) -> Self:
-        if isinstance(
-            other, int | float | np.ndarray | Float32 | list | tuple
-        ):
+        if isinstance(other, int | float | Float32 | list | tuple):
+            self.x += other
+            self.y += other
+        elif isinstance(other, np.ndarray) and other.ndim == 2:
+            self.x += other[0]
+            self.y += other[1]
+        elif isinstance(other, np.ndarray):
             self.x += other
             self.y += other
         else:
