@@ -125,7 +125,7 @@ def move_boids(
 ) -> None:
     transforms, velocities = query.result()
     transforms.translation += velocities.value * 16 / 1e3
-    xx.Vec2.from_float(0.0, 1.0, len(transforms)).angle_between(
+    xx.Vec2.from_xy(0.0, 1.0, len(transforms)).angle_between(
         velocities.value, out=transforms.rotation
     )
 
