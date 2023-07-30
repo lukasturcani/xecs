@@ -1,3 +1,4 @@
+import operator
 import typing
 
 import numpy as np
@@ -14,7 +15,7 @@ def benchmark_numpy_getitem_mask(
 ) -> None:
     generator = np.random.default_rng(55)
     key = generator.random(len(numpy_array)) < key_size
-    benchmark(getitem, numpy_array, key)
+    benchmark(operator.getitem, numpy_array, key)
 
 
 @pytest.mark.benchmark(group="xecs-getitem-mask")
@@ -25,14 +26,7 @@ def benchmark_xecs_getitem_mask(
 ) -> None:
     generator = np.random.default_rng(55)
     key = generator.random(len(ecs_array)) < key_size
-    benchmark(getitem, ecs_array, key)
-
-
-def getitem(
-    array: xx.Float32 | npt.NDArray[np.float32],
-    key: npt.NDArray[np.bool_],
-) -> None:
-    array[key]
+    benchmark(operator.getitem, ecs_array, key)
 
 
 @pytest.fixture(

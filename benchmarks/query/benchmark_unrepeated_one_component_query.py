@@ -9,11 +9,9 @@ class One(xx.Component):
 
 
 @pytest.mark.benchmark(group="unrepeated-one-component-query")
-def benchmark_query(
-    benchmark: typing.Any,
-    app: xx.App,
-) -> None:
-    benchmark(app.p_run_systems)
+def benchmark_query(benchmark: typing.Any, app: xx.App) -> None:
+    app.add_system(system)
+    benchmark(app.update)
 
 
 def system(query: xx.Query[tuple[One]]) -> None:
@@ -30,7 +28,6 @@ def app(request: pytest.FixtureRequest) -> xx.App:
 
     app = xx.App()
     app.add_startup_system(startup_system)
-    app.add_system(system)
     app.add_pool(One.create_pool(request.param))
-    app.p_run_startup_systems()
+    app.update()
     return app

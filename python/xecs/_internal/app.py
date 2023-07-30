@@ -172,7 +172,7 @@ class App:
             )
         )
 
-    def p_process_pending_systems(self) -> None:
+    def _process_pending_systems(self) -> None:
         pending_startup_systems = self.world.get_resource(
             PendingStartupSystems
         )
@@ -207,7 +207,7 @@ class App:
                     )
         pending_systems.systems = []
 
-    def p_run_startup_systems(self) -> None:
+    def _run_startup_systems(self) -> None:
         self._has_run_startup_systems = True
         for system in self.world.get_resource(StartupSystems).systems:
             for query in system.query_args.values():
@@ -218,7 +218,7 @@ class App:
                 **system.other_args,
             )
 
-    def p_run_systems(self) -> None:
+    def _run_systems(self) -> None:
         for system in self.world.get_resource(Systems).systems:
             for query in system.query_args.values():
                 self._run_query(query)
@@ -228,7 +228,7 @@ class App:
                 **system.other_args,
             )
 
-    def p_run_fixed_time_step_systems(
+    def _run_fixed_time_step_systems(
         self,
         time_since_last_update: Duration,
     ) -> None:
@@ -247,16 +247,16 @@ class App:
     def update(self) -> None:
         if not self.world.has_resource(Time):
             self.world.add_resource(Time.default())
-        self.p_process_pending_systems()
+        self._process_pending_systems()
         self._update()
 
     def _update(self) -> None:
         time = self.world.get_resource(Time)
         time.update()
         if not self._has_run_startup_systems:
-            self.p_run_startup_systems()
-        self.p_run_systems()
-        self.p_run_fixed_time_step_systems(time.delta())
+            self._run_startup_systems()
+        self._run_systems()
+        self._run_fixed_time_step_systems(time.delta())
 
     def run(
         self,
@@ -265,7 +265,7 @@ class App:
     ) -> None:
         if not self.world.has_resource(Time):
             self.world.add_resource(Time.default())
-        self.p_process_pending_systems()
+        self._process_pending_systems()
         self._run(frame_time, max_run_time)
 
     def _run(
