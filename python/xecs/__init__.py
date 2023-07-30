@@ -1,4 +1,13 @@
-from xecs._internal.app import App
+from xecs._internal.app import (
+    App,
+    FixedTimeStepSystems,
+    FixedTimeStepSystemSpec,
+    PendingStartupSystems,
+    PendingSystems,
+    StartupSystems,
+    Systems,
+    SystemSpec,
+)
 from xecs._internal.commands import Commands
 from xecs._internal.component import Component, ComponentPool
 from xecs._internal.float import Float
@@ -16,11 +25,18 @@ __all__ = [
     "Component",
     "ComponentPool",
     "Duration",
+    "FixedTimeStepSystems",
+    "FixedTimeStepSystemSpec",
     "Float",
     "Float32",
+    "PendingStartupSystems",
+    "PendingSystems",
     "Query",
     "Resource",
+    "StartupSystems",
     "Struct",
+    "Systems",
+    "SystemSpec",
     "Vec2",
     "World",
 ]

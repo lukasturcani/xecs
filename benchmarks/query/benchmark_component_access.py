@@ -10,7 +10,6 @@ indices we're accessing. These benchmarks exist to check
 if we're making good trade-offs.
 """
 
-
 import typing
 
 import pytest
