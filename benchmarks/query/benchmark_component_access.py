@@ -20,12 +20,24 @@ class One(xx.Component):
     x: xx.Float32
 
 
-@pytest.mark.benchmark(group="component-access")
-def benchmark_component_access(benchmark: typing.Any, app: xx.App) -> None:
+@pytest.mark.benchmark(group="component-access-only")
+def benchmark_component_access_only(
+    benchmark: typing.Any,
+    app: xx.App,
+) -> None:
     app.add_system(add)
     app.update()
     query = app.world.get_resource(xx.Systems).systems[0].query_args["query"]
     benchmark(add, query)
+
+
+@pytest.mark.benchmark(group="component-access-and-query")
+def benchmark_component_access_and_query(
+    benchmark: typing.Any,
+    app: xx.App,
+) -> None:
+    app.add_system(add)
+    benchmark(app.update)
 
 
 @pytest.fixture
