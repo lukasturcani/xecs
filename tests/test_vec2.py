@@ -64,13 +64,13 @@ def test_ioperators_array(
 
 @pytest.fixture(
     params=(
-        # operator.add,
-        # operator.sub,
+        operator.add,
+        operator.sub,
         operator.mul,
-        # operator.truediv,
-        # operator.floordiv,
-        # operator.mod,
-        # operator.pow,
+        operator.truediv,
+        operator.floordiv,
+        operator.mod,
+        operator.pow,
     )
 )
 def math_operator(request: pytest.FixtureRequest) -> typing.Any:
