@@ -141,7 +141,7 @@ def calculate_separation(
     transform1, separation1 = boid1
     transform2, separation2 = boid2
     displacement = transform1.translation - transform2.translation
-    distance = displacement.length()
+    distance = np.linalg.norm(displacement, axis=0)
     needs_separation = distance < params.separation_radius
 
     displacement = displacement[needs_separation]
@@ -165,10 +165,9 @@ def calculate_alignment(
     transform2, *_ = boid2
 
     displacement = transform1.translation - transform2.translation
-    distance = displacement.length()
-    needs_alignment = (
-        distance > params.separation_radius & distance < params.visible_radius
-    )
+    distance = np.linalg.norm(displacement, axis=0)
+    needs_alignment = distance > params.separation_radius
+    needs_alignment &= distance < params.visible_radius
 
     (_, velocity1, alignment1) = boid1[needs_alignment]
     (_, velocity2, alignment2) = boid2[needs_alignment]
@@ -183,28 +182,29 @@ def calculate_cohesion(
     params: Params,
     query: xx.Query[tuple[Transform, Cohesion]],
 ) -> None:
-    (_, cohesions) = query.result()
-    cohesions.translation_sum.fill(0)
-    cohesions.num_neighbors.fill(0)
+    (_, cohesion) = query.result()
+    cohesion.translation_sum.fill(0)
+    cohesion.num_neighbors.fill(0)
 
-    (transforms1, cohesions1), (transforms2, cohesions2) = query.combinations(
-        2
-    )
-    displacement = transforms1.translation - transforms2.translation
-    distance = displacement.length()
+    boid1, boid2 = query.combinations_2()
+    transform1, cohesion1 = boid1
+    transform2, cohesion2 = boid2
+
+    displacement = transform1.translation - transform2.translation
+    distance = np.linalg.norm(displacement, axis=0)
     needs_cohesion = (
         distance > params.separation_radius & distance < params.visible_radius
     )
 
-    transforms1 = transforms1[needs_cohesion]
-    cohesions1 = cohesions1[needs_cohesion]
-    transforms2 = transforms2[needs_cohesion]
-    cohesions2 = cohesions2[needs_cohesion]
+    transform1 = transform1[needs_cohesion]
+    cohesion1 = cohesion1[needs_cohesion]
+    transform2 = transform2[needs_cohesion]
+    cohesion2 = cohesion2[needs_cohesion]
 
-    cohesions1.translation_sum += transforms2.translation
-    cohesions1.num_neighbors += 1
-    cohesions2.translation_sum += transforms1.translation
-    cohesions2.num_neighbors += 1
+    cohesion1.translation_sum += transform2.translation
+    cohesion1.num_neighbors += 1
+    cohesion2.translation_sum += transform1.translation
+    cohesion2.num_neighbors += 1
 
 
 def update_boid_velocity(
@@ -214,39 +214,39 @@ def update_boid_velocity(
     ],
 ) -> None:
     (
-        transforms,
-        separations,
-        alignments,
-        cohesions,
-        velocities,
+        transform,
+        separation,
+        alignment,
+        cohesion,
+        velocity,
     ) = query.result()
 
-    alignment_update = alignments.num_neighbors > 0
-    alignment_velocities = velocities[alignment_update]
-    alignments = alignments[alignment_update]
-    alignments.velocity_sum /= alignments.num_neighbors
-    alignments.velocity_sum -= alignment_velocities.value
-    alignments.velocity_sum *= params.alignment_coefficient
-    alignment_velocities.value += alignments.velocity_sum
+    alignment_update = alignment.num_neighbors > 0
+    alignment_velocities = velocity[alignment_update]
+    alignment = alignment[alignment_update]
+    alignment.velocity_sum /= alignment.num_neighbors
+    alignment.velocity_sum -= alignment_velocities.value
+    alignment.velocity_sum *= params.alignment_coefficient
+    alignment_velocities.value += alignment.velocity_sum
 
-    cohesion_update = cohesions.num_neighbors > 0
-    cohesions = cohesions[cohesion_update]
-    cohesions.translation_sum /= cohesions.num_neighbors
-    cohesions.translation_sum -= transforms[cohesion_update].translation
-    cohesions.translation_sum *= params.cohesion_coefficient
-    velocities[cohesion_update].value += cohesions.translation_sum
+    cohesion_update = cohesion.num_neighbors > 0
+    cohesion = cohesion[cohesion_update]
+    cohesion.translation_sum /= cohesion.num_neighbors
+    cohesion.translation_sum -= transform[cohesion_update].translation
+    cohesion.translation_sum *= params.cohesion_coefficient
+    velocity[cohesion_update].value += cohesion.translation_sum
 
-    left_bounds = transforms.translation.x < params.left_margin
-    velocities[left_bounds].value.x += params.box_bound_coefficient
+    left_bounds = transform.translation.x < params.left_margin
+    velocity[left_bounds].value.x += params.box_bound_coefficient
 
-    right_bounds = transforms.translation.x > params.right_margin
-    velocities[right_bounds].value.x -= params.box_bound_coefficient
+    right_bounds = transform.translation.x > params.right_margin
+    velocity[right_bounds].value.x -= params.box_bound_coefficient
 
-    bottom_bounds = transforms.translation.y < params.bottom_margin
-    velocities[bottom_bounds].value.y += params.box_bound_coefficient
+    bottom_bounds = transform.translation.y < params.bottom_margin
+    velocity[bottom_bounds].value.y += params.box_bound_coefficient
 
-    top_bounds = transforms.translation.y > params.top_margin
-    velocities[top_bounds].value.y += params.box_bound_coefficient
+    top_bounds = transform.translation.y > params.top_margin
+    velocity[top_bounds].value.y += params.box_bound_coefficient
 
-    separations.displacement_sum *= params.separation_coefficient
-    velocities.value += separations.displacement_sum
+    separation.displacement_sum *= params.separation_coefficient
+    velocity.value += separation.displacement_sum
