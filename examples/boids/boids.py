@@ -123,10 +123,10 @@ def spawn_boids(
 def move_boids(
     query: xx.Query[tuple[Transform, Velocity]],
 ) -> None:
-    transforms, velocities = query.result()
-    transforms.translation += velocities.value * 16 / 1e3
-    xx.Vec2.from_xy(0.0, 1.0, len(transforms)).angle_between(
-        velocities.value, out=transforms.rotation
+    transform, velocity = query.result()
+    transform.translation += velocity.value * 16 / 1e3
+    xx.Vec2.from_xy(0.0, 1.0, len(transform)).angle_between(
+        velocity.value, out=transform.rotation
     )
 
 
@@ -137,45 +137,46 @@ def calculate_separation(
     (_, separations) = query.result()
     separations.displacement_sum.fill(0)
 
-    (transforms1, separations1), (
-        transforms2,
-        separations2,
-    ) = query.combinations(2)
-    displacement = transforms1.translation - transforms2.translation
+    boid1, boid2 = query.combinations_2()
+    transform1, separation1 = boid1
+    transform2, separation2 = boid2
+    displacement = transform1.translation - transform2.translation
     distance = displacement.length()
     needs_separation = distance < params.separation_radius
 
     displacement = displacement[needs_separation]
-    separations1 = separations1[needs_separation]
-    separations2 = separations2[needs_separation]
+    separation1 = separation1[needs_separation]
+    separation2 = separation2[needs_separation]
 
-    separations1.displacement_sum += displacement
-    separations2.displacement_sum -= displacement
+    separation1.displacement_sum += displacement
+    separation2.displacement_sum -= displacement
 
 
 def calculate_alignment(
     params: Params,
     query: xx.Query[tuple[Transform, Velocity, Alignment]],
 ) -> None:
-    (_, _, alignments) = query.result()
-    alignments.velocity_sum.fill(0)
-    alignments.num_neighbors.fill(0)
+    (_, _, alignment) = query.result()
+    alignment.velocity_sum.fill(0)
+    alignment.num_neighbors.fill(0)
 
-    boids1, boids2 = query.combinations(2)
+    boid1, boid2 = query.combinations_2()
+    transform1, *_ = boid1
+    transform2, *_ = boid2
 
-    displacement = boids1[0].translation - boids2[0].translation
+    displacement = transform1.translation - transform2.translation
     distance = displacement.length()
     needs_alignment = (
         distance > params.separation_radius & distance < params.visible_radius
     )
 
-    (_, velocities1, alignments1) = boids1[needs_alignment]
-    (_, velocities2, alignments2) = boids2[needs_alignment]
+    (_, velocity1, alignment1) = boid1[needs_alignment]
+    (_, velocity2, alignment2) = boid2[needs_alignment]
 
-    alignments1.velocity_sum += velocities2.inner
-    alignments1.num_neighbors += 1
-    alignments2.velocity_sum += velocities1.inner
-    alignments2.num_neighbors += 1
+    alignment1.velocity_sum += velocity2.value
+    alignment1.num_neighbors += 1
+    alignment2.velocity_sum += velocity1.value
+    alignment2.num_neighbors += 1
 
 
 def calculate_cohesion(

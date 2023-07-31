@@ -2,6 +2,7 @@ use pyo3::prelude::*;
 
 mod app;
 mod array_view_indices;
+mod combinations;
 mod component_id;
 mod component_pool;
 mod entity_id;
@@ -25,5 +26,6 @@ fn xecs(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<time::Duration>()?;
     m.add_class::<time::Instant>()?;
     m.add_class::<time::Time>()?;
+    m.add_function(wrap_pyfunction!(combinations::combinations_2, m)?)?;
     Ok(())
 }
