@@ -29,10 +29,12 @@ pub fn combinations_2(
         let j: usize = unsafe { *x.get_unchecked(1) };
         for (component_index, indices) in read_indices.iter().enumerate() {
             unsafe {
-                let a = *indices.get_unchecked(i);
-                let b = *indices.get_unchecked(j);
-                indices1.get_unchecked_mut(component_index).push(a);
-                indices2.get_unchecked_mut(component_index).push(b);
+                indices1
+                    .get_unchecked_mut(component_index)
+                    .push(*indices.get_unchecked(i));
+                indices2
+                    .get_unchecked_mut(component_index)
+                    .push(*indices.get_unchecked(j));
             }
         }
     }
