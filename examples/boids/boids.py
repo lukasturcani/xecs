@@ -134,10 +134,10 @@ def calculate_separation(
     params: Params,
     query: xx.Query[tuple[Transform, Separation]],
 ) -> None:
-    (_, separations) = query.result()
-    separations.displacement_sum.fill(0)
+    (_, separation) = query.result()
+    separation.displacement_sum.fill(0)
 
-    boid1, boid2 = query.combinations_2()
+    boid1, boid2 = query.product_2()
     transform1, separation1 = boid1
     transform2, separation2 = boid2
     displacement = transform1.translation - transform2.translation
@@ -161,16 +161,18 @@ def calculate_alignment(
     alignment.num_neighbors.fill(0)
 
     boid1, boid2 = query.combinations_2()
-    transform1, *_ = boid1
-    transform2, *_ = boid2
+    transform1, velocity1, alignment1 = boid1
+    transform2, velocity2, alignment2 = boid2
 
     displacement = transform1.translation - transform2.translation
     distance = np.linalg.norm(displacement, axis=0)
     needs_alignment = distance > params.separation_radius
     needs_alignment &= distance < params.visible_radius
 
-    (_, velocity1, alignment1) = boid1[needs_alignment]
-    (_, velocity2, alignment2) = boid2[needs_alignment]
+    velocity1 = velocity1[needs_alignment]
+    alignment1 = alignment1[needs_alignment]
+    velocity2 = velocity2[needs_alignment]
+    alignment2 = alignment2[needs_alignment]
 
     alignment1.velocity_sum += velocity2.value
     alignment1.num_neighbors += 1
