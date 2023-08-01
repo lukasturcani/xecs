@@ -27,5 +27,6 @@ fn xecs(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<time::Instant>()?;
     m.add_class::<time::Time>()?;
     m.add_function(wrap_pyfunction!(combinations::combinations_2, m)?)?;
+    m.add_function(wrap_pyfunction!(combinations::product_2, m)?)?;
     Ok(())
 }
