@@ -34,6 +34,14 @@ pub struct Float32 {
 #[pymethods]
 impl Float32 {
     #[staticmethod]
+    fn p_from_value(value: f32, num: usize) -> PyResult<Self> {
+        Ok(Self {
+            array: Arc::new(RwLock::new(vec![value; num])),
+            indices: ArrayViewIndices(Arc::new(RwLock::new((0_u32..(num as u32)).collect()))),
+        })
+    }
+
+    #[staticmethod]
     fn p_from_numpy(array: &PyArray1<f32>) -> PyResult<Self> {
         Ok(Self {
             array: Arc::new(RwLock::new(array.to_vec()?)),
@@ -186,7 +194,7 @@ impl Float32 {
         }
         Ok(())
     }
-    fn __add__(&self, rhs: Float32Rhs) -> PyResult<Self> {
+    fn __add__(&self, py: Python, rhs: Float32Rhs) -> PyResult<Py<PyArray1<f32>>> {
         let array = self.array.read().map_err(cannot_read)?;
         let indices = self.indices.0.read().map_err(cannot_read)?;
         let mut result = Vec::with_capacity(indices.len());
@@ -235,12 +243,7 @@ impl Float32 {
                 }
             }
         }
-        Ok(Self {
-            indices: ArrayViewIndices(Arc::new(RwLock::new(
-                (0_u32..(result.len() as u32)).collect(),
-            ))),
-            array: Arc::new(RwLock::new(result)),
-        })
+        Ok(PyArray1::from_vec(py, result).into_py(py))
     }
     fn __iadd__(&mut self, rhs: Float32Rhs) -> PyResult<()> {
         let mut array = self.array.write().map_err(cannot_write)?;
@@ -290,7 +293,7 @@ impl Float32 {
         }
         Ok(())
     }
-    fn __sub__(&self, rhs: Float32Rhs) -> PyResult<Self> {
+    fn __sub__(&self, py: Python, rhs: Float32Rhs) -> PyResult<Py<PyArray1<f32>>> {
         let array = self.array.read().map_err(cannot_read)?;
         let indices = self.indices.0.read().map_err(cannot_read)?;
         let mut result = Vec::with_capacity(indices.len());
@@ -339,12 +342,7 @@ impl Float32 {
                 }
             }
         }
-        Ok(Self {
-            indices: ArrayViewIndices(Arc::new(RwLock::new(
-                (0_u32..(result.len() as u32)).collect(),
-            ))),
-            array: Arc::new(RwLock::new(result)),
-        })
+        Ok(PyArray1::from_vec(py, result).into_py(py))
     }
     fn __isub__(&mut self, rhs: Float32Rhs) -> PyResult<()> {
         let mut array = self.array.write().map_err(cannot_write)?;
@@ -394,7 +392,7 @@ impl Float32 {
         }
         Ok(())
     }
-    fn __mul__(&self, rhs: Float32Rhs) -> PyResult<Self> {
+    fn __mul__(&self, py: Python, rhs: Float32Rhs) -> PyResult<Py<PyArray1<f32>>> {
         let array = self.array.read().map_err(cannot_read)?;
         let indices = self.indices.0.read().map_err(cannot_read)?;
         let mut result = Vec::with_capacity(indices.len());
@@ -443,12 +441,7 @@ impl Float32 {
                 }
             }
         }
-        Ok(Self {
-            indices: ArrayViewIndices(Arc::new(RwLock::new(
-                (0_u32..(result.len() as u32)).collect(),
-            ))),
-            array: Arc::new(RwLock::new(result)),
-        })
+        Ok(PyArray1::from_vec(py, result).into_py(py))
     }
     fn __imul__(&mut self, rhs: Float32Rhs) -> PyResult<()> {
         let mut array = self.array.write().map_err(cannot_write)?;
@@ -498,7 +491,7 @@ impl Float32 {
         }
         Ok(())
     }
-    fn __truediv__(&self, rhs: Float32Rhs) -> PyResult<Self> {
+    fn __truediv__(&self, py: Python, rhs: Float32Rhs) -> PyResult<Py<PyArray1<f32>>> {
         let array = self.array.read().map_err(cannot_read)?;
         let indices = self.indices.0.read().map_err(cannot_read)?;
         let mut result = Vec::with_capacity(indices.len());
@@ -547,12 +540,7 @@ impl Float32 {
                 }
             }
         }
-        Ok(Self {
-            indices: ArrayViewIndices(Arc::new(RwLock::new(
-                (0_u32..(result.len() as u32)).collect(),
-            ))),
-            array: Arc::new(RwLock::new(result)),
-        })
+        Ok(PyArray1::from_vec(py, result).into_py(py))
     }
     fn __itruediv__(&mut self, rhs: Float32Rhs) -> PyResult<()> {
         let mut array = self.array.write().map_err(cannot_write)?;
@@ -602,7 +590,7 @@ impl Float32 {
         }
         Ok(())
     }
-    fn __floordiv__(&self, rhs: Float32Rhs) -> PyResult<Self> {
+    fn __floordiv__(&self, py: Python, rhs: Float32Rhs) -> PyResult<Py<PyArray1<f32>>> {
         let array = self.array.read().map_err(cannot_read)?;
         let indices = self.indices.0.read().map_err(cannot_read)?;
         let mut result = Vec::with_capacity(indices.len());
@@ -652,12 +640,7 @@ impl Float32 {
                 }
             }
         }
-        Ok(Self {
-            indices: ArrayViewIndices(Arc::new(RwLock::new(
-                (0_u32..(result.len() as u32)).collect(),
-            ))),
-            array: Arc::new(RwLock::new(result)),
-        })
+        Ok(PyArray1::from_vec(py, result).into_py(py))
     }
     fn __ifloordiv__(&mut self, rhs: Float32Rhs) -> PyResult<()> {
         let mut array = self.array.write().map_err(cannot_write)?;
@@ -702,7 +685,7 @@ impl Float32 {
         }
         Ok(())
     }
-    fn __mod__(&self, rhs: Float32Rhs) -> PyResult<Self> {
+    fn __mod__(&self, py: Python, rhs: Float32Rhs) -> PyResult<Py<PyArray1<f32>>> {
         let array = self.array.read().map_err(cannot_read)?;
         let indices = self.indices.0.read().map_err(cannot_read)?;
         let mut result = Vec::with_capacity(indices.len());
@@ -751,12 +734,7 @@ impl Float32 {
                 }
             }
         }
-        Ok(Self {
-            indices: ArrayViewIndices(Arc::new(RwLock::new(
-                (0_u32..(result.len() as u32)).collect(),
-            ))),
-            array: Arc::new(RwLock::new(result)),
-        })
+        Ok(PyArray1::from_vec(py, result).into_py(py))
     }
     fn __imod__(&mut self, rhs: Float32Rhs) -> PyResult<()> {
         let mut array = self.array.write().map_err(cannot_write)?;
@@ -807,7 +785,7 @@ impl Float32 {
         Ok(())
     }
     #[args(_modulo = "None")]
-    fn __pow__(&self, rhs: PowRhs, _modulo: &PyAny) -> PyResult<Self> {
+    fn __pow__(&self, py: Python, rhs: PowRhs, _modulo: &PyAny) -> PyResult<Py<PyArray1<f32>>> {
         let array = self.array.read().map_err(cannot_read)?;
         let indices = self.indices.0.read().map_err(cannot_read)?;
         let mut result = Vec::with_capacity(indices.len());
@@ -868,12 +846,7 @@ impl Float32 {
                 }
             }
         }
-        Ok(Self {
-            indices: ArrayViewIndices(Arc::new(RwLock::new(
-                (0_u32..(result.len() as u32)).collect(),
-            ))),
-            array: Arc::new(RwLock::new(result)),
-        })
+        Ok(PyArray1::from_vec(py, result).into_py(py))
     }
     #[args(_modulo = "None")]
     fn __ipow__(&mut self, rhs: PowRhs, _modulo: &PyAny) -> PyResult<()> {

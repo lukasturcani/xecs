@@ -50,7 +50,7 @@ def test_ioperator_list(
 def test_self(array: xx.Float32, iop: typing.Any) -> None:
     expected = iop(array.numpy(), array.numpy())
     result = iop(array, array)
-    assert np.all(np.equal(result.numpy(), expected))
+    assert np.all(np.equal(result, expected))
 
 
 def test_self_mask(array: xx.Float32, iop: typing.Any) -> None:

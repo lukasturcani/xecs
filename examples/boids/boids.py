@@ -11,18 +11,25 @@ class Transform(xx.Component):
         generator: np.random.Generator,
         scale: float,
     ) -> None:
-        pass
+        self.translation.fill(
+            generator.random((2, len(self)), dtype=np.float32) * scale
+        )
+        self.rotation.fill(
+            generator.random(len(self), dtype=np.float32) * 2 * np.pi
+        )
 
 
 class Velocity(xx.Component):
-    inner: xx.Vec2
+    value: xx.Vec2
 
     def fill_random(
         self,
         generator: np.random.Generator,
         scale: float,
     ) -> None:
-        pass
+        self.value.fill(
+            generator.random((2, len(self)), dtype=np.float32) * scale
+        )
 
 
 class Separation(xx.Component):
@@ -116,10 +123,10 @@ def spawn_boids(
 def move_boids(
     query: xx.Query[tuple[Transform, Velocity]],
 ) -> None:
-    transforms, velocities = query.result()
-    transforms.translation += velocities.inner * time_step.period.as_secs()
-    transforms.rotation = xx.Quat.from_rotation_z(
-        xx.Vec2(0.0, 1.0).angle_between(velocities.inner)
+    transform, velocity = query.result()
+    transform.translation += velocity.value * 16 / 1e3
+    xx.Vec2.from_xy(0.0, 1.0, len(transform)).angle_between(
+        velocity.value, out=transform.rotation
     )
 
 
@@ -127,76 +134,79 @@ def calculate_separation(
     params: Params,
     query: xx.Query[tuple[Transform, Separation]],
 ) -> None:
-    (_, separations) = query.result()
-    separations.displacement_sum.fill(0)
+    (_, separation) = query.result()
+    separation.displacement_sum.fill(0)
 
-    (transforms1, separations1), (
-        transforms2,
-        separations2,
-    ) = query.combinations(2)
-    displacement = transforms1.translation - transforms2.translation
-    distance = displacement.length()
+    boid1, boid2 = query.product_2()
+    transform1, separation1 = boid1
+    transform2, separation2 = boid2
+    displacement = transform1.translation - transform2.translation
+    distance = np.linalg.norm(displacement, axis=0)
     needs_separation = distance < params.separation_radius
 
     displacement = displacement[needs_separation]
-    separations1 = separations1[needs_separation]
-    separations2 = separations2[needs_separation]
+    separation1 = separation1[needs_separation]
+    separation2 = separation2[needs_separation]
 
-    separations1.displacement_sum += displacement
-    separations2.displacement_sum -= displacement
+    separation1.displacement_sum += displacement
+    separation2.displacement_sum -= displacement
 
 
 def calculate_alignment(
     params: Params,
     query: xx.Query[tuple[Transform, Velocity, Alignment]],
 ) -> None:
-    (_, _, alignments) = query.result()
-    alignments.velocity_sum.fill(0)
-    alignments.num_neighbors.fill(0)
+    (_, _, alignment) = query.result()
+    alignment.velocity_sum.fill(0)
+    alignment.num_neighbors.fill(0)
 
-    boids1, boids2 = query.combinations(2)
+    boid1, boid2 = query.combinations_2()
+    transform1, velocity1, alignment1 = boid1
+    transform2, velocity2, alignment2 = boid2
 
-    displacement = boids1[0].translation - boids2[0].translation
-    distance = displacement.length()
-    needs_alignment = (
-        distance > params.separation_radius & distance < params.visible_radius
-    )
+    displacement = transform1.translation - transform2.translation
+    distance = np.linalg.norm(displacement, axis=0)
+    needs_alignment = distance > params.separation_radius
+    needs_alignment &= distance < params.visible_radius
 
-    (_, velocities1, alignments1) = boids1[needs_alignment]
-    (_, velocities2, alignments2) = boids2[needs_alignment]
+    velocity1 = velocity1[needs_alignment]
+    alignment1 = alignment1[needs_alignment]
+    velocity2 = velocity2[needs_alignment]
+    alignment2 = alignment2[needs_alignment]
 
-    alignments1.velocity_sum += velocities2.inner
-    alignments1.num_neighbors += 1
-    alignments2.velocity_sum += velocities1.inner
-    alignments2.num_neighbors += 1
+    alignment1.velocity_sum += velocity2.value
+    alignment1.num_neighbors += 1
+    alignment2.velocity_sum += velocity1.value
+    alignment2.num_neighbors += 1
 
 
 def calculate_cohesion(
     params: Params,
     query: xx.Query[tuple[Transform, Cohesion]],
 ) -> None:
-    (_, cohesions) = query.result()
-    cohesions.translation_sum.fill(0)
-    cohesions.num_neighbors.fill(0)
+    (_, cohesion) = query.result()
+    cohesion.translation_sum.fill(0)
+    cohesion.num_neighbors.fill(0)
 
-    (transforms1, cohesions1), (transforms2, cohesions2) = query.combinations(
-        2
-    )
-    displacement = transforms1.translation - transforms2.translation
-    distance = displacement.length()
+    boid1, boid2 = query.combinations_2()
+    transform1, cohesion1 = boid1
+    transform2, cohesion2 = boid2
+
+    displacement = transform1.translation - transform2.translation
+    distance = np.linalg.norm(displacement, axis=0)
     needs_cohesion = (
         distance > params.separation_radius & distance < params.visible_radius
     )
 
-    transforms1 = transforms1[needs_cohesion]
-    cohesions1 = cohesions1[needs_cohesion]
-    transforms2 = transforms2[needs_cohesion]
-    cohesions2 = cohesions2[needs_cohesion]
+    transform1 = transform1[needs_cohesion]
+    cohesion1 = cohesion1[needs_cohesion]
+    transform2 = transform2[needs_cohesion]
+    cohesion2 = cohesion2[needs_cohesion]
 
-    cohesions1.translation_sum += transforms2.translation
-    cohesions1.num_neighbors += 1
-    cohesions2.translation_sum += transforms1.translation
-    cohesions2.num_neighbors += 1
+    cohesion1.translation_sum += transform2.translation
+    cohesion1.num_neighbors += 1
+    cohesion2.translation_sum += transform1.translation
+    cohesion2.num_neighbors += 1
 
 
 def update_boid_velocity(
@@ -206,39 +216,39 @@ def update_boid_velocity(
     ],
 ) -> None:
     (
-        transforms,
-        separations,
-        alignments,
-        cohesions,
-        velocities,
+        transform,
+        separation,
+        alignment,
+        cohesion,
+        velocity,
     ) = query.result()
 
-    alignment_update = alignments.num_neighbors > 0
-    alignment_velocities = velocities[alignment_update]
-    alignments = alignments[alignment_update]
-    alignments.velocity_sum /= alignments.num_neighbors
-    alignments.velocity_sum -= alignment_velocities.inner
-    alignments.velocity_sum *= params.alignment_coefficient
-    alignment_velocities.inner += alignments.velocity_sum
+    alignment_update = alignment.num_neighbors > 0
+    alignment_velocities = velocity[alignment_update]
+    alignment = alignment[alignment_update]
+    alignment.velocity_sum /= alignment.num_neighbors
+    alignment.velocity_sum -= alignment_velocities.value
+    alignment.velocity_sum *= params.alignment_coefficient
+    alignment_velocities.value += alignment.velocity_sum
 
-    cohesion_update = cohesions.num_neighbors > 0
-    cohesions = cohesions[cohesion_update]
-    cohesions.translation_sum /= cohesions.num_neighbors
-    cohesions.translation_sum -= transforms[cohesion_update].translation
-    cohesions.translation_sum *= params.cohesion_coefficient
-    velocities[cohesion_update].inner += cohesions.translation_sum
+    cohesion_update = cohesion.num_neighbors > 0
+    cohesion = cohesion[cohesion_update]
+    cohesion.translation_sum /= cohesion.num_neighbors
+    cohesion.translation_sum -= transform[cohesion_update].translation
+    cohesion.translation_sum *= params.cohesion_coefficient
+    velocity[cohesion_update].value += cohesion.translation_sum
 
-    left_bounds = transforms.translation.x < params.left_margin
-    velocities[left_bounds].inner.x += params.box_bound_coefficient
+    left_bounds = transform.translation.x < params.left_margin
+    velocity[left_bounds].value.x += params.box_bound_coefficient
 
-    right_bounds = transforms.translation.x > params.right_margin
-    velocities[right_bounds].inner.x -= params.box_bound_coefficient
+    right_bounds = transform.translation.x > params.right_margin
+    velocity[right_bounds].value.x -= params.box_bound_coefficient
 
-    bottom_bounds = transforms.translation.y < params.bottom_margin
-    velocities[bottom_bounds].inner.y += params.box_bound_coefficient
+    bottom_bounds = transform.translation.y < params.bottom_margin
+    velocity[bottom_bounds].value.y += params.box_bound_coefficient
 
-    top_bounds = transforms.translation.y > params.top_margin
-    velocities[top_bounds].inner.y += params.box_bound_coefficient
+    top_bounds = transform.translation.y > params.top_margin
+    velocity[top_bounds].value.y += params.box_bound_coefficient
 
-    separations.displacement_sum *= params.separation_coefficient
-    velocities.inner += separations.displacement_sum
+    separation.displacement_sum *= params.separation_coefficient
+    velocity.value += separation.displacement_sum

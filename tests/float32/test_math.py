@@ -14,7 +14,7 @@ def test_operator_value(
 ) -> None:
     expected = op(array.numpy(), other_value)
     result = op(array, other_value)
-    assert np.all(np.equal(result.numpy(), expected))
+    assert np.all(np.equal(result, expected))
 
 
 def test_operator_numpy(
@@ -24,7 +24,7 @@ def test_operator_numpy(
 ) -> None:
     expected = op(array.numpy(), other_numpy)
     result = op(array, other_numpy)
-    assert np.all(np.equal(result.numpy(), expected))
+    assert np.all(np.equal(result, expected))
 
 
 def test_operator_array(
@@ -34,7 +34,7 @@ def test_operator_array(
 ) -> None:
     expected = op(array.numpy(), other_array.numpy())
     result = op(array, other_array)
-    assert np.all(np.equal(result.numpy(), expected))
+    assert np.all(np.equal(result, expected))
 
 
 def test_operator_list(
@@ -44,13 +44,13 @@ def test_operator_list(
 ) -> None:
     expected = op(array.numpy(), other_list)
     result = op(array, other_list)
-    assert np.allclose(result.numpy(), expected)
+    assert np.allclose(result, expected)
 
 
 def test_self(array: xx.Float32, op: typing.Any) -> None:
     expected = op(array.numpy(), array.numpy())
     result = op(array, array)
-    assert np.all(np.equal(result.numpy(), expected))
+    assert np.all(np.equal(result, expected))
 
 
 @pytest.fixture(

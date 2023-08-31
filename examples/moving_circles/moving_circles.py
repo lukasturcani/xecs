@@ -11,9 +11,9 @@ class Position(xx.Component):
         generator: np.random.Generator,
         scale: float,
     ) -> None:
-        num = len(self.value.x)
-        self.value.x.fill(generator.random(num, dtype=np.float32) * scale)
-        self.value.y.fill(generator.random(num, dtype=np.float32) * scale)
+        self.value.fill(
+            generator.random((2, len(self)), dtype=np.float32) * scale
+        )
 
 
 class Velocity(xx.Component):
@@ -24,9 +24,9 @@ class Velocity(xx.Component):
         generator: np.random.Generator,
         scale: float,
     ) -> None:
-        num = len(self.value.x)
-        self.value.x.fill(generator.random(num, dtype=np.float32) * scale)
-        self.value.y.fill(generator.random(num, dtype=np.float32) * scale)
+        self.value.fill(
+            generator.random((2, len(self)), dtype=np.float32) * scale
+        )
 
 
 class Generator(xx.Resource):

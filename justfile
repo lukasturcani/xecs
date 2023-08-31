@@ -34,6 +34,12 @@ check:
   echo
   ( set -x; make -C docs doctest )
 
+  echo
+  ( set -x; cargo check )
+
+  echo
+  ( set -x; cargo clippy )
+
   test $error = 0
 
 # auto-fix code issues
