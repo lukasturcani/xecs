@@ -35,8 +35,46 @@ class Vec2(Struct):
         obj._init(Float32.p_from_value(x, num), Float32.p_from_value(y, num))
         return obj
 
-    def angle_between(self, other: "Vec2", out: Float32) -> None:
-        pass
+    def dot_xy(self, x: float, y: float) -> npt.NDArray[np.float32]:
+        tmp = self.numpy()
+        np.multiply(tmp, [[x], [y]], out=tmp)
+        return np.sum(tmp, axis=0, out=tmp[0])
+
+    def dot_vec2(self, other: "Vec2") -> npt.NDArray[np.float32]:
+        tmp = self.numpy()
+        np.multiply(tmp, other.numpy(), out=tmp)
+        return np.sum(tmp, axis=0, out=tmp[0])
+
+    def perp_dot_xy(self, x: float, y: float) -> npt.NDArray[np.float32]:
+        return np.cross(self.numpy(), [x, y], axisa=0, axisb=0)
+
+    def perp_dot_vec2(self, other: "Vec2") -> npt.NDArray[np.float32]:
+        return np.cross(self.numpy(), other.numpy(), axisa=0, axisb=0)
+
+    def angle_between_xy(self, x: float, y: float) -> npt.NDArray[np.float32]:
+        tmp = self.length_squared()
+        np.multiply(tmp, x * x + y * y, out=tmp)
+        np.sqrt(tmp, out=tmp)
+        tmp2 = self.dot_xy(x, y)
+        tmp2 /= tmp
+        np.arccos(tmp2, out=tmp2)
+        perp_dot = self.perp_dot_xy(x, y)
+        return np.multiply(tmp2, np.sign(perp_dot, out=perp_dot), out=tmp2)
+
+    def angle_between_vec2(self, other: "Vec2") -> npt.NDArray[np.float32]:
+        tmp = self.length_squared()
+        np.multiply(tmp, other.length_squared(), out=tmp)
+        np.sqrt(tmp, out=tmp)
+        tmp2 = self.dot_vec2(other)
+        tmp2 /= tmp
+        np.arccos(tmp2, out=tmp2)
+        perp_dot = self.perp_dot_vec2(other)
+        return np.multiply(tmp2, np.sign(perp_dot, out=perp_dot), out=tmp2)
+
+    def length_squared(self) -> npt.NDArray[np.float32]:
+        values = self.numpy()
+        np.multiply(values, values, out=values)
+        return np.sum(values, axis=0, out=values[0])
 
     def numpy(self) -> npt.NDArray[np.float32]:
         return np.array([self.x.numpy(), self.y.numpy()], dtype=np.float32)

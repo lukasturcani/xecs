@@ -1,4 +1,5 @@
 import numpy as np
+import pygame
 import xecs as xx
 
 
@@ -66,7 +67,12 @@ class Generator(xx.Resource):
     value: np.random.Generator
 
 
+class Display(xx.Resource):
+    surface: pygame.Surface
+
+
 def main() -> None:
+    pygame.init()
     app = xx.App()
     num_boids = 100
     app.add_resource(
@@ -81,12 +87,13 @@ def main() -> None:
             cohesion_coefficient=0.0005,
             box_bound_coefficient=0.2,
             left_margin=0.0,
-            right_margin=150.0,
+            right_margin=300.0,
             bottom_margin=0.0,
             top_margin=150.0,
         )
     )
     app.add_resource(Generator(np.random.default_rng(55)))
+    app.add_resource(Display(pygame.display.set_mode((640, 640))))
     app.add_startup_system(spawn_boids)
     time_step = xx.Duration.from_millis(16)
     app.add_system(calculate_separation, time_step)
@@ -94,6 +101,7 @@ def main() -> None:
     app.add_system(calculate_cohesion, time_step)
     app.add_system(update_boid_velocity, time_step)
     app.add_system(move_boids, time_step)
+    app.add_system(show_boids)
     app.add_pool(Transform.create_pool(num_boids))
     app.add_pool(Velocity.create_pool(num_boids))
     app.add_pool(Separation.create_pool(num_boids))
@@ -125,9 +133,7 @@ def move_boids(
 ) -> None:
     transform, velocity = query.result()
     transform.translation += velocity.value * 16 / 1e3
-    xx.Vec2.from_xy(0.0, 1.0, len(transform)).angle_between(
-        velocity.value, out=transform.rotation
-    )
+    transform.rotation.fill(-velocity.value.angle_between_xy(0.0, 1.0))
 
 
 def calculate_separation(
@@ -138,18 +144,15 @@ def calculate_separation(
     separation.displacement_sum.fill(0)
 
     boid1, boid2 = query.product_2()
-    transform1, separation1 = boid1
-    transform2, separation2 = boid2
+    transform1, separation = boid1
+    transform2, _ = boid2
     displacement = transform1.translation - transform2.translation
     distance = np.linalg.norm(displacement, axis=0)
     needs_separation = distance < params.separation_radius
 
-    displacement = displacement[needs_separation]
-    separation1 = separation1[needs_separation]
-    separation2 = separation2[needs_separation]
-
-    separation1.displacement_sum += displacement
-    separation2.displacement_sum -= displacement
+    displacement = displacement[:, needs_separation]
+    separation = separation[needs_separation]
+    separation.displacement_sum += displacement
 
 
 def calculate_alignment(
@@ -160,9 +163,9 @@ def calculate_alignment(
     alignment.velocity_sum.fill(0)
     alignment.num_neighbors.fill(0)
 
-    boid1, boid2 = query.combinations_2()
-    transform1, velocity1, alignment1 = boid1
-    transform2, velocity2, alignment2 = boid2
+    boid1, boid2 = query.product_2()
+    transform1, velocity1, alignment = boid1
+    transform2, velocity2, _ = boid2
 
     displacement = transform1.translation - transform2.translation
     distance = np.linalg.norm(displacement, axis=0)
@@ -170,14 +173,11 @@ def calculate_alignment(
     needs_alignment &= distance < params.visible_radius
 
     velocity1 = velocity1[needs_alignment]
-    alignment1 = alignment1[needs_alignment]
+    alignment = alignment[needs_alignment]
     velocity2 = velocity2[needs_alignment]
-    alignment2 = alignment2[needs_alignment]
 
-    alignment1.velocity_sum += velocity2.value
-    alignment1.num_neighbors += 1
-    alignment2.velocity_sum += velocity1.value
-    alignment2.num_neighbors += 1
+    alignment.velocity_sum += velocity2.value
+    alignment.num_neighbors += 1
 
 
 def calculate_cohesion(
@@ -188,25 +188,21 @@ def calculate_cohesion(
     cohesion.translation_sum.fill(0)
     cohesion.num_neighbors.fill(0)
 
-    boid1, boid2 = query.combinations_2()
-    transform1, cohesion1 = boid1
-    transform2, cohesion2 = boid2
+    boid1, boid2 = query.product_2()
+    transform1, cohesion = boid1
+    transform2, _ = boid2
 
     displacement = transform1.translation - transform2.translation
     distance = np.linalg.norm(displacement, axis=0)
-    needs_cohesion = (
-        distance > params.separation_radius & distance < params.visible_radius
-    )
+    needs_cohesion = distance > params.separation_radius
+    needs_cohesion &= distance < params.visible_radius
 
     transform1 = transform1[needs_cohesion]
-    cohesion1 = cohesion1[needs_cohesion]
+    cohesion = cohesion[needs_cohesion]
     transform2 = transform2[needs_cohesion]
-    cohesion2 = cohesion2[needs_cohesion]
 
-    cohesion1.translation_sum += transform2.translation
-    cohesion1.num_neighbors += 1
-    cohesion2.translation_sum += transform1.translation
-    cohesion2.num_neighbors += 1
+    cohesion.translation_sum += transform2.translation
+    cohesion.num_neighbors += 1
 
 
 def update_boid_velocity(
@@ -248,7 +244,35 @@ def update_boid_velocity(
     velocity[bottom_bounds].value.y += params.box_bound_coefficient
 
     top_bounds = transform.translation.y > params.top_margin
-    velocity[top_bounds].value.y += params.box_bound_coefficient
+    velocity[top_bounds].value.y -= params.box_bound_coefficient
 
     separation.displacement_sum *= params.separation_coefficient
     velocity.value += separation.displacement_sum
+
+
+def show_boids(
+    display: Display,
+    query: xx.Query[tuple[Transform]],
+) -> None:
+    boid = np.array([[-4, -5], [0, 10], [4, -5]]).T
+    (transform,) = query.result()
+    display.surface.fill("purple")
+    position = transform.translation.numpy()
+    rotation = transform.rotation.numpy()
+    for i in range(position.shape[1]):
+        angle = rotation[i]
+        r = [
+            [np.cos(angle), -np.sin(angle)],
+            [np.sin(angle), np.cos(angle)],
+        ]
+        boid_polygon = position[:, i] + (r @ boid).T
+        pygame.draw.polygon(display.surface, "green", boid_polygon.tolist())
+    display.surface.blit(
+        pygame.transform.flip(display.surface, False, True),
+        dest=(0, 0),
+    )
+    pygame.display.flip()
+
+
+if __name__ == "__main__":
+    main()
