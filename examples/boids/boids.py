@@ -13,7 +13,7 @@ class Transform(xx.Component):
         scale: float,
     ) -> None:
         self.translation.fill(
-            generator.random((2, len(self)), dtype=np.float32) * scale
+            (generator.random((2, len(self)), dtype=np.float32) - 0.5) * scale
         )
         self.rotation.fill(
             generator.random(len(self), dtype=np.float32) * 2 * np.pi
@@ -29,7 +29,7 @@ class Velocity(xx.Component):
         scale: float,
     ) -> None:
         self.value.fill(
-            generator.random((2, len(self)), dtype=np.float32) * scale
+            (generator.random((2, len(self)), dtype=np.float32) - 0.5) * scale
         )
 
 
@@ -49,7 +49,6 @@ class Cohesion(xx.Component):
 
 class Params(xx.Resource):
     num_boids: int
-    max_translation: float
     max_speed: float
     separation_radius: float
     visible_radius: float
@@ -57,10 +56,7 @@ class Params(xx.Resource):
     alignment_coefficient: float
     cohesion_coefficient: float
     box_bound_coefficient: float
-    left_margin: float
-    right_margin: float
-    bottom_margin: float
-    top_margin: float
+    box_size: float
 
 
 class Generator(xx.Resource):
@@ -78,7 +74,6 @@ def main() -> None:
     app.add_resource(
         Params(
             num_boids=num_boids,
-            max_translation=150.0,
             max_speed=60.0,
             separation_radius=3.0,
             visible_radius=6.0,
@@ -86,10 +81,7 @@ def main() -> None:
             alignment_coefficient=0.005,
             cohesion_coefficient=0.0005,
             box_bound_coefficient=0.2,
-            left_margin=0.0,
-            right_margin=300.0,
-            bottom_margin=0.0,
-            top_margin=150.0,
+            box_size=250.0,
         )
     )
     app.add_resource(Generator(np.random.default_rng(55)))
@@ -121,7 +113,7 @@ def spawn_boids(
         num=params.num_boids,
     )
     world.get_view(Transform, transformi).fill_random(
-        generator.value, params.max_translation
+        generator.value, params.box_size
     )
     world.get_view(Velocity, velocityi).fill_random(
         generator.value, params.max_speed
@@ -234,16 +226,16 @@ def update_boid_velocity(
     cohesion.translation_sum *= params.cohesion_coefficient
     velocity[cohesion_update].value += cohesion.translation_sum
 
-    left_bounds = transform.translation.x < params.left_margin
+    left_bounds = transform.translation.x < -params.box_size / 2
     velocity[left_bounds].value.x += params.box_bound_coefficient
 
-    right_bounds = transform.translation.x > params.right_margin
+    right_bounds = transform.translation.x > params.box_size / 2
     velocity[right_bounds].value.x -= params.box_bound_coefficient
 
-    bottom_bounds = transform.translation.y < params.bottom_margin
+    bottom_bounds = transform.translation.y < -params.box_size / 2
     velocity[bottom_bounds].value.y += params.box_bound_coefficient
 
-    top_bounds = transform.translation.y > params.top_margin
+    top_bounds = transform.translation.y > params.box_size / 2
     velocity[top_bounds].value.y -= params.box_bound_coefficient
 
     separation.displacement_sum *= params.separation_coefficient
@@ -259,13 +251,14 @@ def show_boids(
     display.surface.fill("purple")
     position = transform.translation.numpy()
     rotation = transform.rotation.numpy()
+    display_origin = np.array(display.surface.get_size()) / 2
     for i in range(position.shape[1]):
         angle = rotation[i]
         r = [
             [np.cos(angle), -np.sin(angle)],
             [np.sin(angle), np.cos(angle)],
         ]
-        boid_polygon = position[:, i] + (r @ boid).T
+        boid_polygon = 2 * position[:, i] + display_origin + (r @ boid).T
         pygame.draw.polygon(display.surface, "green", boid_polygon.tolist())
     display.surface.blit(
         pygame.transform.flip(display.surface, False, True),
