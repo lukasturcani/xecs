@@ -77,7 +77,7 @@ def main() -> None:
             num_boids=num_boids,
             min_speed=15.0,
             max_speed=60.0,
-            separation_radius=3.0,
+            separation_radius=6.0,
             visible_radius=6.0,
             separation_coefficient=0.1,
             alignment_coefficient=0.005,
