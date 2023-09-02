@@ -35,6 +35,29 @@ class Vec2(Struct):
         obj._init(Float32.p_from_value(x, num), Float32.p_from_value(y, num))
         return obj
 
+    def clamp_length(self, min: float, max: float) -> None:
+        length_sq = self.length_squared()
+        too_small = length_sq < (min * min)
+        too_small_self = self[too_small]
+        too_large = length_sq > (max * max)
+        too_large_self = self[too_large]
+
+        too_small_length = length_sq[too_small]
+        np.sqrt(too_small_length, out=too_small_length)
+
+        too_small_self.x /= too_small_length
+        too_small_self.x *= min
+        too_small_self.y /= too_small_length
+        too_small_self.y *= min
+
+        too_large_length = length_sq[too_large]
+        np.sqrt(too_large_length, out=too_large_length)
+
+        too_large_self.x /= too_large_length
+        too_large_self.x *= min
+        too_large_self.y /= too_large_length
+        too_large_self.y *= min
+
     def dot_xy(self, x: float, y: float) -> npt.NDArray[np.float32]:
         tmp = self.numpy()
         np.multiply(tmp, [[x], [y]], out=tmp)

@@ -49,6 +49,7 @@ class Cohesion(xx.Component):
 
 class Params(xx.Resource):
     num_boids: int
+    min_speed: float
     max_speed: float
     separation_radius: float
     visible_radius: float
@@ -74,6 +75,7 @@ def main() -> None:
     app.add_resource(
         Params(
             num_boids=num_boids,
+            min_speed=15.0,
             max_speed=60.0,
             separation_radius=3.0,
             visible_radius=6.0,
@@ -240,6 +242,7 @@ def update_boid_velocity(
 
     separation.displacement_sum *= params.separation_coefficient
     velocity.value += separation.displacement_sum
+    velocity.value.clamp_length(params.min_speed, params.max_speed)
 
 
 def show_boids(

@@ -104,6 +104,10 @@ def test_angle_between_xy() -> None:
     )
 
 
+def test_clamp_length() -> None:
+    assert False
+
+
 @pytest.fixture
 def vec1() -> xx.Vec2:
     generator = np.random.default_rng(55)
