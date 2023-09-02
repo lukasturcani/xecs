@@ -105,7 +105,21 @@ def test_angle_between_xy() -> None:
 
 
 def test_clamp_length() -> None:
-    assert False
+    v1 = xx.Vec2.from_numpy(
+        np.array(
+            [
+                [0.5, 6.0, 3.0, 5.0, 0.1],
+                [0.0, 0.0, 0.0, 10.0, 0.05],
+            ],
+            dtype=np.float32,
+        )
+    )
+    v1.clamp_length(1, 5)
+    expected = [
+        [1.0, 5.0, 3.0, 2.236068, 0.8944272],
+        [0.0, 0.0, 0.0, 4.472136, 0.4472136],
+    ]
+    assert np.allclose(v1.numpy(), expected)
 
 
 @pytest.fixture

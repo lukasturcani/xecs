@@ -5,7 +5,7 @@ import numpy as np
 import numpy.typing as npt
 
 from xecs._internal.struct import Struct
-from xecs.xecs import Float32
+from xecs.xecs import ArrayViewIndices, Float32
 
 if typing.TYPE_CHECKING:
     from xecs.xecs import Float32Rhs
@@ -22,11 +22,23 @@ class Vec2(Struct):
     def from_numpy(array: npt.NDArray[np.float32]) -> "Vec2":
         obj = Vec2.__new__(Vec2)
         if isinstance(array, np.ndarray) and array.ndim == 2:
-            obj.x = Float32.p_from_numpy(array[0])
-            obj.y = Float32.p_from_numpy(array[1])
+            indices = ArrayViewIndices.with_capacity(len(array[0]))
+            indices.spawn(len(array[0]))
+            obj.x = Float32.p_from_numpy(array[0]).p_new_view_with_indices(
+                indices
+            )
+            obj.y = Float32.p_from_numpy(array[1]).p_new_view_with_indices(
+                indices
+            )
         else:
-            obj.x = Float32.p_from_numpy(array)
-            obj.y = Float32.p_from_numpy(array)
+            indices = ArrayViewIndices.with_capacity(len(array))
+            obj.x = Float32.p_from_numpy(array).p_new_view_with_indices(
+                indices
+            )
+            obj.y = Float32.p_from_numpy(array).p_new_view_with_indices(
+                indices
+            )
+        obj._indices = indices
         return obj
 
     @staticmethod
@@ -35,7 +47,7 @@ class Vec2(Struct):
         obj._init(Float32.p_from_value(x, num), Float32.p_from_value(y, num))
         return obj
 
-    def clamp_length(self, min: float, max: float) -> None:
+    def clamp_length(self, min: float, max: float) -> Self:
         length_sq = self.length_squared()
         too_small = length_sq < (min * min)
         too_small_self = self[too_small]
@@ -54,9 +66,10 @@ class Vec2(Struct):
         np.sqrt(too_large_length, out=too_large_length)
 
         too_large_self.x /= too_large_length
-        too_large_self.x *= min
+        too_large_self.x *= max
         too_large_self.y /= too_large_length
-        too_large_self.y *= min
+        too_large_self.y *= max
+        return self
 
     def dot_xy(self, x: float, y: float) -> npt.NDArray[np.float32]:
         tmp = self.numpy()

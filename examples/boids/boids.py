@@ -82,7 +82,7 @@ def main() -> None:
             separation_coefficient=0.1,
             alignment_coefficient=0.005,
             cohesion_coefficient=0.0005,
-            box_bound_coefficient=0.2,
+            box_bound_coefficient=1.0,
             box_size=250.0,
         )
     )
