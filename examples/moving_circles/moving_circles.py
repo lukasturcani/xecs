@@ -104,8 +104,13 @@ def show_circles(
     display.surface.fill("purple")
     position = position_.value.numpy()
     for i in range(position.shape[1]):
-        x, y = map(float, position[:, i])
-        pygame.draw.circle(display.surface, "green", (x, y), 10)
+        pygame.draw.circle(
+            display.surface, "green", position[:, i].tolist(), 10
+        )
+    display.surface.blit(
+        pygame.transform.flip(display.surface, False, True),
+        dest=(0, 0),
+    )
     pygame.display.flip()
 
 

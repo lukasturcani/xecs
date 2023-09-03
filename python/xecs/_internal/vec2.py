@@ -5,7 +5,7 @@ import numpy as np
 import numpy.typing as npt
 
 from xecs._internal.struct import Struct
-from xecs.xecs import Float32
+from xecs.xecs import ArrayViewIndices, Float32
 
 if typing.TYPE_CHECKING:
     from xecs.xecs import Float32Rhs
@@ -22,11 +22,23 @@ class Vec2(Struct):
     def from_numpy(array: npt.NDArray[np.float32]) -> "Vec2":
         obj = Vec2.__new__(Vec2)
         if isinstance(array, np.ndarray) and array.ndim == 2:
-            obj.x = Float32.p_from_numpy(array[0])
-            obj.y = Float32.p_from_numpy(array[1])
+            indices = ArrayViewIndices.with_capacity(len(array[0]))
+            indices.spawn(len(array[0]))
+            obj.x = Float32.p_from_numpy(array[0]).p_new_view_with_indices(
+                indices
+            )
+            obj.y = Float32.p_from_numpy(array[1]).p_new_view_with_indices(
+                indices
+            )
         else:
-            obj.x = Float32.p_from_numpy(array)
-            obj.y = Float32.p_from_numpy(array)
+            indices = ArrayViewIndices.with_capacity(len(array))
+            obj.x = Float32.p_from_numpy(array).p_new_view_with_indices(
+                indices
+            )
+            obj.y = Float32.p_from_numpy(array).p_new_view_with_indices(
+                indices
+            )
+        obj._indices = indices
         return obj
 
     @staticmethod
@@ -35,8 +47,70 @@ class Vec2(Struct):
         obj._init(Float32.p_from_value(x, num), Float32.p_from_value(y, num))
         return obj
 
-    def angle_between(self, other: "Vec2", out: Float32) -> None:
-        pass
+    def clamp_length(self, min: float, max: float) -> Self:
+        length_sq = self.length_squared()
+        too_small = length_sq < (min * min)
+        too_small_self = self[too_small]
+        too_large = length_sq > (max * max)
+        too_large_self = self[too_large]
+
+        too_small_length = length_sq[too_small]
+        np.sqrt(too_small_length, out=too_small_length)
+
+        too_small_self.x /= too_small_length
+        too_small_self.x *= min
+        too_small_self.y /= too_small_length
+        too_small_self.y *= min
+
+        too_large_length = length_sq[too_large]
+        np.sqrt(too_large_length, out=too_large_length)
+
+        too_large_self.x /= too_large_length
+        too_large_self.x *= max
+        too_large_self.y /= too_large_length
+        too_large_self.y *= max
+        return self
+
+    def dot_xy(self, x: float, y: float) -> npt.NDArray[np.float32]:
+        tmp = self.numpy()
+        np.multiply(tmp, [[x], [y]], out=tmp)
+        return np.sum(tmp, axis=0, out=tmp[0])
+
+    def dot_vec2(self, other: "Vec2") -> npt.NDArray[np.float32]:
+        tmp = self.numpy()
+        np.multiply(tmp, other.numpy(), out=tmp)
+        return np.sum(tmp, axis=0, out=tmp[0])
+
+    def perp_dot_xy(self, x: float, y: float) -> npt.NDArray[np.float32]:
+        return np.cross(self.numpy(), [x, y], axisa=0, axisb=0)
+
+    def perp_dot_vec2(self, other: "Vec2") -> npt.NDArray[np.float32]:
+        return np.cross(self.numpy(), other.numpy(), axisa=0, axisb=0)
+
+    def angle_between_xy(self, x: float, y: float) -> npt.NDArray[np.float32]:
+        tmp = self.length_squared()
+        np.multiply(tmp, x * x + y * y, out=tmp)
+        np.sqrt(tmp, out=tmp)
+        tmp2 = self.dot_xy(x, y)
+        tmp2 /= tmp
+        np.arccos(tmp2, out=tmp2)
+        perp_dot = self.perp_dot_xy(x, y)
+        return np.multiply(tmp2, np.sign(perp_dot, out=perp_dot), out=tmp2)
+
+    def angle_between_vec2(self, other: "Vec2") -> npt.NDArray[np.float32]:
+        tmp = self.length_squared()
+        np.multiply(tmp, other.length_squared(), out=tmp)
+        np.sqrt(tmp, out=tmp)
+        tmp2 = self.dot_vec2(other)
+        tmp2 /= tmp
+        np.arccos(tmp2, out=tmp2)
+        perp_dot = self.perp_dot_vec2(other)
+        return np.multiply(tmp2, np.sign(perp_dot, out=perp_dot), out=tmp2)
+
+    def length_squared(self) -> npt.NDArray[np.float32]:
+        values = self.numpy()
+        np.multiply(values, values, out=values)
+        return np.sum(values, axis=0, out=values[0])
 
     def numpy(self) -> npt.NDArray[np.float32]:
         return np.array([self.x.numpy(), self.y.numpy()], dtype=np.float32)

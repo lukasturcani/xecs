@@ -98,6 +98,30 @@ def test_operators_array(
     assert np.all(np.equal(result, expected))
 
 
+def test_angle_between_xy() -> None:
+    assert np.allclose(
+        xx.Vec2.from_xy(0, 1, 1).angle_between_xy(1, 0), [-np.pi / 2]
+    )
+
+
+def test_clamp_length() -> None:
+    v1 = xx.Vec2.from_numpy(
+        np.array(
+            [
+                [0.5, 6.0, 3.0, 5.0, 0.1],
+                [0.0, 0.0, 0.0, 10.0, 0.05],
+            ],
+            dtype=np.float32,
+        )
+    )
+    v1.clamp_length(1, 5)
+    expected = [
+        [1.0, 5.0, 3.0, 2.236068, 0.8944272],
+        [0.0, 0.0, 0.0, 4.472136, 0.4472136],
+    ]
+    assert np.allclose(v1.numpy(), expected)
+
+
 @pytest.fixture
 def vec1() -> xx.Vec2:
     generator = np.random.default_rng(55)

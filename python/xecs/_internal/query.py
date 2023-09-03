@@ -3,7 +3,7 @@ from collections.abc import Sequence
 from typing import cast
 
 from xecs._internal.component import Component
-from xecs.xecs import combinations_2, product_2
+from xecs.xecs import product_2
 
 if typing.TYPE_CHECKING:
     from xecs.xecs import QueryId
@@ -30,29 +30,6 @@ class Query(typing.Generic[T]):
 
     def result(self) -> T:
         return self.p_result
-
-    def combinations_2(self) -> tuple[T, T]:
-        query_result = cast(Sequence[Component], self.p_result)
-        indices1, indices2 = combinations_2(
-            [component.p_indices for component in query_result]
-        )
-        return cast(
-            tuple[T, T],
-            (
-                tuple(
-                    component.p_new_view_with_indices(indices)
-                    for component, indices in zip(
-                        query_result, indices1, strict=True
-                    )
-                ),
-                tuple(
-                    component.p_new_view_with_indices(indices)
-                    for component, indices in zip(
-                        query_result, indices2, strict=True
-                    )
-                ),
-            ),
-        )
 
     def product_2(self) -> tuple[T, T]:
         query_result = cast(Sequence[Component], self.p_result)
