@@ -86,6 +86,11 @@ class FixedTimeStepSystems(Resource):
     systems: list[FixedTimeStepSystemSpec]
 
 
+class Plugin:
+    def build(self, app: "App") -> None:
+        pass
+
+
 class App:
     def __init__(self) -> None:
         self.world = World()
@@ -101,6 +106,9 @@ class App:
         )
         self._commands = Commands(self._rust_app, self.world)
         self._has_run_startup_systems = False
+
+    def add_plugin(self, plugin: Plugin) -> None:
+        plugin.build(self)
 
     def add_resource(self, resource: Resource) -> None:
         self.world.add_resource(resource)
@@ -172,7 +180,7 @@ class App:
             )
         )
 
-    def _process_pending_systems(self) -> None:
+    def _process_pending_startup_systems(self) -> None:
         pending_startup_systems = self.world.get_resource(
             PendingStartupSystems
         )
@@ -188,6 +196,7 @@ class App:
             )
         pending_startup_systems.systems = []
 
+    def _process_pending_systems(self) -> None:
         pending_systems = self.world.get_resource(PendingSystems)
         systems = self.world.get_resource(Systems)
         fixed_time_step_systems = self.world.get_resource(FixedTimeStepSystems)
@@ -247,14 +256,15 @@ class App:
     def update(self) -> None:
         if not self.world.has_resource(Time):
             self.world.add_resource(Time.default())
+        if not self._has_run_startup_systems:
+            self._process_pending_startup_systems()
+            self._run_startup_systems()
         self._process_pending_systems()
         self._update()
 
     def _update(self) -> None:
         time = self.world.get_resource(Time)
         time.update()
-        if not self._has_run_startup_systems:
-            self._run_startup_systems()
         self._run_systems()
         self._run_fixed_time_step_systems(time.delta())
 
@@ -265,6 +275,9 @@ class App:
     ) -> None:
         if not self.world.has_resource(Time):
             self.world.add_resource(Time.default())
+        if not self._has_run_startup_systems:
+            self._process_pending_startup_systems()
+            self._run_startup_systems()
         self._process_pending_systems()
         self._run(frame_time, max_run_time)
 

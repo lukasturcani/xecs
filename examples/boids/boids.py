@@ -1,23 +1,12 @@
+from dataclasses import dataclass
+
 import numpy as np
 import pygame
+import pygame_widgets
 import xecs as xx
-
-
-class Transform(xx.Component):
-    translation: xx.Vec2
-    rotation: xx.Float
-
-    def fill_random(
-        self,
-        generator: np.random.Generator,
-        scale: float,
-    ) -> None:
-        self.translation.fill(
-            (generator.random((2, len(self)), dtype=np.float32) - 0.5) * scale
-        )
-        self.rotation.fill(
-            generator.random(len(self), dtype=np.float32) * 2 * np.pi
-        )
+from pygame_widgets import slider
+from pygame_widgets.textbox import TextBox
+from xecs_pygame import Display, Polygon, PyGamePlugin
 
 
 class Velocity(xx.Component):
@@ -64,14 +53,45 @@ class Generator(xx.Resource):
     value: np.random.Generator
 
 
-class Display(xx.Resource):
-    surface: pygame.Surface
+@dataclass(slots=True, frozen=True)
+class Slider:
+    slider: slider.Slider
+    textbox: TextBox
+
+    def __post_init__(self) -> None:
+        self.textbox.disable()
+
+    def update(self) -> None:
+        self.textbox.setText(self.slider.getValue())
+
+
+class Ui(xx.Resource):
+    min_speed_slider: Slider
+    max_speed_slider: Slider
+    separation_radius_slider: Slider
+    visible_radius_slider: Slider
+    separation_coefficient_slider: Slider
+    alignment_coefficient_slider: Slider
+    cohesion_coefficient_slider: Slider
+    box_bound_coefficient_slider: Slider
+    box_size_slider: Slider
+
+    def update_sliders(self) -> None:
+        self.min_speed_slider.update()
+        self.max_speed_slider.update()
+        self.separation_radius_slider.update()
+        self.visible_radius_slider.update()
+        self.separation_coefficient_slider.update()
+        self.alignment_coefficient_slider.update()
+        self.cohesion_coefficient_slider.update()
+        self.box_bound_coefficient_slider.update()
+        self.box_size_slider.update()
 
 
 def main() -> None:
-    pygame.init()
     app = xx.App()
     num_boids = 100
+    app.add_plugin(PyGamePlugin())
     app.add_resource(
         Params(
             num_boids=num_boids,
@@ -87,7 +107,7 @@ def main() -> None:
         )
     )
     app.add_resource(Generator(np.random.default_rng(55)))
-    app.add_resource(Display(pygame.display.set_mode((640, 640))))
+    app.add_startup_system(init_ui)
     app.add_startup_system(spawn_boids)
     time_step = xx.Duration.from_millis(16)
     app.add_system(calculate_separation, time_step)
@@ -95,12 +115,13 @@ def main() -> None:
     app.add_system(calculate_cohesion, time_step)
     app.add_system(update_boid_velocity, time_step)
     app.add_system(move_boids, time_step)
-    app.add_system(show_boids)
-    app.add_pool(Transform.create_pool(num_boids))
+    app.add_system(handle_ui)
+    app.add_pool(xx.Transform2.create_pool(num_boids))
     app.add_pool(Velocity.create_pool(num_boids))
     app.add_pool(Separation.create_pool(num_boids))
     app.add_pool(Alignment.create_pool(num_boids))
     app.add_pool(Cohesion.create_pool(num_boids))
+    app.add_pool(Polygon.create_pool(num_boids))
     app.run()
 
 
@@ -110,20 +131,30 @@ def spawn_boids(
     world: xx.World,
     commands: xx.Commands,
 ) -> None:
-    transformi, velocityi, *_ = commands.spawn(
-        components=(Transform, Velocity, Separation, Alignment, Cohesion),
+    transformi, velocityi, polygoni, *_ = commands.spawn(
+        components=(
+            xx.Transform2,
+            Velocity,
+            Polygon,
+            Separation,
+            Alignment,
+            Cohesion,
+        ),
         num=params.num_boids,
     )
-    world.get_view(Transform, transformi).fill_random(
+    world.get_view(xx.Transform2, transformi).fill_random(
         generator.value, params.box_size
     )
     world.get_view(Velocity, velocityi).fill_random(
         generator.value, params.max_speed
     )
+    polygon = world.get_view(Polygon, polygoni)
+    polygon.vertices.fill([(-4, -5), (0, 10), (4, -5)])
+    polygon.color.fill("green")
 
 
 def move_boids(
-    query: xx.Query[tuple[Transform, Velocity]],
+    query: xx.Query[tuple[xx.Transform2, Velocity]],
 ) -> None:
     transform, velocity = query.result()
     transform.translation += velocity.value * 16 / 1e3
@@ -132,7 +163,7 @@ def move_boids(
 
 def calculate_separation(
     params: Params,
-    query: xx.Query[tuple[Transform, Separation]],
+    query: xx.Query[tuple[xx.Transform2, Separation]],
 ) -> None:
     (_, separation) = query.result()
     separation.displacement_sum.fill(0)
@@ -151,7 +182,7 @@ def calculate_separation(
 
 def calculate_alignment(
     params: Params,
-    query: xx.Query[tuple[Transform, Velocity, Alignment]],
+    query: xx.Query[tuple[xx.Transform2, Velocity, Alignment]],
 ) -> None:
     (_, _, alignment) = query.result()
     alignment.velocity_sum.fill(0)
@@ -176,7 +207,7 @@ def calculate_alignment(
 
 def calculate_cohesion(
     params: Params,
-    query: xx.Query[tuple[Transform, Cohesion]],
+    query: xx.Query[tuple[xx.Transform2, Cohesion]],
 ) -> None:
     (_, cohesion) = query.result()
     cohesion.translation_sum.fill(0)
@@ -202,7 +233,7 @@ def calculate_cohesion(
 def update_boid_velocity(
     params: Params,
     query: xx.Query[
-        tuple[Transform, Separation, Alignment, Cohesion, Velocity]
+        tuple[xx.Transform2, Separation, Alignment, Cohesion, Velocity]
     ],
 ) -> None:
     (
@@ -245,29 +276,92 @@ def update_boid_velocity(
     velocity.value.clamp_length(params.min_speed, params.max_speed)
 
 
-def show_boids(
-    display: Display,
-    query: xx.Query[tuple[Transform]],
-) -> None:
-    boid = np.array([[-4, -5], [0, 10], [4, -5]]).T
-    (transform,) = query.result()
-    display.surface.fill("purple")
-    position = transform.translation.numpy()
-    rotation = transform.rotation.numpy()
-    display_origin = np.array(display.surface.get_size()) / 2
-    for i in range(position.shape[1]):
-        angle = rotation[i]
-        r = [
-            [np.cos(angle), -np.sin(angle)],
-            [np.sin(angle), np.cos(angle)],
-        ]
-        boid_polygon = 2 * position[:, i] + display_origin + (r @ boid).T
-        pygame.draw.polygon(display.surface, "green", boid_polygon.tolist())
-    display.surface.blit(
-        pygame.transform.flip(display.surface, False, True),
-        dest=(0, 0),
+def init_ui(world: xx.World, display: Display) -> None:
+    display.color = "purple"
+    world.add_resource(
+        Ui(
+            min_speed_slider=Slider(
+                slider=slider.Slider(
+                    display.surface, 100, 100, 800, 40, min=0, max=99, step=1
+                ),
+                textbox=TextBox(
+                    display.surface, 475, 200, 50, 50, fontSize=30
+                ),
+            ),
+            max_speed_slider=Slider(
+                slider=slider.Slider(
+                    display.surface, 100, 100, 800, 40, min=0, max=99, step=1
+                ),
+                textbox=TextBox(
+                    display.surface, 475, 200, 50, 50, fontSize=30
+                ),
+            ),
+            separation_radius_slider=Slider(
+                slider=slider.Slider(
+                    display.surface, 100, 100, 800, 40, min=0, max=99, step=1
+                ),
+                textbox=TextBox(
+                    display.surface, 475, 200, 50, 50, fontSize=30
+                ),
+            ),
+            visible_radius_slider=Slider(
+                slider=slider.Slider(
+                    display.surface, 100, 100, 800, 40, min=0, max=99, step=1
+                ),
+                textbox=TextBox(
+                    display.surface, 475, 200, 50, 50, fontSize=30
+                ),
+            ),
+            separation_coefficient_slider=Slider(
+                slider=slider.Slider(
+                    display.surface, 100, 100, 800, 40, min=0, max=99, step=1
+                ),
+                textbox=TextBox(
+                    display.surface, 475, 200, 50, 50, fontSize=30
+                ),
+            ),
+            alignment_coefficient_slider=Slider(
+                slider=slider.Slider(
+                    display.surface, 100, 100, 800, 40, min=0, max=99, step=1
+                ),
+                textbox=TextBox(
+                    display.surface, 475, 200, 50, 50, fontSize=30
+                ),
+            ),
+            cohesion_coefficient_slider=Slider(
+                slider=slider.Slider(
+                    display.surface, 100, 100, 800, 40, min=0, max=99, step=1
+                ),
+                textbox=TextBox(
+                    display.surface, 475, 200, 50, 50, fontSize=30
+                ),
+            ),
+            box_bound_coefficient_slider=Slider(
+                slider=slider.Slider(
+                    display.surface, 100, 100, 800, 40, min=0, max=99, step=1
+                ),
+                textbox=TextBox(
+                    display.surface, 475, 200, 50, 50, fontSize=30
+                ),
+            ),
+            box_size_slider=Slider(
+                slider=slider.Slider(
+                    display.surface, 100, 100, 800, 40, min=0, max=99, step=1
+                ),
+                textbox=TextBox(
+                    display.surface, 475, 200, 50, 50, fontSize=30
+                ),
+            ),
+        )
     )
-    pygame.display.flip()
+
+
+def handle_ui(
+    params: Params,
+    ui: Ui,
+) -> None:
+    ui.update_sliders()
+    pygame_widgets.update(pygame.event.get())
 
 
 if __name__ == "__main__":

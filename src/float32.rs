@@ -119,6 +119,11 @@ impl Float32 {
         }
         Ok(())
     }
+    fn get(&self, index: usize) -> PyResult<f32> {
+        let array = self.array.read().map_err(cannot_read)?;
+        let indices = self.indices.0.read().map_err(cannot_read)?;
+        Ok(unsafe { *array.get_unchecked(*indices.get_unchecked(index) as usize) })
+    }
     fn __len__(&self) -> PyResult<usize> {
         Ok(self.indices.0.read().map_err(cannot_read)?.len())
     }
