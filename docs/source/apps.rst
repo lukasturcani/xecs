@@ -18,10 +18,15 @@ Apps
 
   def main() -> None:
       app = xx.RealTimeApp()
-      app.run()
+      app.update()
 
   if __name__ == "__main__":
       main()
+
+.. testcode:: real-time-app
+  :hide:
+
+  main()
 
 :class:`~xecs.SimulationApp` example:
 
@@ -31,10 +36,15 @@ Apps
 
   def main() -> None:
       app = xx.SimulationApp()
-      app.run(500)
+      app.update()
 
   if __name__ == "__main__":
       main()
+
+.. testcode:: simulation-app
+  :hide:
+
+  main()
 
 
 These examples do not do any useful work, but they are complete, working
