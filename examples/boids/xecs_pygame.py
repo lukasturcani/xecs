@@ -5,12 +5,12 @@ import pygame
 import xecs as xx
 
 
-class PyGamePlugin(xx.Plugin):
+class PyGamePlugin(xx.RealTimeAppPlugin):
     def __init__(self, window_size: tuple[int, int] = (640, 640)) -> None:
         super().__init__()
         self._window_size = window_size
 
-    def build(self, app: xx.App) -> None:
+    def build(self, app: xx.RealTimeApp) -> None:
         pygame.init()
         app.add_resource(
             Display(pygame.display.set_mode(self._window_size), "black", [])

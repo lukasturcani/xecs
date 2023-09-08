@@ -38,7 +38,7 @@ familiar to you. Here is a little taste:
 .. testcode:: taste
   :hide:
 
-  app = xx.App()
+  app = xx.RealTimeApp()
   app.add_pool(xx.Transform2.create_pool(0))
   app.add_pool(Velocity.create_pool(0))
   app.add_system(update_positions)

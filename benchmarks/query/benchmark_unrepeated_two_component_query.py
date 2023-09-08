@@ -31,7 +31,7 @@ class Two(xx.Component):
 )
 def benchmark_one_component_grows_but_overlap_constant(
     benchmark: typing.Any,
-    fixed_overlap_app_one_grows: xx.App,
+    fixed_overlap_app_one_grows: xx.RealTimeApp,
 ) -> None:
     fixed_overlap_app_one_grows.add_system(system)
     benchmark(fixed_overlap_app_one_grows.update)
@@ -42,7 +42,7 @@ def benchmark_one_component_grows_but_overlap_constant(
 )
 def benchmark_both_components_grow_but_overlap_constant(
     benchmark: typing.Any,
-    fixed_overlap_app_both_grow: xx.App,
+    fixed_overlap_app_both_grow: xx.RealTimeApp,
 ) -> None:
     fixed_overlap_app_both_grow.add_system(system)
     benchmark(fixed_overlap_app_both_grow.update)
@@ -53,7 +53,7 @@ def benchmark_both_components_grow_but_overlap_constant(
 )
 def benchmark_overlap_increases(
     benchmark: typing.Any,
-    increasing_overlap_app: xx.App,
+    increasing_overlap_app: xx.RealTimeApp,
 ) -> None:
     increasing_overlap_app.add_system(system)
     benchmark(increasing_overlap_app.update)
@@ -67,13 +67,15 @@ def system(query: xx.Query[tuple[One, Two]]) -> None:
     params=(10, 100, 1_000, 1_000_000, 100_000_000),
     ids=("10", "100", "1_000", "1_000_000", "100_000_000"),
 )
-def fixed_overlap_app_one_grows(request: pytest.FixtureRequest) -> xx.App:
+def fixed_overlap_app_one_grows(
+    request: pytest.FixtureRequest,
+) -> xx.RealTimeApp:
     def startup_system(commands: xx.Commands) -> None:
         commands.spawn(components=(One,), num=request.param - 5)
         commands.spawn(components=(Two,), num=5)
         commands.spawn(components=(One, Two), num=5)
 
-    app = xx.App()
+    app = xx.RealTimeApp()
     app.add_startup_system(startup_system)
     app.add_pool(One.create_pool(request.param))
     app.add_pool(Two.create_pool(request.param))
@@ -85,13 +87,15 @@ def fixed_overlap_app_one_grows(request: pytest.FixtureRequest) -> xx.App:
     params=(10, 100, 1_000, 1_000_000),
     ids=("10", "100", "1_000", "1_000_000"),
 )
-def fixed_overlap_app_both_grow(request: pytest.FixtureRequest) -> xx.App:
+def fixed_overlap_app_both_grow(
+    request: pytest.FixtureRequest,
+) -> xx.RealTimeApp:
     def startup_system(commands: xx.Commands) -> None:
         commands.spawn(components=(One,), num=request.param - 5)
         commands.spawn(components=(Two,), num=request.param - 5)
         commands.spawn(components=(One, Two), num=5)
 
-    app = xx.App()
+    app = xx.RealTimeApp()
     app.add_startup_system(startup_system)
     app.add_pool(One.create_pool(request.param))
     app.add_pool(Two.create_pool(request.param))
@@ -103,13 +107,13 @@ def fixed_overlap_app_both_grow(request: pytest.FixtureRequest) -> xx.App:
     params=(10, 100, 1_000, 1_000_000),
     ids=("10", "100", "1_000", "1_000_000"),
 )
-def increasing_overlap_app(request: pytest.FixtureRequest) -> xx.App:
+def increasing_overlap_app(request: pytest.FixtureRequest) -> xx.RealTimeApp:
     def startup_system(commands: xx.Commands) -> None:
         commands.spawn(components=(One,), num=5)
         commands.spawn(components=(Two,), num=5)
         commands.spawn(components=(One, Two), num=request.param - 10)
 
-    app = xx.App()
+    app = xx.RealTimeApp()
     app.add_startup_system(startup_system)
     app.add_pool(One.create_pool(request.param))
     app.add_pool(Two.create_pool(request.param))

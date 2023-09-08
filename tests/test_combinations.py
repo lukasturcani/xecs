@@ -15,12 +15,12 @@ class Three(xx.Component):
     z: xx.Float32
 
 
-def test_product_2_one_component(app: xx.App) -> None:
+def test_product_2_one_component(app: xx.RealTimeApp) -> None:
     app.add_system(get_product_one_component)
     app.update()
 
 
-def test_product_2_two_components(app: xx.App) -> None:
+def test_product_2_two_components(app: xx.RealTimeApp) -> None:
     app.add_system(get_product_two_components)
     app.update()
 
@@ -62,8 +62,8 @@ def spawn_entities(world: xx.World, commands: xx.Commands) -> None:
 
 
 @pytest.fixture
-def app() -> xx.App:
-    app = xx.App()
+def app() -> xx.RealTimeApp:
+    app = xx.RealTimeApp()
     app.add_pool(One.create_pool(10))
     app.add_pool(Two.create_pool(10))
     app.add_pool(Three.create_pool(10))

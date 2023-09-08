@@ -8,7 +8,7 @@ class Thing(xx.Component):
     num_neighbors: xx.Float32
 
 
-def test_getting_neighbors_one_component(app: xx.App) -> None:
+def test_getting_neighbors_one_component(app: xx.RealTimeApp) -> None:
     app.add_system(get_neighbors_one_component)
     app.update()
 
@@ -36,7 +36,7 @@ class Second(xx.Component):
     num_neighbors: xx.Float32
 
 
-def test_getting_neighbors_two_components(app: xx.App) -> None:
+def test_getting_neighbors_two_components(app: xx.RealTimeApp) -> None:
     app.add_system(get_neighbors_two_components)
     app.update()
 
@@ -68,8 +68,8 @@ def spawn_entities(world: xx.World, commands: xx.Commands) -> None:
 
 
 @pytest.fixture
-def app() -> xx.App:
-    app = xx.App()
+def app() -> xx.RealTimeApp:
+    app = xx.RealTimeApp()
     app.add_pool(Thing.create_pool(10))
     app.add_pool(First.create_pool(10))
     app.add_pool(Second.create_pool(10))

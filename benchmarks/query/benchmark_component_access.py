@@ -23,7 +23,7 @@ class One(xx.Component):
 @pytest.mark.benchmark(group="component-access-only")
 def benchmark_component_access_only(
     benchmark: typing.Any,
-    app: xx.App,
+    app: xx.RealTimeApp,
 ) -> None:
     app.add_system(add)
     app.update()
@@ -34,15 +34,15 @@ def benchmark_component_access_only(
 @pytest.mark.benchmark(group="component-access-and-query")
 def benchmark_component_access_and_query(
     benchmark: typing.Any,
-    app: xx.App,
+    app: xx.RealTimeApp,
 ) -> None:
     app.add_system(add)
     benchmark(app.update)
 
 
 @pytest.fixture
-def app() -> xx.App:
-    app = xx.App()
+def app() -> xx.RealTimeApp:
+    app = xx.RealTimeApp()
     app.add_startup_system(spawn)
     app.add_pool(One.create_pool(10_000))
     app.update()

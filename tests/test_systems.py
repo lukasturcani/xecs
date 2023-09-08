@@ -15,23 +15,23 @@ class Params(xx.Resource):
     z: str
 
 
-def test_query_with_one_component(app: xx.App) -> None:
+def test_query_with_one_component(app: xx.RealTimeApp) -> None:
     app.add_system(query_with_one_component)
     app.update()
 
 
-def test_query_with_two_components(app: xx.App) -> None:
+def test_query_with_two_components(app: xx.RealTimeApp) -> None:
     app.add_system(query_with_two_components)
     app.update()
 
 
-def test_system_with_resource(app: xx.App) -> None:
+def test_system_with_resource(app: xx.RealTimeApp) -> None:
     app.add_system(system_with_resource)
     app.add_resource(Params("hi"))
     app.update()
 
 
-def test_spawning(app: xx.App) -> None:
+def test_spawning(app: xx.RealTimeApp) -> None:
     app.add_system(spawning_sytem)
     app.update()
 
@@ -87,8 +87,8 @@ def spawn_entities(commands: xx.Commands) -> None:
 
 
 @pytest.fixture
-def app() -> xx.App:
-    app = xx.App()
+def app() -> xx.RealTimeApp:
+    app = xx.RealTimeApp()
     app.add_pool(One.create_pool(20))
     app.add_pool(Two.create_pool(10))
     app.add_startup_system(spawn_entities)

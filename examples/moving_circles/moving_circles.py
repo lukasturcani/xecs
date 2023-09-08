@@ -45,7 +45,7 @@ class Display(xx.Resource):
 
 def main() -> None:
     pygame.init()
-    app = xx.App()
+    app = xx.RealTimeApp()
     num_circles = 10
     app.add_resource(
         Params(

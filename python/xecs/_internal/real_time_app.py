@@ -86,12 +86,12 @@ class FixedTimeStepSystems(Resource):
     systems: list[FixedTimeStepSystemSpec]
 
 
-class Plugin:
-    def build(self, app: "App") -> None:
+class RealTimeAppPlugin:
+    def build(self, app: "RealTimeApp") -> None:
         pass
 
 
-class App:
+class RealTimeApp:
     def __init__(self) -> None:
         self.world = World()
         self.add_resource(PendingStartupSystems([]))
@@ -107,7 +107,7 @@ class App:
         self._commands = Commands(self._rust_app, self.world)
         self._has_run_startup_systems = False
 
-    def add_plugin(self, plugin: Plugin) -> None:
+    def add_plugin(self, plugin: RealTimeAppPlugin) -> None:
         plugin.build(self)
 
     def add_resource(self, resource: Resource) -> None:
