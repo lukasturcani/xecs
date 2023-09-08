@@ -42,3 +42,7 @@ Here's a breakdown of the core concepts in an ECS:
 
 Your First System
 -----------------
+
+
+Your First Components
+---------------------
