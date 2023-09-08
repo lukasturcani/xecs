@@ -20,6 +20,7 @@ dev = [
   "ruff",
   "mypy",
   "pygame",
+  "pygame-widgets",
   "pytest",
   "pytest-benchmark",
 ]
