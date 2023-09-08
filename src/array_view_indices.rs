@@ -31,6 +31,7 @@ impl MultipleArrayViewIndices {
     }
 }
 
+/// Indices into the component pool which form the array view.
 #[pyclass]
 pub struct ArrayViewIndices(pub Arc<RwLock<Vec<Index>>>);
 
