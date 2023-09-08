@@ -11,11 +11,10 @@ impl Instant {
         Self(Some(time::Instant::now()))
     }
     fn checked_duration_since(&self, earlier: &mut Self) -> PyResult<Duration> {
-        let original_ealier = earlier.0.clone();
+        let original_ealier = earlier.0;
         let duration = self
             .0
-            .map(|x| x.checked_duration_since(earlier.0.take().unwrap()))
-            .flatten()
+            .and_then(|x| x.checked_duration_since(earlier.0.take().unwrap()))
             .ok_or_else(|| PyRuntimeError::new_err("input was not earlier"))
             .map(|x| Duration(Some(x)));
         earlier.0 = original_ealier;
@@ -25,22 +24,20 @@ impl Instant {
         Duration(Some(self.0.map(|x| x.elapsed()).unwrap()))
     }
     fn checked_add(&self, duration: &mut Duration) -> PyResult<Self> {
-        let original_duration = duration.0.clone();
+        let original_duration = duration.0;
         let instant = self
             .0
-            .map(|x| x.checked_add(duration.0.take().unwrap()))
-            .flatten()
+            .and_then(|x| x.checked_add(duration.0.take().unwrap()))
             .ok_or_else(|| PyRuntimeError::new_err("overflow"))
             .map(|x| Self(Some(x)));
         duration.0 = original_duration;
         instant
     }
     fn checked_sub(&self, duration: &mut Duration) -> PyResult<Self> {
-        let original_duration = duration.0.clone();
+        let original_duration = duration.0;
         let instant = self
             .0
-            .map(|x| x.checked_sub(duration.0.take().unwrap()))
-            .flatten()
+            .and_then(|x| x.checked_sub(duration.0.take().unwrap()))
             .ok_or_else(|| PyRuntimeError::new_err("overflow"))
             .map(|x| Self(Some(x)));
         duration.0 = original_duration;
@@ -91,8 +88,8 @@ impl Duration {
         self.0.map(|x| x.as_nanos()).unwrap()
     }
     fn checked_add(&mut self, rhs: &mut Self) -> PyResult<()> {
-        let original_lhs = self.0.clone();
-        let original_rhs = rhs.0.clone();
+        let original_lhs = self.0;
+        let original_rhs = rhs.0;
         if let duration @ Some(_) = self.0.take().unwrap().checked_add(rhs.0.take().unwrap()) {
             self.0 = duration;
             rhs.0 = original_rhs;
@@ -104,8 +101,8 @@ impl Duration {
         }
     }
     fn checked_sub(&mut self, rhs: &mut Self) -> PyResult<()> {
-        let original_lhs = self.0.clone();
-        let original_rhs = rhs.0.clone();
+        let original_lhs = self.0;
+        let original_rhs = rhs.0;
         if let duration @ Some(_) = self.0.take().unwrap().checked_sub(rhs.0.take().unwrap()) {
             self.0 = duration;
             rhs.0 = original_rhs;
@@ -117,15 +114,15 @@ impl Duration {
         }
     }
     fn saturating_sub(&mut self, rhs: &mut Self) -> Self {
-        let original_lhs = self.0.clone();
-        let original_rhs = rhs.0.clone();
+        let original_lhs = self.0;
+        let original_rhs = rhs.0;
         let result = self.0.take().unwrap().saturating_sub(rhs.0.take().unwrap());
         self.0 = original_lhs;
         rhs.0 = original_rhs;
         Self(Some(result))
     }
     fn checked_mul(&mut self, rhs: u32) -> PyResult<()> {
-        let original_lhs = self.0.clone();
+        let original_lhs = self.0;
         if let duration @ Some(_) = self.0.take().unwrap().checked_mul(rhs) {
             self.0 = duration;
             Ok(())
@@ -135,7 +132,7 @@ impl Duration {
         }
     }
     fn checked_div(&mut self, rhs: u32) -> PyResult<()> {
-        let original_lhs = self.0.clone();
+        let original_lhs = self.0;
         if let duration @ Some(_) = self.0.take().unwrap().checked_div(rhs) {
             self.0 = duration;
             Ok(())
@@ -155,7 +152,7 @@ impl Duration {
         }
     }
     fn __add__(&mut self, rhs: &mut Self) -> PyResult<Self> {
-        let mut clone = Self(self.0.clone());
+        let mut clone = Self(self.0);
         clone.checked_add(rhs)?;
         Ok(clone)
     }
@@ -163,7 +160,7 @@ impl Duration {
         self.checked_add(rhs)
     }
     fn __sub__(&mut self, rhs: &mut Self) -> PyResult<Self> {
-        let mut clone = Self(self.0.clone());
+        let mut clone = Self(self.0);
         clone.checked_sub(rhs)?;
         Ok(clone)
     }

@@ -9,7 +9,7 @@ use crate::{array_view_indices::ArrayViewIndices, error_handlers::cannot_read};
 pub fn product_2(
     indices: Vec<PyRef<ArrayViewIndices>>,
 ) -> PyResult<(Vec<ArrayViewIndices>, Vec<ArrayViewIndices>)> {
-    if indices.len() == 0 {
+    if indices.is_empty() {
         return Ok((Vec::new(), Vec::new()));
     }
     let mut read_indices = Vec::with_capacity(indices.len());

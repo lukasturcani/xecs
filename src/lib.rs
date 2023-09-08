@@ -11,6 +11,7 @@ mod float32;
 mod getitem_key;
 mod index;
 mod map;
+mod py_field;
 mod query;
 mod query_id;
 mod set;
@@ -26,6 +27,7 @@ fn xecs(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<time::Duration>()?;
     m.add_class::<time::Instant>()?;
     m.add_class::<time::Time>()?;
+    m.add_class::<py_field::PyField>()?;
     m.add_function(wrap_pyfunction!(combinations::product_2, m)?)?;
     Ok(())
 }
