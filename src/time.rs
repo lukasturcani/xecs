@@ -45,7 +45,7 @@ impl Instant {
     }
 }
 
-#[pyclass]
+#[pyclass(module = "xecs")]
 pub struct Duration(Option<time::Duration>);
 
 #[pymethods]

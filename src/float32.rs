@@ -25,7 +25,7 @@ enum PowRhs<'a> {
     VecF32(Vec<f32>),
 }
 
-#[pyclass]
+#[pyclass(module = "xecs")]
 pub struct Float32 {
     array: Arc<RwLock<Vec<f32>>>,
     indices: ArrayViewIndices,

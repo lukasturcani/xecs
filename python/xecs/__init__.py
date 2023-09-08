@@ -1,3 +1,7 @@
+"""
+A fast ECS library.
+"""
+
 from xecs._internal.app import (
     App,
     FixedTimeStepSystems,

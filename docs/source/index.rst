@@ -35,17 +35,15 @@ familiar to you. Here is a little taste:
       (transform, velocity) = query.result()
       transform.translation += velocity.value
 
-
 The goals of :mod:`xecs` are as follows:
 
 * **Fast**: Operations are executed in parallel as much as possible
-  and the library is written in Rust to be as cache friendly and
-  performant as possible.
+  and the library is written in Rust to be as cache friendly and performant.
 * **Simple**: Data is defined with a dataclass-like syntax and systems are regular
   Python functions.
 * **Typed**: Types form an integral part of the API, making code clean but
   also easily verified with type checkers.
-* **NumPy-friendly**: Support use of NumPy with our data types.
+* **NumPy-friendly**: Our data types can be used seamlessly with NumPy.
 * **Python-friendly**: User code is regular Python code, allowing
   full integration with the Python ecosystem. We avoid things like Numba
   which cause pain during debugging and limit use of pure Python libraries.

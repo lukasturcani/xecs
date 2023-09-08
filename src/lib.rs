@@ -17,7 +17,7 @@ mod query_id;
 mod set;
 mod time;
 
-/// A Python module implemented in Rust.
+/// Internal Rust implementations.
 #[pymodule]
 fn xecs(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<float32::Float32>()?;
