@@ -2,7 +2,6 @@ import operator
 import typing
 
 import numpy as np
-import numpy.typing as npt
 import pytest
 import xecs as xx
 

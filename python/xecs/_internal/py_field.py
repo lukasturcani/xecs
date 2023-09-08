@@ -1,4 +1,4 @@
-from typing import Generic, Self, TypeVar
+from typing import Generic, TypeVar
 
 import numpy as np
 import numpy.typing as npt

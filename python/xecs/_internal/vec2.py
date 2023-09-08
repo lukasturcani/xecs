@@ -11,9 +11,6 @@ if typing.TYPE_CHECKING:
     from xecs.xecs import Float32Rhs
 
 
-Rhs: TypeAlias = "Vec2 | Float32 | npt.NDArray[np.float32] | float | list[float] | tuple[float, ...]"
-
-
 class Vec2(Struct):
     x: Float32
     y: Float32
@@ -127,14 +124,14 @@ class Vec2(Struct):
         self.x = x
         self.y = y
 
-    def __add__(self, other: Rhs) -> npt.NDArray[np.float32]:
+    def __add__(self, other: "Rhs") -> npt.NDArray[np.float32]:
         if isinstance(other, Vec2 | Float32):
             other = other.numpy()
         result = self.numpy()
         result += other
         return result
 
-    def __iadd__(self, other: Rhs) -> Self:
+    def __iadd__(self, other: "Rhs") -> Self:
         if isinstance(other, int | float | Float32 | list | tuple):
             self.x += other
             self.y += other
@@ -149,14 +146,14 @@ class Vec2(Struct):
             self.y += other.y
         return self
 
-    def __sub__(self, other: Rhs) -> npt.NDArray[np.float32]:
+    def __sub__(self, other: "Rhs") -> npt.NDArray[np.float32]:
         if isinstance(other, Vec2 | Float32):
             other = other.numpy()
         result = self.numpy()
         result -= other
         return result
 
-    def __isub__(self, other: Rhs) -> Self:
+    def __isub__(self, other: "Rhs") -> Self:
         if isinstance(other, int | float | Float32 | list | tuple):
             self.x -= other
             self.y -= other
@@ -171,14 +168,14 @@ class Vec2(Struct):
             self.y -= other.y
         return self
 
-    def __mul__(self, other: Rhs) -> npt.NDArray[np.float32]:
+    def __mul__(self, other: "Rhs") -> npt.NDArray[np.float32]:
         if isinstance(other, Vec2 | Float32):
             other = other.numpy()
         result = self.numpy()
         result *= other
         return result
 
-    def __imul__(self, other: Rhs) -> Self:
+    def __imul__(self, other: "Rhs") -> Self:
         if isinstance(other, int | float | Float32 | list | tuple):
             self.x *= other
             self.y *= other
@@ -193,14 +190,14 @@ class Vec2(Struct):
             self.y *= other.y
         return self
 
-    def __truediv__(self, other: Rhs) -> npt.NDArray[np.float32]:
+    def __truediv__(self, other: "Rhs") -> npt.NDArray[np.float32]:
         if isinstance(other, Vec2 | Float32):
             other = other.numpy()
         result = self.numpy()
         result /= other
         return result
 
-    def __itruediv__(self, other: Rhs) -> Self:
+    def __itruediv__(self, other: "Rhs") -> Self:
         if isinstance(other, int | float | Float32 | list | tuple):
             self.x /= other
             self.y /= other
@@ -215,14 +212,14 @@ class Vec2(Struct):
             self.y /= other.y
         return self
 
-    def __floordiv__(self, other: Rhs) -> npt.NDArray[np.float32]:
+    def __floordiv__(self, other: "Rhs") -> npt.NDArray[np.float32]:
         if isinstance(other, Vec2 | Float32):
             other = other.numpy()
         result = self.numpy()
         result //= other
         return result
 
-    def __ifloordiv__(self, other: Rhs) -> Self:
+    def __ifloordiv__(self, other: "Rhs") -> Self:
         if isinstance(other, int | float | Float32 | list | tuple):
             self.x //= other
             self.y //= other
@@ -237,14 +234,14 @@ class Vec2(Struct):
             self.y //= other.y
         return self
 
-    def __mod__(self, other: Rhs) -> npt.NDArray[np.float32]:
+    def __mod__(self, other: "Rhs") -> npt.NDArray[np.float32]:
         if isinstance(other, Vec2 | Float32):
             other = other.numpy()
         result = self.numpy()
         result %= other
         return result
 
-    def __imod__(self, other: Rhs) -> Self:
+    def __imod__(self, other: "Rhs") -> Self:
         if isinstance(other, int | float | Float32 | list | tuple):
             self.x %= other
             self.y %= other
@@ -259,14 +256,14 @@ class Vec2(Struct):
             self.y %= other.y
         return self
 
-    def __pow__(self, other: Rhs) -> npt.NDArray[np.float32]:
+    def __pow__(self, other: "Rhs") -> npt.NDArray[np.float32]:
         if isinstance(other, Vec2 | Float32):
             other = other.numpy()
         result = self.numpy()
         result **= other
         return result
 
-    def __ipow__(self, other: Rhs) -> Self:
+    def __ipow__(self, other: "Rhs") -> Self:
         if isinstance(other, int | float | Float32 | list | tuple):
             self.x **= other
             self.y **= other
@@ -280,3 +277,13 @@ class Vec2(Struct):
             self.x **= other.x
             self.y **= other.y
         return self
+
+
+Rhs: TypeAlias = (
+    Vec2
+    | Float32
+    | npt.NDArray[np.float32]
+    | float
+    | list[float]
+    | tuple[float, ...]
+)
