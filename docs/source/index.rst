@@ -24,7 +24,7 @@ If you are familiar with `Bevy <https://bevyengine.org/>`_ and
 `NumPy <https://numpy.org/>`_ -- the API of :mod:`xecs` should be
 familiar to you. Here is a little taste:
 
-.. testcode::
+.. testcode:: taste
 
   import xecs as xx
 
@@ -34,6 +34,15 @@ familiar to you. Here is a little taste:
   def update_positions(query: xx.Query[tuple[xx.Transform2, Velocity]]) -> None:
       (transform, velocity) = query.result()
       transform.translation += velocity.value
+
+.. testcode:: taste
+  :hide:
+
+  app = xx.App()
+  app.add_pool(xx.Transform2.create_pool(0))
+  app.add_pool(Velocity.create_pool(0))
+  app.add_system(update_positions)
+  app.update()
 
 The goals of :mod:`xecs` are as follows:
 
