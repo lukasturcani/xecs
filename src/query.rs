@@ -35,7 +35,7 @@ impl Query {
             .iter()
             .map(|pool| &pool.entity_ids)
             .fold(first_component.entity_ids.clone(), |acc, entity_ids| {
-                acc.intersection(entity_ids).map(|x| *x).collect()
+                acc.intersection(entity_ids).cloned().collect()
             });
         let mut result = Vec::with_capacity(other_components.len() + 1);
         result.push(Arc::new(RwLock::new(
