@@ -2,6 +2,7 @@ use pyo3::prelude::*;
 
 mod app;
 mod array_view_indices;
+mod bool;
 mod combinations;
 mod component_id;
 mod component_pool;
@@ -23,6 +24,7 @@ mod time;
 fn xecs(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<float32::Float32>()?;
     m.add_class::<int32::Int32>()?;
+    m.add_class::<bool::Bool>()?;
     m.add_class::<app::RustApp>()?;
     m.add_class::<array_view_indices::ArrayViewIndices>()?;
     m.add_class::<array_view_indices::MultipleArrayViewIndices>()?;

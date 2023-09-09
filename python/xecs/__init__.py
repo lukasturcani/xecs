@@ -27,10 +27,11 @@ from xecs._internal.systems import (
 from xecs._internal.transform2 import Transform2
 from xecs._internal.vec2 import Vec2
 from xecs._internal.world import World
-from xecs.xecs import ArrayViewIndices, Duration, Float32
+from xecs.xecs import ArrayViewIndices, Bool, Duration, Float32, Int32
 
 __all__ = [
     "ArrayViewIndices",
+    "Bool",
     "Commands",
     "Component",
     "ComponentPool",
@@ -40,6 +41,7 @@ __all__ = [
     "Float",
     "Float32",
     "Int",
+    "Int32",
     "PendingStartupSystems",
     "PendingSystems",
     "PyField",
