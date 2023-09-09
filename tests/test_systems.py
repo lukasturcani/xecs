@@ -38,13 +38,13 @@ def test_spawning(app: xx.RealTimeApp) -> None:
 
 def query_with_one_component(
     query_one: xx.Query[tuple[One]],
-    query_two: xx.Query[tuple[Two]],
+    query_two: xx.Query[Two],
 ) -> None:
     (one,) = query_one.result()
     assert isinstance(one, One)
     assert len(one) == 10
 
-    (two,) = query_two.result()
+    two = query_two.result()
     assert isinstance(two, Two)
     assert len(two) == 5
 

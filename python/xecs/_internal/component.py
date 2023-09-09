@@ -77,3 +77,9 @@ class Component:
     def __init_subclass__(cls) -> None:
         super().__init_subclass__()
         cls.component_ids[cls] = len(cls.component_ids)
+
+    # def __repr__(self) -> str:
+    #     pass
+
+    # def __str__(self) -> str:
+    #     pass

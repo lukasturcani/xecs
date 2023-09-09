@@ -40,6 +40,21 @@ Here's a breakdown of the core concepts in an ECS:
         person = query.result()
         print(person)
 
+
+  .. testcode:: ecs
+
+    def spawn_people(commands: xx.Commands, world: xx.World) -> None:
+        (personi,) = commands.spawn((Person,), 2)
+        person = world.get_view(Person, personi)
+
+    app = xx.SimulationApp()
+    app.add_startup_system(spawn_people)
+    app.add_system(print_person_system)
+    app.add_pool(Person.create_pool(2))
+    app.update(xx.Duration.from_millis(1))
+
+
+
 Your First System
 -----------------
 

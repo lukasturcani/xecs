@@ -16,23 +16,30 @@ class Query(typing.Generic[T]):
     p_query_id: "QueryId"
     p_result: T
     p_components: Sequence[type[Component]]
+    p_tuple_query: bool
 
     @classmethod
     def p_new(
         cls,
         query_id: int,
         components: Sequence[type[Component]],
+        tuple_query: bool,
     ) -> typing.Self:
         query = cls()
         query.p_query_id = query_id
         query.p_components = components
+        query.p_tuple_query = tuple_query
         return query
 
     def result(self) -> T:
         return self.p_result
 
     def product_2(self) -> tuple[T, T]:
-        query_result = cast(Sequence[Component], self.p_result)
+        if self.p_tuple_query:
+            query_result = cast(Sequence[Component], self.p_result)
+        else:
+            query_result = cast(Sequence[Component], (self.p_result,))
+
         indices1, indices2 = product_2(
             [component.p_indices for component in query_result]
         )
