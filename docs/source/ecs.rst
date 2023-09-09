@@ -412,5 +412,6 @@ app. In this app we will:
   main()
 
 .. testoutput:: neighbors
+  :hide:
 
   [1, 1, 2, 2, 2]
