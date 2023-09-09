@@ -36,7 +36,7 @@ Apps
 
   def main() -> None:
       app = xx.SimulationApp()
-      app.update()
+      app.update(xx.Duration.from_millis(1000))
 
   if __name__ == "__main__":
       main()

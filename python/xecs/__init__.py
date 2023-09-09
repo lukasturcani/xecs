@@ -8,18 +8,21 @@ from xecs._internal.float import Float
 from xecs._internal.py_field import PyField
 from xecs._internal.query import Query
 from xecs._internal.real_time_app import (
+    RealTimeApp,
+    RealTimeAppPlugin,
+)
+from xecs._internal.resource import Resource
+from xecs._internal.simulation_app import SimulationApp
+from xecs._internal.struct import Struct
+from xecs._internal.systems import (
     FixedTimeStepSystems,
     FixedTimeStepSystemSpec,
     PendingStartupSystems,
     PendingSystems,
-    RealTimeApp,
-    RealTimeAppPlugin,
     StartupSystems,
     Systems,
     SystemSpec,
 )
-from xecs._internal.resource import Resource
-from xecs._internal.struct import Struct
 from xecs._internal.transform2 import Transform2
 from xecs._internal.vec2 import Vec2
 from xecs._internal.world import World
@@ -42,6 +45,7 @@ __all__ = [
     "RealTimeApp",
     "RealTimeAppPlugin",
     "Resource",
+    "SimulationApp",
     "StartupSystems",
     "Struct",
     "Systems",

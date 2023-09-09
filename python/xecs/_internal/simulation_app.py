@@ -1,7 +1,6 @@
 import inspect
 import typing
 from collections import abc
-from time import sleep
 from typing import Any
 
 from xecs._internal.commands import Commands
@@ -27,18 +26,18 @@ from xecs._internal.systems import (
 )
 from xecs._internal.time import Time
 from xecs._internal.world import World
-from xecs.xecs import Duration, Instant, RustApp
+from xecs.xecs import Duration, RustApp
 
 P = typing.ParamSpec("P")
 R = typing.TypeVar("R")
 
 
-class RealTimeAppPlugin:
-    def build(self, app: "RealTimeApp") -> None:
+class SimulationAppPlugin:
+    def build(self, app: "SimulationApp") -> None:
         pass
 
 
-class RealTimeApp:
+class SimulationApp:
     def __init__(self) -> None:
         self.world = World()
         self.add_resource(PendingStartupSystems([]))
@@ -54,7 +53,7 @@ class RealTimeApp:
         self._commands = Commands(self._rust_app, self.world)
         self._has_run_startup_systems = False
 
-    def add_plugin(self, plugin: RealTimeAppPlugin) -> None:
+    def add_plugin(self, plugin: SimulationAppPlugin) -> None:
         plugin.build(self)
 
     def add_resource(self, resource: Resource) -> None:
@@ -200,47 +199,33 @@ class RealTimeApp:
                 )
                 system.time_to_simulate -= system.time_step
 
-    def update(self) -> None:
+    def update(self, time_step: Duration) -> None:
         if not self.world.has_resource(Time):
             self.world.add_resource(Time.default())
         if not self._has_run_startup_systems:
             self._process_pending_startup_systems()
             self._run_startup_systems()
         self._process_pending_systems()
-        self._update()
+        self._update(time_step)
 
-    def _update(self) -> None:
+    def _update(self, time_step: Duration) -> None:
         time = self.world.get_resource(Time)
-        time.update()
+        time.update_with_delta(time_step)
         self._run_systems()
-        self._run_fixed_time_step_systems(time.delta())
+        self._run_fixed_time_step_systems(time_step)
 
-    def run(
-        self,
-        frame_time: Duration = Duration.from_nanos(int(1e9 / 60)),
-        max_run_time: Duration | None = None,
-    ) -> None:
+    def run(self, num_steps: int, time_step: Duration) -> None:
         if not self.world.has_resource(Time):
             self.world.add_resource(Time.default())
         if not self._has_run_startup_systems:
             self._process_pending_startup_systems()
             self._run_startup_systems()
         self._process_pending_systems()
-        self._run(frame_time, max_run_time)
+        self._run(num_steps, time_step)
 
-    def _run(
-        self,
-        frame_time: Duration,
-        max_run_time: Duration | None,
-    ) -> None:
-        time = self.world.get_resource(Time)
-        while True:
-            start = Instant.now()
-            self._update()
-            if max_run_time is not None and time.elapsed() >= max_run_time:
-                break
-            sleep_time = frame_time.saturating_sub(start.elapsed())
-            sleep(sleep_time.as_nanos() / 1e9)
+    def _run(self, num_steps: int, time_step: Duration) -> None:
+        for _ in range(num_steps):
+            self._update(time_step)
 
     def add_pool(self, pool: ComponentPool[ComponentT]) -> None:
         component_id = Component.component_ids[type(pool.p_component)]

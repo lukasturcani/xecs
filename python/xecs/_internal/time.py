@@ -13,7 +13,10 @@ class Time(Resource):
         return self.time.delta()
 
     def update(self) -> None:
-        self.time.update()
+        return self.time.update()
+
+    def update_with_delta(self, delta: xecs.Duration) -> None:
+        return self.time.update_with_delta(delta)
 
     def elapsed(self) -> xecs.Duration:
         return self.time.elapsed()

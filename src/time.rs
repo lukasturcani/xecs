@@ -197,6 +197,11 @@ impl Time {
         self.last_update = Some(now);
         self.elapsed += self.delta;
     }
+    fn update_with_delta(&mut self, delta: &Duration) {
+        self.delta = delta.0.unwrap();
+        self.last_update = Some(self.last_update.unwrap_or(self.startup) + self.delta);
+        self.elapsed += self.delta;
+    }
     fn elapsed(&self) -> Duration {
         Duration(Some(self.elapsed))
     }
