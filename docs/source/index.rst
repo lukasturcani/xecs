@@ -16,6 +16,23 @@ GitHub: https://github.com/lukasturcani/xecs
   Getting Started <getting_started>
   Examples <examples>
   Developer's Guide <developers_guide>
+
+.. toctree::
+  :maxdepth: 2
+  :caption: Core API:
+  :hidden:
+
+  Bool <_autosummary/xecs.Bool>
+  Int32 <_autosummary/xecs.Int32>
+  Float32 <_autosummary/xecs.Float32>
+  PyField <_autosummary/xecs.PyField>
+  Vec2 <_autosummary/xecs.Vec2>
+  Transform2 <_autosummary/xecs.Transform2>
+  Query <_autosummary/xecs.Query>
+  Commands <_autosummary/xecs.Commands>
+  World <_autosummary/xecs.World>
+  RealTimeApp <_autosummary/xecs.RealTimeApp>
+  SimulationApp <_autosummary/xecs.SimulationApp>
   Modules <modules>
 
 :mod:`xecs` is a Python library (written in Rust!) for a performant
