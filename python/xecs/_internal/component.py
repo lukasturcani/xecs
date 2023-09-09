@@ -78,8 +78,14 @@ class Component:
         super().__init_subclass__()
         cls.component_ids[cls] = len(cls.component_ids)
 
-    # def __repr__(self) -> str:
-    #     pass
+    def __repr__(self) -> str:
+        return str(self)
 
-    # def __str__(self) -> str:
-    #     pass
+    def __str__(self) -> str:
+        cls = type(self)
+        fields = []
+        for attr_name in inspect.get_annotations(cls):
+            attr_value = getattr(self, attr_name).to_str()
+            fields.append(f"{attr_name}={attr_value}")
+            joined = ",\n    ".join(fields)
+        return f"<xecs.{type(self).__name__}(\n    {joined}\n)>"

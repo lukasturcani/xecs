@@ -124,6 +124,17 @@ impl Float32 {
         let indices = self.indices.0.read().map_err(cannot_read)?;
         Ok(unsafe { *array.get_unchecked(*indices.get_unchecked(index) as usize) })
     }
+    fn to_str(&self) -> PyResult<String> {
+        let mut result = String::new();
+        let array = self.array.read().map_err(cannot_read)?;
+        let indices = self.indices.0.read().map_err(cannot_read)?;
+        let view: Vec<_> = indices
+            .iter()
+            .map(|index| unsafe { array.get_unchecked(*index as usize) })
+            .collect();
+        result += &format!("<xecs.Float32 {view:?}>");
+        Ok(result)
+    }
     fn __str__(&self) -> PyResult<String> {
         let array = self.array.read().map_err(cannot_read)?;
         let indices = self.indices.0.read().map_err(cannot_read)?;

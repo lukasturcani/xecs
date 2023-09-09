@@ -53,7 +53,13 @@ Here's a breakdown of the core concepts in an ECS:
     app.add_pool(Person.create_pool(2))
     app.update(xx.Duration.from_millis(1))
 
+  .. testoutput:: ecs
 
+    <xecs.Person(
+      	stamina=<xecs.Int32 [0, 0]>,
+        is_damaged=<xecs.Bool [false, false]>,
+        height=<xecs.Float32 [0.0, 0.0]>
+    )>
 
 Your First System
 -----------------
