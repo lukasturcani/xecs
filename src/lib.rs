@@ -10,6 +10,7 @@ mod error_handlers;
 mod float32;
 mod getitem_key;
 mod index;
+mod int32;
 mod map;
 mod py_field;
 mod query;
@@ -21,6 +22,7 @@ mod time;
 #[pymodule]
 fn xecs(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<float32::Float32>()?;
+    m.add_class::<int32::Int32>()?;
     m.add_class::<app::RustApp>()?;
     m.add_class::<array_view_indices::ArrayViewIndices>()?;
     m.add_class::<array_view_indices::MultipleArrayViewIndices>()?;

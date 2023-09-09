@@ -5,6 +5,7 @@ A fast ECS library.
 from xecs._internal.commands import Commands
 from xecs._internal.component import Component, ComponentPool
 from xecs._internal.float import Float
+from xecs._internal.int import Int
 from xecs._internal.py_field import PyField
 from xecs._internal.query import Query
 from xecs._internal.real_time_app import (
@@ -38,6 +39,7 @@ __all__ = [
     "FixedTimeStepSystemSpec",
     "Float",
     "Float32",
+    "Int",
     "PendingStartupSystems",
     "PendingSystems",
     "PyField",

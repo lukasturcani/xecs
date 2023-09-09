@@ -14,6 +14,8 @@ GitHub: https://github.com/lukasturcani/xecs
   :hidden:
 
   Getting Started <getting_started>
+  Examples <examples>
+  Developer's Guide <developers_guide>
   Modules <modules>
 
 :mod:`xecs` is a Python library (written in Rust!) for a performant
@@ -47,7 +49,7 @@ familiar to you. Here is a little taste:
 The goals of :mod:`xecs` are as follows:
 
 * **Fast**: Operations are executed in parallel as much as possible
-  and the library is written in Rust to be as cache friendly and performant.
+  and the library is written in Rust to be cache friendly and performant.
 * **Simple**: Data is defined with a dataclass-like syntax and systems are regular
   Python functions.
 * **Typed**: Types form an integral part of the API, making code clean but
