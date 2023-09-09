@@ -308,8 +308,21 @@ values into NumPy arrays with :meth:`~xecs.Int32.numpy`.
 Filtering Components
 ....................
 
+For some systems we want to filter out entities based on the values
+of components. Take for example a healing system, which adds a health
+point to any entity with less than 50 health:
 
 
+.. testcode:: first-component
 
-Combinations of Entities
-........................
+  def healing_system(
+      query: xx.Query[tuple[Person, Health]],
+  ) -> None:
+      person, health = query.result()
+      low_health = health[health.value < 50]
+      low_health.value += 1
+
+In this system, ``health.value < 50`` returns a boolean mask.
+When the mask is used to index, as in ``health[...]``, a new
+``Health`` component is returned, holding only entities where
+the mask was ``True``.
