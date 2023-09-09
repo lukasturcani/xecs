@@ -80,17 +80,29 @@ class SimulationApp:
         for name, parameter in inspect.signature(system).parameters.items():
             if typing.get_origin(parameter.annotation) is Query:
                 (component_tuple,) = typing.get_args(parameter.annotation)
-                components = typing.get_args(component_tuple)
-                component_ids = [
-                    Component.component_ids[component]
-                    for component in components
-                ]
+                if issubclass(component_tuple, Component):
+                    query_id = self._rust_app.add_query(
+                        first_component=Component.component_ids[
+                            component_tuple
+                        ],
+                        other_components=[],
+                    )
+                    query_args[name] = Query.p_new(
+                        query_id, [component_tuple], False
+                    )
 
-                query_id = self._rust_app.add_query(
-                    first_component=component_ids[0],
-                    other_components=component_ids[1:],
-                )
-                query_args[name] = Query.p_new(query_id, components)
+                else:
+                    components = typing.get_args(component_tuple)
+                    component_ids = [
+                        Component.component_ids[component]
+                        for component in components
+                    ]
+
+                    query_id = self._rust_app.add_query(
+                        first_component=component_ids[0],
+                        other_components=component_ids[1:],
+                    )
+                    query_args[name] = Query.p_new(query_id, components, True)
 
             elif parameter.annotation is Commands:
                 other_args[name] = self._commands
@@ -125,6 +137,8 @@ class SimulationApp:
                 strict=True,
             )
         )
+        if not query.p_tuple_query:
+            query.p_result = query.p_result[0]
 
     def _process_pending_startup_systems(self) -> None:
         pending_startup_systems = self.world.get_resource(
