@@ -42,6 +42,7 @@ Here's a breakdown of the core concepts in an ECS:
 
 
   .. testcode:: ecs
+    :hide:
 
     def spawn_people(commands: xx.Commands, world: xx.World) -> None:
         (personi,) = commands.spawn((Person,), 2)
@@ -54,6 +55,7 @@ Here's a breakdown of the core concepts in an ECS:
     app.update(xx.Duration.from_millis(1))
 
   .. testoutput:: ecs
+    :hide:
 
     <xecs.Person(
       	stamina=<xecs.Int32 [0, 0]>,
@@ -63,6 +65,46 @@ Here's a breakdown of the core concepts in an ECS:
 
 Your First System
 -----------------
+
+A simple system does not have to take any parameters:
+
+.. testcode:: first-system
+
+  def hello_world() -> None:
+      print("Hello world!")
+
+We can create a working program by copying the above snippet with the
+code below:
+
+.. testcode:: first-system
+
+  import xecs as xx
+
+  def main() -> None:
+      app = xx.RealTimeApp()
+      app.add_system(hello_world)
+      app.update()
+
+  if __name__ == "__name__":
+      main()
+
+If you copied the above code into a file called ``xecs_hello_world.py``,
+you can run you code with:
+
+.. code-block:: bash
+
+  python xecs_hello_world.py
+
+The program will print:
+
+.. testcode:: first-system
+  :hide:
+
+  main()
+
+.. testoutput:: first-system
+
+  Hello world!
 
 
 Your First Components
