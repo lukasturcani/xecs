@@ -51,7 +51,7 @@ class RealTimeApp:
             num_pools=len(Component.component_ids),
             num_queries=Query.p_num_queries,
         )
-        self._commands = Commands(self._rust_app, self.world)
+        self._commands = Commands.p_new(self._rust_app, self.world)
         self._has_run_startup_systems = False
 
     def add_plugin(self, plugin: RealTimeAppPlugin) -> None:

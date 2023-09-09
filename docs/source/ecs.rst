@@ -276,3 +276,7 @@ Doing Math
 
 Filtering Components
 ....................
+
+
+Using NumPy
+...........

@@ -76,6 +76,10 @@ impl Int32 {
             .collect();
         Ok(PyArray1::from_vec(py, vec).into_py(py))
     }
+    /// Set the values of the array.
+    ///
+    /// Parameters:
+    ///     values (int | list[int]): The new values.
     fn fill(&mut self, values: Int32Rhs) -> PyResult<()> {
         let mut array = self.array.write().map_err(cannot_write)?;
         let indices = self.indices.0.read().map_err(cannot_read)?;

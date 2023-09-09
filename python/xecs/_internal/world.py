@@ -37,6 +37,18 @@ class World:
         component: type[ComponentT],
         indices: ArrayViewIndices | None = None,
     ) -> ComponentT:
+        """
+        Get a view of some components.
+
+        Parameters:
+            component:
+                The component which you want to view.
+            indices:
+                The indices specifying which entities in the
+                component pool you want to view.
+        Returns:
+            A component view of your selected entities.
+        """
         if indices is None:
             return self.p_get_pool(component).p_component
         return self.p_get_pool(component).p_component.p_new_view_with_indices(

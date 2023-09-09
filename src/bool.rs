@@ -67,6 +67,10 @@ impl Bool {
             .collect();
         Ok(PyArray1::from_vec(py, vec).into_py(py))
     }
+    /// Set the values of the array.
+    ///
+    /// Parameters:
+    ///     values (bool | list[bool]): The new values.
     fn fill(&mut self, values: BoolRhs) -> PyResult<()> {
         let mut array = self.array.write().map_err(cannot_write)?;
         let indices = self.indices.0.read().map_err(cannot_read)?;
