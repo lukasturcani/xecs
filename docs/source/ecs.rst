@@ -57,7 +57,7 @@ Here's a breakdown of the core concepts in an ECS:
   .. testoutput:: ecs
     :hide:
 
-    <xecs.Person(
+    <Person(
       	stamina=<xecs.Int32 [0, 0]>,
         is_damaged=<xecs.Bool [false, false]>,
         height=<xecs.Float32 [0.0, 0.0]>,
@@ -73,12 +73,15 @@ A simple system does not have to take any parameters:
   def hello_world() -> None:
       print("Hello world!")
 
-We can create a working program by copying the above snippet with the
-code below:
+We can create a working program by combining the above snippet with our basic
+boilerplate:
 
 .. testcode:: first-system
 
   import xecs as xx
+
+  def hello_world() -> None:
+      print("Hello world!")
 
   def main() -> None:
       app = xx.RealTimeApp()
@@ -89,7 +92,7 @@ code below:
       main()
 
 If you copied the above code into a file called ``xecs_hello_world.py``,
-you can run you code with:
+you can run your code with:
 
 .. code-block:: bash
 
@@ -109,3 +112,56 @@ The program will print:
 
 Your First Components
 ---------------------
+
+.. testsetup:: first-component
+
+  import xecs as xx
+
+In ECS we model game objects, such as people, as entities.
+An entity is essentially just a bundle of components. To start, we
+create a ``Person`` component:
+
+.. testcode:: first-component
+
+  class Person(xx.Component):
+      pass
+
+Entities which represent a person will have this component.
+
+.. testcode:: first-component
+
+  class Health(xx.Component):
+      value: xx.Int
+
+
+.. testcode:: first-component
+
+  def spawn_people(
+      commands: xx.Commands,
+  ) -> None:
+      commands.spawn((Person, Health), 5)
+
+
+.. testcode:: first-component
+
+  def report_person_health(
+      query: xx.Query[tuple[Person, Health]],
+  ) -> None:
+      (person, health) = query.result()
+      print(person)
+      print(health)
+
+.. testcode:: first-component
+
+  def main() -> None:
+      app = xx.RealTimeApp()
+      app.add_startup_system(spawn_people)
+      app.add_system(report_person_health)
+      app.add_pool(Person.create_pool(5))
+      app.add_pool(Health.create_pool(5))
+      app.update()
+
+.. testcode:: first-component
+  :hide:
+
+  main()

@@ -51,6 +51,7 @@ class Struct:
         cls = type(self)
         fields = []
         indent = " " * 4 * nesting
+        joined = None
         for attr_name in inspect.get_annotations(cls):
             attr_value = getattr(self, attr_name)
             if isinstance(attr_value, Struct):
@@ -59,7 +60,10 @@ class Struct:
                 attr_str = attr_value.to_str()
             fields.append(f"{indent}{attr_name}={attr_str},")
             joined = "\n    ".join(fields)
-        return f"<xecs.{type(self).__name__}(\n    {joined}\n{indent})>"
+        if joined is not None:
+            return f"<{type(self).__name__}(\n    {joined}\n{indent})>"
+        else:
+            return f"<{type(self).__name__}()>"
 
     def __len__(self) -> int:
         return len(self._indices)

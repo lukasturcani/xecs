@@ -85,6 +85,7 @@ class Component:
     def __str__(self) -> str:
         cls = type(self)
         fields = []
+        joined = None
         for attr_name in inspect.get_annotations(cls):
             attr_value = getattr(self, attr_name)
             if isinstance(attr_value, Struct):
@@ -93,4 +94,7 @@ class Component:
                 attr_str = attr_value.to_str()
             fields.append(f"{attr_name}={attr_str},")
             joined = "\n    ".join(fields)
-        return f"<xecs.{type(self).__name__}(\n    {joined}\n)>"
+        if joined is not None:
+            return f"<{type(self).__name__}(\n    {joined}\n)>"
+        else:
+            return f"<{type(self).__name__}()>"
