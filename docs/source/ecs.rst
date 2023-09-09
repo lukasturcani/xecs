@@ -326,3 +326,91 @@ In this system, ``health.value < 50`` returns a boolean mask.
 When the mask is used to index, as in ``health[...]``, a new
 ``Health`` component is returned, holding only entities where
 the mask was ``True``.
+
+.. testcode:: first-component
+  :hide:
+
+  def main() -> None:
+      app = xx.RealTimeApp()
+      app.add_startup_system(spawn_people)
+      app.add_system(damage_system)
+      app.add_system(healing_system)
+      app.add_pool(Person.create_pool(5))
+      app.add_pool(Health.create_pool(5))
+      app.update()
+
+  main()
+
+Combining Entities
+..................
+
+As you can tell, :mod:`xecs` focuses a lot on element-wise operations.
+In fact, this is the primary tool it uses for its performance. As a result,
+if you find yourself using a for-loop inside an :mod:`xecs` system, chances are
+something has gone wrong.
+
+One common reason to reach for a for-loop is to go through all pairs of entities
+because we expect them to have some kind of interaction. Let's write a new
+app. In this app we will:
+
+* Spawn some entities.
+* Assign them some positions.
+* Go through all pairs of entities.
+* If two entities are "close", we will consider them to be neighbors and
+  increase their neighbor count.
+
+.. testcode:: neighbors
+
+  import xecs as xx
+
+  class Neighbors(xx.Component):
+      num_neighbors: xx.Int
+
+  def spawn_entities(
+      commands: xx.Commands,
+      world: xx.World,
+  ) -> None:
+      _, transformi = commands.spawn((Neighbors, xx.Transform2), 5)
+      transform = world.get_view(xx.Transform2, transformi)
+      transform.translation.x.fill([1, 2, 3, 4, 5])
+
+  def count_neighbors(
+      query: xx.Query[tuple[Neighbors, xx.Transform2]],
+  ) -> None:
+      (neighbors, transform1), (_, transform2) = query.product_2()
+      x_distance = abs(transform1.translation.x - transform2.translation.x)
+      neighbors[x_distance < 2].num_neighbors += 1
+
+  def print_neighbors(query: xx.Query[Neighbors]) -> None:
+      print(query.result())
+
+  def main() -> None:
+      app = xx.RealTimeApp()
+      app.add_startup_system(spawn_entities)
+      app.add_system(count_neighbors)
+      app.add_system(print_neighbors)
+      app.add_pool(Neighbors.create_pool(5))
+      app.add_pool(xx.Transform2.create_pool(5))
+      app.update()
+
+  if __name__ == "__main__":
+      main()
+
+.. testcode:: neighbors
+  :hide:
+
+  def print_neighbors(query: xx.Query[Neighbors]) -> None:
+      print(sorted(query.result().num_neighbors.numpy()))
+  def main() -> None:
+      app = xx.RealTimeApp()
+      app.add_startup_system(spawn_entities)
+      app.add_system(count_neighbors)
+      app.add_system(print_neighbors)
+      app.add_pool(Neighbors.create_pool(5))
+      app.add_pool(xx.Transform2.create_pool(5))
+      app.update()
+  main()
+
+.. testoutput:: neighbors
+
+  [1, 1, 2, 2, 2]
