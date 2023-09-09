@@ -58,7 +58,7 @@ Here's a breakdown of the core concepts in an ECS:
     <xecs.Person(
       	stamina=<xecs.Int32 [0, 0]>,
         is_damaged=<xecs.Bool [false, false]>,
-        height=<xecs.Float32 [0.0, 0.0]>
+        height=<xecs.Float32 [0.0, 0.0]>,
     )>
 
 Your First System

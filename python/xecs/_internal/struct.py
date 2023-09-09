@@ -47,5 +47,19 @@ class Struct:
             )
         return struct
 
+    def to_str(self, nesting: int) -> str:
+        cls = type(self)
+        fields = []
+        indent = " " * 4 * nesting
+        for attr_name in inspect.get_annotations(cls):
+            attr_value = getattr(self, attr_name)
+            if isinstance(attr_value, Struct):
+                attr_str = attr_value.to_str(nesting + 1)
+            else:
+                attr_str = attr_value.to_str()
+            fields.append(f"{indent}{attr_name}={attr_str},")
+            joined = "\n    ".join(fields)
+        return f"<xecs.{type(self).__name__}(\n    {joined}\n{indent})>"
+
     def __len__(self) -> int:
         return len(self._indices)

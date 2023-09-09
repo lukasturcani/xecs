@@ -4,6 +4,7 @@ import typing
 import numpy as np
 import numpy.typing as npt
 
+from xecs._internal.struct import Struct
 from xecs.xecs import ArrayViewIndices
 
 if typing.TYPE_CHECKING:
@@ -85,7 +86,11 @@ class Component:
         cls = type(self)
         fields = []
         for attr_name in inspect.get_annotations(cls):
-            attr_value = getattr(self, attr_name).to_str()
-            fields.append(f"{attr_name}={attr_value}")
-            joined = ",\n    ".join(fields)
+            attr_value = getattr(self, attr_name)
+            if isinstance(attr_value, Struct):
+                attr_str = attr_value.to_str(1)
+            else:
+                attr_str = attr_value.to_str()
+            fields.append(f"{attr_name}={attr_str},")
+            joined = "\n    ".join(fields)
         return f"<xecs.{type(self).__name__}(\n    {joined}\n)>"
