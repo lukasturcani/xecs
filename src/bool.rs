@@ -58,6 +58,10 @@ impl Bool {
             indices: ArrayViewIndices(Arc::clone(&indices.0)),
         }
     }
+    /// Copy the elements into a NumPy array.
+    ///
+    /// Returns:
+    ///     numpy.ndarray: The NumPy array.
     fn numpy(&self, py: Python) -> PyResult<Py<PyArray1<bool>>> {
         let array = self.array.read().map_err(cannot_read)?;
         let indices = self.indices.0.read().map_err(cannot_read)?;

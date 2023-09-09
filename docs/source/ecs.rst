@@ -173,7 +173,7 @@ entities with a ``Person`` and ``Health`` component. The
 of all ``Person`` and ``Health`` components, which belong
 to entities containing both.
 
-Finally, lets write our ``main`` function again and
+Finally, let's write our ``main`` function again and
 register our new systems:
 
 .. testcode:: first-component
@@ -267,16 +267,49 @@ If we run our program again, our output will be:
   )>
 
 
-
-
 Doing Math
 ..........
 
+Getting access to our components in a system is step one, but more
+often than not, we will want to perform some kind of numerical operation
+on our data. Let's continue our example by adding a damage system. At
+each step it will remove one health point from our entities:
 
+.. testcode:: first-component
+
+  def damage_system(
+      query: xx.Query[tuple[Person, Health]],
+  ) -> None:
+      person, health = query.result()
+      health.value -= 1
+
+Recall that ``health`` has type ``Health`` and is actually an array
+of all ``Health`` components on entities which also have a ``Person``
+component. The ``value`` attribute is of type :class:`~xecs.Int32`.
+It is an array holding all the integers representing the
+health values. The primitive types in
+:mod:`xecs` such as :class:`~xecs.Bool`, :class:`~xecs.Int32`
+and :class:`~xecs.Float32` are arrays holding a value for each
+entity in the current view. Numerical types such as :class:`~xecs.Int32`
+and :class:`~xecs.Float32` provide element wise arithmetic operations, much
+like `NumPy <https://numpy.org/>`_.
+
+Our values can be updated in-place using operators such as ``+=``,
+``-=``, ``*=`` and so on. The right hand side of the operator can be
+a single number, a list of numbers or a NumPy array. When using
+list or array of numbers the operation is performed element-wise.
+Operators such as ``+``, ``-`` and ``*`` do not update our
+components in-place, instead they return a NumPy array of the
+results. If we want to place the results back into our
+components we can use :meth:`~xecs.Int32.fill`. Finally,
+if we want to use NumPy functions, we can convert our component
+values into NumPy arrays with :meth:`~xecs.Int32.numpy`.
 
 Filtering Components
 ....................
 
 
-Using NumPy
-...........
+
+
+Combinations of Entities
+........................
