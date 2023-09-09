@@ -126,13 +126,25 @@ create a ``Person`` component:
   class Person(xx.Component):
       pass
 
-Entities which represent a person will have this component.
+Entities which represent a person will have this component. In our
+example, we also want to keep track of how much health each person has.
+If you're not familiar with ECS you may be tempted to add a field to
+the ``Person`` component, such as ``health: xx.Int``. However,
+other entities may have health too. By splitting up health into
+a separate component, we can eventually write systems which operate
+on any entity which has health. For example, a damage system will not
+care if the entity receiving damage is a person or a cow. In any case,
+here is our new component:
 
 .. testcode:: first-component
 
   class Health(xx.Component):
       value: xx.Int
 
+Next, we add people into our :class:`~xecs.World` using a
+"startup system". Startup systems are run once, before any other
+system. We use :class:`~xecs.Commands` to spawn entities into our
+:class:`~xecs.World`:
 
 .. testcode:: first-component
 
@@ -142,6 +154,9 @@ Entities which represent a person will have this component.
       commands.spawn((Person, Health), 5)
 
 
+To show we've spawned our people, and their health, we can write a new system
+which acts on all entities with a ``Person`` and ``Health`` component:
+
 .. testcode:: first-component
 
   def report_person_health(
@@ -150,6 +165,16 @@ Entities which represent a person will have this component.
       (person, health) = query.result()
       print(person)
       print(health)
+
+The parameters of our system function determine what data
+our system runs on. In this case we are getting all
+entities with a ``Person`` and ``Health`` component. The
+``person`` and ``health`` variables are actually arrays
+of all ``Person`` and ``Health`` components, which belong
+to entities containing both.
+
+Finally, lets write our ``main`` function again and
+register our new systems:
 
 .. testcode:: first-component
 
@@ -161,7 +186,93 @@ Entities which represent a person will have this component.
       app.add_pool(Health.create_pool(5))
       app.update()
 
+Notice we also called :meth:`~xecs.RealTimeApp.add_pool`. In :mod:`xecs` we
+reserve memory ahead of time for our components. This means that as our app runs,
+we can avoid unnecessary re-allocations.
+
 .. testcode:: first-component
   :hide:
 
   main()
+
+The output of our program will be as follows:
+
+.. testoutput:: first-component
+
+  <Person()>
+  <Health(
+      value=<xecs.Int32 [0, 0, 0, 0, 0]>,
+  )>
+
+Initializing Components
+.......................
+
+In the previous section we spawned a bunch of health components:
+
+.. testcode:: first-component
+
+  def spawn_people(
+      commands: xx.Commands,
+  ) -> None:
+      commands.spawn((Person, Health), 5)
+
+We also saw that when we printed out ``Health`` component, the values
+were set to 0. Let's say our game requires full health to be a value of
+``100``, we can edit our function so that newly spawned components are
+set to this value:
+
+.. testcode:: first-component
+
+  def spawn_people(
+      commands: xx.Commands,
+      world: xx.World,
+  ) -> None:
+      personi, healthi = commands.spawn((Person, Health), 5)
+      health = world.get_view(Health, healthi)
+      health.value.fill(100)
+
+
+There is a lot going on here so let's take it step by step. First,
+we added ``world: xx.World`` to our parameter list, so that
+our system has access to the our simulated :class:`~xecs.World`. The
+:class:`~xecs.World` can be used by systems to access entities, resources
+and even other systems. In our system we will use the :class:`~xecs.World`
+to access the newly spawned ``Health`` components, so that we can set their
+value to ``100``.
+
+We also created the ``personi`` and ``healthi`` variables from the return
+value of :meth:`~xecs.Commands.spawn`. Recall that our components are held
+in a pool we created in our ``main()`` function. The
+:meth:`~xecs.Commands.spawn` command returns the indices of the components
+we just spawned. We can retrieve the actual components by using
+:meth:`~xecs.World.get_view`.
+
+The ``health`` variable has type ``Health`` and is an array of all
+newly spawned health components. The ``value`` attribute is of type
+:class:`~xecs.Int32` and holds all the health values. We call
+:meth:`~xecs.Int32.fill` to set all the selected values to ``100``.
+
+If we run our program again, our output will be:
+
+.. testcode:: first-component
+  :hide:
+
+  main()
+
+.. testoutput:: first-component
+
+  <Person()>
+  <Health(
+      value=<xecs.Int32 [100, 100, 100, 100, 100]>,
+  )>
+
+
+
+
+Doing Math
+..........
+
+
+
+Filtering Components
+....................

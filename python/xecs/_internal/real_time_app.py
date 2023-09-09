@@ -257,6 +257,15 @@ class RealTimeApp:
             sleep(sleep_time.as_nanos() / 1e9)
 
     def add_pool(self, pool: ComponentPool[ComponentT]) -> None:
+        """
+        Add a pre-allocated pool of components.
+
+        The `pool` will be used to hold any components which
+        are spawned during runtime.
+
+        Parameters:
+            pool: The component pool.
+        """
         component_id = Component.component_ids[type(pool.p_component)]
         self._rust_app.add_pool(component_id, pool.p_capacity)
         self.world.add_pool(pool)
