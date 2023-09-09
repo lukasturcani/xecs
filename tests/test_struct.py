@@ -15,5 +15,8 @@ def test_to_str() -> None:
     assert (
         repr(pool.p_component)
         == str(pool.p_component)
-        == "<xecs.MyComponent(\n    s=<xecs.MyStruct(\n        x=<xecs.Int32 [0, 0]>,\n    )>,\n)>"
+        == (
+            "<xecs.MyComponent(\n    "
+            "s=<xecs.MyStruct(\n        x=<xecs.Int32 [0, 0]>,\n    )>,\n)>"
+        )
     )
