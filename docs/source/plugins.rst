@@ -29,6 +29,9 @@ Creating Your First Plugin
   if __name__ == "__main__":
       main()
 
+.. testcode:: plugin
+
+  main()
 
 .. testoutput:: plugin
   :hide:
