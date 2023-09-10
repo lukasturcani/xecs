@@ -14,25 +14,51 @@ ComponentT = typing.TypeVar("ComponentT", bound="Component")
 
 
 class ComponentPool(typing.Generic[ComponentT]):
+    """
+    A preallocated pool of components.
+    """
+
     __slots__ = "p_component", "p_capacity"
 
     p_component: ComponentT
     p_capacity: int
 
-    def __init__(self, component: ComponentT, capacity: int) -> None:
-        self.p_component = component
-        self.p_capacity = capacity
+    @staticmethod
+    def p_new(
+        component: ComponentT,
+        capacity: int,
+    ) -> "ComponentPool[ComponentT]":
+        component_pool: ComponentPool[ComponentT] = ComponentPool()
+        component_pool.p_component = component
+        component_pool.p_capacity = capacity
+        return component_pool
 
     def p_spawn(self, num: int) -> ArrayViewIndices:
         return self.p_component.p_indices.spawn(num)
 
 
 class Component:
+    """
+    A view into the components of some entities.
+    """
+
     component_ids: "typing.ClassVar[dict[type[Component], ComponentId]]" = {}
+    """
+    Maps each component type to a unique ID. This is automatically
+    populated by subclasses.
+    """
     p_indices: ArrayViewIndices
 
     @classmethod
     def create_pool(cls, capacity: int) -> ComponentPool[typing.Self]:
+        """
+        Create a preallocated pool of components.
+
+        Parameters:
+            capacity: The maximum number of components the pool can hold.
+        Returns:
+            The component pool.
+        """
         component = cls()
         component.p_indices = ArrayViewIndices.with_capacity(capacity)
         for key, value in inspect.get_annotations(cls).items():
@@ -41,7 +67,7 @@ class Component:
                 key,
                 value.p_with_indices(component.p_indices),
             )
-        return ComponentPool(component, capacity)
+        return ComponentPool.p_new(component, capacity)
 
     def __getitem__(self, key: npt.NDArray[np.bool_]) -> typing.Self:
         cls = self.__class__

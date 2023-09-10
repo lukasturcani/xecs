@@ -6,6 +6,10 @@ from xecs.xecs import ArrayViewIndices, RustApp
 
 
 class Commands:
+    """
+    Make changes to the :class:`.World`.
+    """
+
     __slots__ = "_app", "_world"
 
     _app: RustApp

@@ -45,48 +45,114 @@ impl Instant {
     }
 }
 
+/// Represents a span of time.
 #[pyclass(module = "xecs")]
 pub struct Duration(Option<time::Duration>);
 
 #[pymethods]
 impl Duration {
+    /// Create a new duration.
+    ///
+    /// Parameters:
+    ///     secs (int): The number of whole seconds.
+    ///     nanos (int): The number of additional nanoseconds.
+    /// Returns:
+    ///     Duration: The duration.
     #[staticmethod]
     fn new(secs: u64, nanos: u32) -> Self {
         Self(Some(time::Duration::new(secs, nanos)))
     }
+    /// Create a new duration from a specified number of milliseconds.
+    ///
+    /// Parameters:
+    ///     millis (int): The number of milliseconds.
+    /// Returns:
+    ///     Duration: The duration.
     #[staticmethod]
     fn from_millis(millis: u64) -> Self {
         Self(Some(time::Duration::from_millis(millis)))
     }
+    /// Create a new duration from a specified number of microseconds.
+    ///
+    /// Parameters:
+    ///     micros (int): The number of microseconds.
+    /// Returns:
+    ///     Duration: The duration.
     #[staticmethod]
     fn from_micros(micros: u64) -> Self {
         Self(Some(time::Duration::from_micros(micros)))
     }
+    /// Create a new duration from a specified number of nanoseconds.
+    ///
+    /// Parameters:
+    ///     nanos (int): The number of nanoseconds.
+    /// Returns:
+    ///     Duration: The duration.
     #[staticmethod]
     fn from_nanos(nanos: u64) -> Self {
         Self(Some(time::Duration::from_nanos(nanos)))
     }
+    /// Return ``True`` if the duration spans no time.
+    ///
+    /// Returns:
+    ///     bool: Whether the duration spans any time or not.
     fn is_zero(&self) -> bool {
         self.0.map(|x| x.is_zero()).unwrap()
     }
+    /// Return the total number of whole seconds in the duration.
+    ///
+    /// Returns:
+    ///     int: The total number of whole seconds.
     fn as_secs(&self) -> u64 {
         self.0.map(|x| x.as_secs()).unwrap()
     }
+    /// Return the fractional part of this duration, in whole microseconds.
+    ///
+    /// This method does **not** return the lenght of the duration when
+    /// represented by microseconds. The returned number always represents
+    /// a fractional portion of a second.
+    ///
+    /// Returns:
+    ///     int: The subsecond microseconds in the duration.
     fn subsec_micros(&self) -> u32 {
         self.0.map(|x| x.subsec_micros()).unwrap()
     }
+    /// Return the fractional part of this duration, in whole nanoseconds.
+    ///
+    /// This method does **not** return the lenght of the duration when
+    /// represented by nanoseconds. The returned number always represents
+    /// a fractional portion of a second.
+    ///
+    /// Returns:
+    ///     int: The subsecond nanoseconds in the duration.
     fn subsec_nanos(&self) -> u32 {
         self.0.map(|x| x.subsec_nanos()).unwrap()
     }
+    /// Return the total number of whole milliseconds in this duration.
+    ///
+    /// Returns:
+    ///     int: The number of whole milliseconds.
     fn as_millis(&self) -> u128 {
         self.0.map(|x| x.as_millis()).unwrap()
     }
+    /// Return the total number of whole microseconds in this duration.
+    ///
+    /// Returns:
+    ///     int: The number of whole microseconds.
     fn as_micros(&self) -> u128 {
         self.0.map(|x| x.as_micros()).unwrap()
     }
+    /// Return the total number of whole nanoseconds in this duration.
+    ///
+    /// Returns:
+    ///     int: The number of whole nanoseconds.
     fn as_nanos(&self) -> u128 {
         self.0.map(|x| x.as_nanos()).unwrap()
     }
+    /// Add a duration inplace.
+    ///
+    /// Parameters:
+    ///     rhs (Duration): The other duration.
     fn checked_add(&mut self, rhs: &mut Self) -> PyResult<()> {
         let original_lhs = self.0;
         let original_rhs = rhs.0;
@@ -100,6 +166,10 @@ impl Duration {
             Err(PyRuntimeError::new_err("overflow"))
         }
     }
+    /// Subtract a duration inplace.
+    ///
+    /// Parameters:
+    ///     rhs (Duration): The other duration.
     fn checked_sub(&mut self, rhs: &mut Self) -> PyResult<()> {
         let original_lhs = self.0;
         let original_rhs = rhs.0;
@@ -113,6 +183,13 @@ impl Duration {
             Err(PyRuntimeError::new_err("overflow"))
         }
     }
+    /// Subtract a duration.
+    ///
+    /// Parameters:
+    ///     rhs (Duration): The other duration.
+    /// Returns:
+    ///     Duration: The new duration. Zero if the result would
+    ///     have been negative
     fn saturating_sub(&mut self, rhs: &mut Self) -> Self {
         let original_lhs = self.0;
         let original_rhs = rhs.0;
@@ -121,6 +198,10 @@ impl Duration {
         rhs.0 = original_rhs;
         Self(Some(result))
     }
+    /// Multiply a duration inplace.
+    ///
+    /// Parameters:
+    ///     rhs (Duration): The other duration.
     fn checked_mul(&mut self, rhs: u32) -> PyResult<()> {
         let original_lhs = self.0;
         if let duration @ Some(_) = self.0.take().unwrap().checked_mul(rhs) {
@@ -131,6 +212,10 @@ impl Duration {
             Err(PyRuntimeError::new_err("overflow"))
         }
     }
+    /// Divide a duration inplace.
+    ///
+    /// Parameters:
+    ///     rhs (Duration): The other duration.
     fn checked_div(&mut self, rhs: u32) -> PyResult<()> {
         let original_lhs = self.0;
         if let duration @ Some(_) = self.0.take().unwrap().checked_div(rhs) {

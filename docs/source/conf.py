@@ -26,6 +26,7 @@ autosummary_imported_members = True
 
 autodoc_typehints = "description"
 autodoc_member_order = "groupwise"
+autodoc_preserve_defaults = True
 autoclass_content = "both"
 
 intersphinx_mapping = {

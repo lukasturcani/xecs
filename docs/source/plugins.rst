@@ -30,6 +30,7 @@ Creating Your First Plugin
       main()
 
 .. testcode:: plugin
+  :hide:
 
   main()
 
