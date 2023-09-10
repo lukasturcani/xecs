@@ -24,6 +24,7 @@ dev = [
   "pygame-widgets",
   "pytest",
   "pytest-benchmark",
+  "pytet-cov",
   "sphinx",
   "sphinx-copybutton",
   "furo"
