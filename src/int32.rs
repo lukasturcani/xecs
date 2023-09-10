@@ -22,6 +22,7 @@ enum PowRhs<'a> {
     VecU32(Vec<u32>),
 }
 
+/// An array of int32 values.
 #[pyclass(module = "xecs")]
 pub struct Int32 {
     array: Arc<RwLock<Vec<i32>>>,

@@ -13,7 +13,7 @@ enum BoolRhs<'a> {
     VecBool(Vec<bool>),
 }
 
-/// An array of boolean component values.
+/// An array of boolean values.
 #[pyclass(module = "xecs")]
 pub struct Bool {
     array: Arc<RwLock<Vec<bool>>>,

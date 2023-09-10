@@ -310,7 +310,7 @@ class RealTimeApp:
 
     def add_pool(self, pool: ComponentPool[ComponentT]) -> None:
         """
-        Add a pre-allocated pool of components.
+        Add a preallocated pool of components.
 
         The `pool` will be used to hold any components which
         are spawned during runtime.

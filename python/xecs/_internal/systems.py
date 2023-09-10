@@ -18,7 +18,18 @@ System: TypeAlias = abc.Callable[..., Any]
 
 
 class SystemSpec:
+    """
+    Specification for a system.
+    """
+
     __slots__ = "function", "query_args", "other_args"
+
+    function: System
+    """The function which runs the system."""
+    query_args: dict[str, Query[Any]]
+    """The query arguments for the system."""
+    other_args: dict[str, NonQueryParameter]
+    """The non-query arguments for the system."""
 
     def __init__(
         self,
@@ -26,6 +37,12 @@ class SystemSpec:
         query_args: dict[str, Query[Any]],
         other_args: dict[str, NonQueryParameter],
     ) -> None:
+        """
+        Parameters:
+            function: The function which runs the system.
+            query_args: The query arguments for the system.
+            other_args: The non-query arguments for the system.
+        """
         self.function = function
         self.query_args = query_args
         self.other_args = other_args

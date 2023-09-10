@@ -8,6 +8,10 @@ from xecs.xecs import ArrayViewIndices
 
 
 class Struct:
+    """
+    A base class for reusable data structures held by components.
+    """
+
     _indices: ArrayViewIndices
 
     @classmethod
@@ -48,6 +52,14 @@ class Struct:
         return struct
 
     def to_str(self, nesting: int) -> str:
+        """
+        Return a string representation.
+
+        Parameters:
+            nesting: How deeply nested the struct is in the component.
+        Returns:
+            The string representation.
+        """
         cls = type(self)
         fields = []
         indent = " " * 4 * nesting

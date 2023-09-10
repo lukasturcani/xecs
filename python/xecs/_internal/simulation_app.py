@@ -68,12 +68,30 @@ class SimulationApp:
         self._has_run_startup_systems = False
 
     def add_plugin(self, plugin: SimulationAppPlugin) -> None:
+        """
+        Add a plugin.
+
+        Parameters:
+            plugin: The plugin.
+        """
         plugin.build(self)
 
     def add_resource(self, resource: Resource) -> None:
+        """
+        Add a resource.
+
+        Parameters:
+            resource: The resource.
+        """
         self.world.add_resource(resource)
 
     def add_startup_system(self, system: System) -> None:
+        """
+        Add a startup system.
+
+        Parameters:
+            system: The system.
+        """
         self.world.get_resource(PendingStartupSystems).systems.append(system)
 
     def add_system(
@@ -81,6 +99,16 @@ class SimulationApp:
         system: System,
         run_condition: Duration | None = None,
     ) -> None:
+        """
+        Add a system.
+
+        Parameters:
+            system:
+                The system.
+            run_condition:
+                The time step between runs of the system.
+                If ``None`` the system will run every frame.
+        """
         self.world.get_resource(PendingSystems).systems.append(
             (system, run_condition)
         )
@@ -228,6 +256,12 @@ class SimulationApp:
                 system.time_to_simulate -= system.time_step
 
     def update(self, time_step: Duration) -> None:
+        """
+        Run the app for a single step.
+
+        Parameters:
+            time_step: The length of time the step simulates.
+        """
         if not self.world.has_resource(Time):
             self.world.add_resource(Time.default())
         if not self._has_run_startup_systems:
@@ -243,6 +277,13 @@ class SimulationApp:
         self._run_fixed_time_step_systems(time_step)
 
     def run(self, num_steps: int, time_step: Duration) -> None:
+        """
+        Run the app continuously.
+
+        Parameters:
+            num_steps: The number of steps to run.
+            time_step: The length of time each step simulates.
+        """
         if not self.world.has_resource(Time):
             self.world.add_resource(Time.default())
         if not self._has_run_startup_systems:
@@ -256,6 +297,15 @@ class SimulationApp:
             self._update(time_step)
 
     def add_pool(self, pool: ComponentPool[ComponentT]) -> None:
+        """
+        Add a preallocated pool of components.
+
+        The `pool` will be used to hold any components which
+        are spawned during runtime.
+
+        Parameters:
+            pool: The component pool.
+        """
         component_id = Component.component_ids[type(pool.p_component)]
         self._rust_app.add_pool(component_id, pool.p_capacity)
         self.world.add_pool(pool)
