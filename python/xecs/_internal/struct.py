@@ -18,9 +18,7 @@ class Struct:
     def p_with_indices(cls, indices: ArrayViewIndices) -> typing.Self:
         struct = cls()
         struct._indices = indices
-        for key, value in inspect.get_annotations(cls).items():
-            if isinstance(value, str):
-                raise RuntimeError(f"{key}: {value}")
+        for key, value in inspect.get_annotations(cls, eval_str=True).items():
             setattr(struct, key, value.p_with_indices(indices))
         return struct
 
