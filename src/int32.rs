@@ -124,11 +124,21 @@ impl Int32 {
         }
         Ok(())
     }
+    /// Get the value at a specific index.
+    ///
+    /// Parameters:
+    ///     index (int): The index where the value is located.
+    /// Returns:
+    ///     int: The value at `index`.
     fn get(&self, index: usize) -> PyResult<i32> {
         let array = self.array.read().map_err(cannot_read)?;
         let indices = self.indices.0.read().map_err(cannot_read)?;
         Ok(unsafe { *array.get_unchecked(*indices.get_unchecked(index) as usize) })
     }
+    /// Get a string representation.
+    ///
+    /// Returns:
+    ///     str: The string representation.
     fn to_str(&self) -> PyResult<String> {
         let mut result = String::new();
         let array = self.array.read().map_err(cannot_read)?;

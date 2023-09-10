@@ -25,6 +25,7 @@ enum PowRhs<'a> {
     VecF32(Vec<f32>),
 }
 
+/// An array of float32 component values.
 #[pyclass(module = "xecs")]
 pub struct Float32 {
     array: Arc<RwLock<Vec<f32>>>,
@@ -127,11 +128,21 @@ impl Float32 {
         }
         Ok(())
     }
+    /// Get the value at a specific index.
+    ///
+    /// Parameters:
+    ///     index (int): The index where the value is located.
+    /// Returns:
+    ///     float: The value at `index`.
     fn get(&self, index: usize) -> PyResult<f32> {
         let array = self.array.read().map_err(cannot_read)?;
         let indices = self.indices.0.read().map_err(cannot_read)?;
         Ok(unsafe { *array.get_unchecked(*indices.get_unchecked(index) as usize) })
     }
+    /// Get a string representation.
+    ///
+    /// Returns:
+    ///     str: The string representation.
     fn to_str(&self) -> PyResult<String> {
         let mut result = String::new();
         let array = self.array.read().map_err(cannot_read)?;
