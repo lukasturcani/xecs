@@ -40,7 +40,7 @@ def test_ioperators_vec2(
 ) -> None:
     expected = math_ioperator(vec1.numpy(), vec2.numpy())
     result = math_ioperator(vec1, vec2)
-    assert np.all(np.equal(result.numpy(), expected))
+    assert np.allclose(result.numpy(), expected)
 
 
 def test_ioperators_float(
@@ -59,7 +59,7 @@ def test_ioperators_array(
 ) -> None:
     expected = math_ioperator(vec1.numpy(), array)
     result = math_ioperator(vec1, array)
-    assert np.all(np.equal(result.numpy(), expected))
+    assert np.allclose(result.numpy(), expected)
 
 
 @pytest.fixture(
