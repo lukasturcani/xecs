@@ -34,11 +34,25 @@ R = typing.TypeVar("R")
 
 
 class RealTimeAppPlugin:
+    """
+    A base class for plugins for :class:`.RealTimeApp`.
+    """
+
     def build(self, app: "RealTimeApp") -> None:
+        """
+        Add the plugin to an `app`.
+
+        Parameters:
+            app: The app to add the plugin to.
+        """
         pass
 
 
 class RealTimeApp:
+    """
+    An app which runs in real time.
+    """
+
     def __init__(self) -> None:
         self.world = World()
         self.add_resource(PendingStartupSystems([]))
@@ -55,12 +69,30 @@ class RealTimeApp:
         self._has_run_startup_systems = False
 
     def add_plugin(self, plugin: RealTimeAppPlugin) -> None:
+        """
+        Add a plugin.
+
+        Parameters:
+            plugin: The plugin.
+        """
         plugin.build(self)
 
     def add_resource(self, resource: Resource) -> None:
+        """
+        Add a resource.
+
+        Parameters:
+            resource: The resource.
+        """
         self.world.add_resource(resource)
 
     def add_startup_system(self, system: System) -> None:
+        """
+        Add a startup system.
+
+        Parameters:
+            system: The startup system.
+        """
         self.world.get_resource(PendingStartupSystems).systems.append(system)
 
     def add_system(
@@ -68,6 +100,16 @@ class RealTimeApp:
         system: System,
         run_condition: Duration | None = None,
     ) -> None:
+        """
+        Add a system.
+
+        Parameters:
+            system:
+                The system.
+            run_condition:
+                The time step between runs of the system.
+                If ``None`` the system will run every frame.
+        """
         self.world.get_resource(PendingSystems).systems.append(
             (system, run_condition)
         )
@@ -215,6 +257,9 @@ class RealTimeApp:
                 system.time_to_simulate -= system.time_step
 
     def update(self) -> None:
+        """
+        Run the app for a single step.
+        """
         if not self.world.has_resource(Time):
             self.world.add_resource(Time.default())
         if not self._has_run_startup_systems:
@@ -234,6 +279,13 @@ class RealTimeApp:
         frame_time: Duration = Duration.from_nanos(int(1e9 / 60)),
         max_run_time: Duration | None = None,
     ) -> None:
+        """
+        Run the app continuously.
+
+        Parameters:
+            frame_time: The time between frames.
+            max_run_time: The maximum time to run the app for.
+        """
         if not self.world.has_resource(Time):
             self.world.add_resource(Time.default())
         if not self._has_run_startup_systems:

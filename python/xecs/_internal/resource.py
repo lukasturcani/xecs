@@ -4,6 +4,10 @@ import typing
 
 @typing.dataclass_transform()
 class Resource:
+    """
+    A base class for resources.
+    """
+
     def __init_subclass__(cls) -> None:
         setattr(cls, "__init__", cls._subclass_init)
 

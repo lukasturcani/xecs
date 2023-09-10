@@ -33,11 +33,25 @@ R = typing.TypeVar("R")
 
 
 class SimulationAppPlugin:
+    """
+    A base class for plugins for :class:`.SimulationAppPlugin`.
+    """
+
     def build(self, app: "SimulationApp") -> None:
+        """
+        Add the plugin to an `app`.
+
+        Parameters:
+            app: The app to add the plugin to.
+        """
         pass
 
 
 class SimulationApp:
+    """
+    An app which runs as fast as possible.
+    """
+
     def __init__(self) -> None:
         self.world = World()
         self.add_resource(PendingStartupSystems([]))

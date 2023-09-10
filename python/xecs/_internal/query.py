@@ -12,6 +12,10 @@ T = typing.TypeVar("T")
 
 
 class Query(typing.Generic[T]):
+    """
+    A system parameter providing selective access to component data.
+    """
+
     p_num_queries: typing.ClassVar[int] = 0
     p_query_id: "QueryId"
     p_result: T
@@ -32,9 +36,21 @@ class Query(typing.Generic[T]):
         return query
 
     def result(self) -> T:
+        """
+        Get the component data matching the query.
+
+        Returns:
+            The component data.
+        """
         return self.p_result
 
     def product_2(self) -> tuple[T, T]:
+        """
+        Get the cartesian product of component data matching the query.
+
+        Returns:
+            Every pair of entities.
+        """
         if self.p_tuple_query:
             query_result = cast(Sequence[Component], self.p_result)
         else:

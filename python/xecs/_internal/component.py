@@ -39,7 +39,7 @@ class ComponentPool(typing.Generic[ComponentT]):
 
 class Component:
     """
-    A view into the components of some entities.
+    A base class for components.
     """
 
     component_ids: "typing.ClassVar[dict[type[Component], ComponentId]]" = {}
