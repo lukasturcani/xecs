@@ -11,7 +11,7 @@ If you are familiar with `Bevy <https://bevyengine.org/>`_ and
 `NumPy <https://numpy.org/>`_ -- the API of ``xecs`` should be
 familiar to you.
 
-The goals of ``xecs``` are as follows:
+The goals of ``xecs`` are as follows:
 
 * **Fast**: Operations are executed in parallel as much as possible
   and the library is written in Rust to be cache friendly and performant.
