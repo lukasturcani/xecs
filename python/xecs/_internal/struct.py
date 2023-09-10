@@ -19,8 +19,6 @@ class Struct:
         struct = cls()
         struct._indices = indices
         for key, value in inspect.get_annotations(cls).items():
-            if isinstance(value, str):
-                raise RuntimeError(f"{cls}, {key}: {value}")
             setattr(struct, key, value.p_with_indices(indices))
         return struct
 
