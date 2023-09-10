@@ -46,3 +46,10 @@ check:
 fix:
   black .
   ruff --fix .
+
+# make docs
+docs:
+  rm -rf docs/source/_autosummary
+  rm -rf docs/build
+  make -C docs html
+  @echo Docs are in: $PWD/docs/build/html/index.html

@@ -31,15 +31,30 @@ impl MultipleArrayViewIndices {
     }
 }
 
-#[pyclass]
+/// Indices into the component pool which form the array view.
+#[pyclass(module = "xecs")]
 pub struct ArrayViewIndices(pub Arc<RwLock<Vec<Index>>>);
 
 #[pymethods]
 impl ArrayViewIndices {
+    /// Construct a new, emtpy set of indices with a given capacity.
+    ///
+    /// Parameters:
+    ///     capacity (int):
+    ///         The amount of indices which can be held without
+    ///         reallocating.
+    /// Returns:
+    ///     ArrayViewIndices: The new indices.
     #[staticmethod]
     pub fn with_capacity(capacity: usize) -> Self {
         Self(Arc::new(RwLock::new(Vec::with_capacity(capacity))))
     }
+    /// Add new indices to self.
+    ///
+    /// Parameters:
+    ///     num (int): The number of new indices to add.
+    /// Returns:
+    ///     ArrayViewIndices: The newly added indices are returned.
     pub fn spawn(&mut self, num: Index) -> PyResult<Self> {
         let mut indices = self.0.write().map_err(cannot_write)?;
         let num_indices = indices.len() as Index;

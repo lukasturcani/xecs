@@ -1,8 +1,7 @@
 import inspect
 import typing
 from collections import abc
-from time import sleep
-from typing import Any, TypeAlias
+from typing import Any
 
 from xecs._internal.commands import Commands
 from xecs._internal.component import (
@@ -12,86 +11,47 @@ from xecs._internal.component import (
 )
 from xecs._internal.query import Query
 from xecs._internal.resource import Resource
+from xecs._internal.systems import (
+    FixedTimeStepSystems,
+    FixedTimeStepSystemSpec,
+    NonQueryParameter,
+    PendingStartupSystems,
+    PendingSystems,
+    StartupSystems,
+    System,
+    SystemParameter,
+    Systems,
+    SystemSignatureError,
+    SystemSpec,
+)
 from xecs._internal.time import Time
 from xecs._internal.world import World
-from xecs.xecs import Duration, Instant, RustApp
+from xecs.xecs import Duration, RustApp
 
 P = typing.ParamSpec("P")
 R = typing.TypeVar("R")
 
 
-class SystemSignatureError(Exception):
-    pass
+class SimulationAppPlugin:
+    """
+    A base class for plugins for :class:`.SimulationAppPlugin`.
+    """
 
+    def build(self, app: "SimulationApp") -> None:
+        """
+        Add the plugin to an `app`.
 
-SystemParameter: TypeAlias = Query[Any] | Commands | Resource
-NonQueryParameter: TypeAlias = Commands | Resource | World
-System: TypeAlias = abc.Callable[..., Any]
-
-
-class SystemSpec:
-    __slots__ = "function", "query_args", "other_args"
-
-    def __init__(
-        self,
-        function: System,
-        query_args: dict[str, Query[Any]],
-        other_args: dict[str, NonQueryParameter],
-    ) -> None:
-        self.function = function
-        self.query_args = query_args
-        self.other_args = other_args
-
-
-class FixedTimeStepSystemSpec:
-    __slots__ = (
-        "function",
-        "query_args",
-        "other_args",
-        "time_step",
-        "time_to_simulate",
-    )
-
-    def __init__(
-        self,
-        function: System,
-        query_args: dict[str, Query[Any]],
-        other_args: dict[str, NonQueryParameter],
-        time_step: Duration,
-    ) -> None:
-        self.function = function
-        self.query_args = query_args
-        self.other_args = other_args
-        self.time_step = time_step
-        self.time_to_simulate = Duration.new(0, 0)
-
-
-class PendingStartupSystems(Resource):
-    systems: list[System]
-
-
-class StartupSystems(Resource):
-    systems: list[SystemSpec]
-
-
-class PendingSystems(Resource):
-    systems: list[tuple[System, Duration | None]]
-
-
-class Systems(Resource):
-    systems: list[SystemSpec]
-
-
-class FixedTimeStepSystems(Resource):
-    systems: list[FixedTimeStepSystemSpec]
-
-
-class Plugin:
-    def build(self, app: "App") -> None:
+        Parameters:
+            app: The app to add the plugin to.
+        """
         pass
 
 
-class App:
+class SimulationApp:
+    """
+    An app which runs as fast as possible.
+    """
+
     def __init__(self) -> None:
         self.world = World()
         self.add_resource(PendingStartupSystems([]))
@@ -104,16 +64,34 @@ class App:
             num_pools=len(Component.component_ids),
             num_queries=Query.p_num_queries,
         )
-        self._commands = Commands(self._rust_app, self.world)
+        self._commands = Commands.p_new(self._rust_app, self.world)
         self._has_run_startup_systems = False
 
-    def add_plugin(self, plugin: Plugin) -> None:
+    def add_plugin(self, plugin: SimulationAppPlugin) -> None:
+        """
+        Add a plugin.
+
+        Parameters:
+            plugin: The plugin.
+        """
         plugin.build(self)
 
     def add_resource(self, resource: Resource) -> None:
+        """
+        Add a resource.
+
+        Parameters:
+            resource: The resource.
+        """
         self.world.add_resource(resource)
 
     def add_startup_system(self, system: System) -> None:
+        """
+        Add a startup system.
+
+        Parameters:
+            system: The system.
+        """
         self.world.get_resource(PendingStartupSystems).systems.append(system)
 
     def add_system(
@@ -121,6 +99,16 @@ class App:
         system: System,
         run_condition: Duration | None = None,
     ) -> None:
+        """
+        Add a system.
+
+        Parameters:
+            system:
+                The system.
+            run_condition:
+                The time step between runs of the system.
+                If ``None`` the system will run every frame.
+        """
         self.world.get_resource(PendingSystems).systems.append(
             (system, run_condition)
         )
@@ -134,17 +122,29 @@ class App:
         for name, parameter in inspect.signature(system).parameters.items():
             if typing.get_origin(parameter.annotation) is Query:
                 (component_tuple,) = typing.get_args(parameter.annotation)
-                components = typing.get_args(component_tuple)
-                component_ids = [
-                    Component.component_ids[component]
-                    for component in components
-                ]
+                if issubclass(component_tuple, Component):
+                    query_id = self._rust_app.add_query(
+                        first_component=Component.component_ids[
+                            component_tuple
+                        ],
+                        other_components=[],
+                    )
+                    query_args[name] = Query.p_new(
+                        query_id, [component_tuple], False
+                    )
 
-                query_id = self._rust_app.add_query(
-                    first_component=component_ids[0],
-                    other_components=component_ids[1:],
-                )
-                query_args[name] = Query.p_new(query_id, components)
+                else:
+                    components = typing.get_args(component_tuple)
+                    component_ids = [
+                        Component.component_ids[component]
+                        for component in components
+                    ]
+
+                    query_id = self._rust_app.add_query(
+                        first_component=component_ids[0],
+                        other_components=component_ids[1:],
+                    )
+                    query_args[name] = Query.p_new(query_id, components, True)
 
             elif parameter.annotation is Commands:
                 other_args[name] = self._commands
@@ -179,6 +179,8 @@ class App:
                 strict=True,
             )
         )
+        if not query.p_tuple_query:
+            query.p_result = query.p_result[0]
 
     def _process_pending_startup_systems(self) -> None:
         pending_startup_systems = self.world.get_resource(
@@ -253,49 +255,57 @@ class App:
                 )
                 system.time_to_simulate -= system.time_step
 
-    def update(self) -> None:
+    def update(self, time_step: Duration) -> None:
+        """
+        Run the app for a single step.
+
+        Parameters:
+            time_step: The length of time the step simulates.
+        """
         if not self.world.has_resource(Time):
             self.world.add_resource(Time.default())
         if not self._has_run_startup_systems:
             self._process_pending_startup_systems()
             self._run_startup_systems()
         self._process_pending_systems()
-        self._update()
+        self._update(time_step)
 
-    def _update(self) -> None:
+    def _update(self, time_step: Duration) -> None:
         time = self.world.get_resource(Time)
-        time.update()
+        time.update_with_delta(time_step)
         self._run_systems()
-        self._run_fixed_time_step_systems(time.delta())
+        self._run_fixed_time_step_systems(time_step)
 
-    def run(
-        self,
-        frame_time: Duration = Duration.from_nanos(int(1e9 / 60)),
-        max_run_time: Duration | None = None,
-    ) -> None:
+    def run(self, num_steps: int, time_step: Duration) -> None:
+        """
+        Run the app continuously.
+
+        Parameters:
+            num_steps: The number of steps to run.
+            time_step: The length of time each step simulates.
+        """
         if not self.world.has_resource(Time):
             self.world.add_resource(Time.default())
         if not self._has_run_startup_systems:
             self._process_pending_startup_systems()
             self._run_startup_systems()
         self._process_pending_systems()
-        self._run(frame_time, max_run_time)
+        self._run(num_steps, time_step)
 
-    def _run(
-        self,
-        frame_time: Duration,
-        max_run_time: Duration | None,
-    ) -> None:
-        time = self.world.get_resource(Time)
-        while True:
-            start = Instant.now()
-            self._update()
-            if max_run_time is not None and time.elapsed() >= max_run_time:
-                break
-            sleep_time = frame_time.saturating_sub(start.elapsed())
-            sleep(sleep_time.as_nanos() / 1e9)
+    def _run(self, num_steps: int, time_step: Duration) -> None:
+        for _ in range(num_steps):
+            self._update(time_step)
 
     def add_pool(self, pool: ComponentPool[ComponentT]) -> None:
+        """
+        Add a preallocated pool of components.
+
+        The `pool` will be used to hold any components which
+        are spawned during runtime.
+
+        Parameters:
+            pool: The component pool.
+        """
         component_id = Component.component_ids[type(pool.p_component)]
         self._rust_app.add_pool(component_id, pool.p_capacity)
         self.world.add_pool(pool)

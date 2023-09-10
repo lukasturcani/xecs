@@ -8,6 +8,10 @@ from xecs.xecs import ArrayViewIndices
 
 
 class Struct:
+    """
+    A base class for reusable data structures held by components.
+    """
+
     _indices: ArrayViewIndices
 
     @classmethod
@@ -46,6 +50,32 @@ class Struct:
                 attr_value.p_new_view_with_indices(indices),
             )
         return struct
+
+    def to_str(self, nesting: int) -> str:
+        """
+        Return a string representation.
+
+        Parameters:
+            nesting: How deeply nested the struct is in the component.
+        Returns:
+            The string representation.
+        """
+        cls = type(self)
+        fields = []
+        indent = " " * 4 * nesting
+        joined = None
+        for attr_name in inspect.get_annotations(cls):
+            attr_value = getattr(self, attr_name)
+            if isinstance(attr_value, Struct):
+                attr_str = attr_value.to_str(nesting + 1)
+            else:
+                attr_str = attr_value.to_str()
+            fields.append(f"{indent}{attr_name}={attr_str},")
+            joined = "\n    ".join(fields)
+        if joined is not None:
+            return f"<{type(self).__name__}(\n    {joined}\n{indent})>"
+        else:
+            return f"<{type(self).__name__}()>"
 
     def __len__(self) -> int:
         return len(self._indices)
