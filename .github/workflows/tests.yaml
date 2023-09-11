@@ -55,6 +55,8 @@ jobs:
           python-version: "3.11"
           cache: "pip"
       - run: pip install -e '.[dev]'
+      # NOTE: Running "make -C docs text" to deal with https://github.com/sphinx-doc/sphinx/issues/11681
+      - run: make -C docs text
       - run: make -C docs doctest
   cargo-check:
     runs-on: ubuntu-22.04

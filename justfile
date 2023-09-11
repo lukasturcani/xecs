@@ -32,7 +32,8 @@ check:
   ( set -x; pytest )
 
   echo
-  ( set -x; make -C docs doctest )
+  # NOTE: Running "make -C docs text" to deal with https://github.com/sphinx-doc/sphinx/issues/11681
+  ( set -x; make -C docs text; make -C docs doctest )
 
   echo
   ( set -x; cargo check )
