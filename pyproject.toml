@@ -15,6 +15,10 @@ classifiers = [
     "Programming Language :: Python :: Implementation :: PyPy",
 ]
 
+[project.urls]
+github = "https://github.com/lukasturcani/xecs"
+documentation = "https://xecs.readthedocs.io"
+
 [project.optional-dependencies]
 dev = [
   "black",
