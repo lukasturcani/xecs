@@ -1,6 +1,6 @@
 use std::sync::{Arc, RwLock};
 
-use pyo3::{exceptions::PyRuntimeError, prelude::*};
+use pyo3::prelude::*;
 
 use crate::{
     array_view_indices::ArrayViewIndices,
@@ -9,17 +9,17 @@ use crate::{
 
 #[pyclass]
 pub struct PyField {
-    array: Arc<RwLock<Vec<Option<PyObject>>>>,
+    array: Arc<RwLock<Vec<PyObject>>>,
     indices: ArrayViewIndices,
 }
 
 #[pymethods]
 impl PyField {
     #[staticmethod]
-    fn p_with_indices(indices: &ArrayViewIndices) -> PyResult<Self> {
+    fn p_with_indices(indices: &ArrayViewIndices, default: PyObject) -> PyResult<Self> {
         Ok(Self {
             array: Arc::new(RwLock::new(vec![
-                None;
+                default;
                 indices
                     .0
                     .read()
@@ -40,19 +40,19 @@ impl PyField {
         let indices = self.indices.0.read().map_err(cannot_read)?;
         for &index in indices.iter() {
             unsafe {
-                *array.get_unchecked_mut(index as usize) = Some(Py::clone_ref(&value, py));
+                *array.get_unchecked_mut(index as usize) = Py::clone_ref(&value, py);
             }
         }
 
         Ok(())
     }
-    fn get(&self, index: usize) -> PyResult<PyObject> {
+    fn get(&self, py: Python, index: usize) -> PyResult<PyObject> {
         let array = self.array.read().map_err(cannot_read)?;
         let indices = self.indices.0.read().map_err(cannot_read)?;
-        let object = unsafe { array.get_unchecked(*indices.get_unchecked(index) as usize) }.clone();
-        object.map_or(Err(PyRuntimeError::new_err("invalid object")), |value| {
-            Ok(value)
-        })
+        Ok(Py::clone_ref(
+            unsafe { array.get_unchecked(*indices.get_unchecked(index) as usize) },
+            py,
+        ))
     }
     fn __len__(&self) -> PyResult<usize> {
         Ok(self.indices.0.read().map_err(cannot_read)?.len())

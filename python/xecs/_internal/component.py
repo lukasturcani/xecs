@@ -4,6 +4,7 @@ import typing
 import numpy as np
 import numpy.typing as npt
 
+from xecs._internal.py_field import PyField, PyFieldError
 from xecs._internal.struct import Struct
 from xecs.xecs import ArrayViewIndices
 
@@ -62,11 +63,27 @@ class Component:
         component = cls()
         component.p_indices = ArrayViewIndices.with_capacity(capacity)
         for key, value in inspect.get_annotations(cls).items():
-            setattr(
-                component,
-                key,
-                value.p_with_indices(component.p_indices),
-            )
+            if typing.get_origin(value) is PyField:
+                if not hasattr(cls, key):
+                    error = PyFieldError("no default value")
+                    error.add_note(
+                        "To use PyField, you must provide a "
+                        "default value with py_field(default=...)."
+                    )
+                    raise error
+                setattr(
+                    component,
+                    key,
+                    value.p_with_indices(
+                        component.p_indices, getattr(cls, key)
+                    ),
+                )
+            else:
+                setattr(
+                    component,
+                    key,
+                    value.p_with_indices(component.p_indices),
+                )
         return ComponentPool.p_new(component, capacity)
 
     def __getitem__(self, key: npt.NDArray[np.bool_]) -> typing.Self:
