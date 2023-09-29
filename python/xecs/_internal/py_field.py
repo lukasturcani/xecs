@@ -1,4 +1,4 @@
-from typing import Generic, TypeVar
+from typing import Any, Generic, TypeVar
 
 import numpy as np
 import numpy.typing as npt
@@ -6,6 +6,9 @@ import numpy.typing as npt
 from xecs import xecs
 
 T = TypeVar("T")
+
+
+no_default: Any = object()
 
 
 class PyField(Generic[T]):
@@ -40,16 +43,22 @@ class PyField(Generic[T]):
         """
         self._inner.fill(value)
 
-    def get(self, index: int) -> T:
+    def get(self, index: int, default: T = no_default) -> T:
         """
         Get the value at a specific index.
 
         Parameters:
             index: The index where the value is located.
+            default: The value to return if `index` is out of bounds.
         Returns:
             The value at `index`.
         """
+        if index >= len(self._inner) and default is not no_default:
+            return default
         return self._inner.get(index)
 
     def __getitem__(self, key: npt.NDArray[np.bool_]) -> "PyField[T]":
         return PyField.p_new(self._inner[key])
+
+    def __len__(self) -> int:
+        return len(self._inner)

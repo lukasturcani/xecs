@@ -54,4 +54,7 @@ impl PyField {
             Ok(value)
         })
     }
+    fn __len__(&self) -> PyResult<usize> {
+        Ok(self.indices.0.read().map_err(cannot_read)?.len())
+    }
 }
