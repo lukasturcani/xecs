@@ -31,7 +31,8 @@ dev = [
   "pytest-cov",
   "sphinx",
   "sphinx-copybutton",
-  "furo"
+  "furo",
+  "xecs-pygame",
 ]
 
 
