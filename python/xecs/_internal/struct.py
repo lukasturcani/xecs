@@ -4,6 +4,7 @@ import typing
 import numpy as np
 import numpy.typing as npt
 
+from xecs._internal.py_field import PyField, PyFieldError
 from xecs.xecs import ArrayViewIndices
 
 
@@ -19,7 +20,21 @@ class Struct:
         struct = cls()
         struct._indices = indices
         for key, value in inspect.get_annotations(cls).items():
-            setattr(struct, key, value.p_with_indices(indices))
+            if typing.get_origin(value) is PyField:
+                if not hasattr(cls, key):
+                    error = PyFieldError("no default value")
+                    error.add_note(
+                        "To use PyField, you must provide a "
+                        "default value with py_field(default=...)."
+                    )
+                    raise error
+                setattr(
+                    struct,
+                    key,
+                    value.p_with_indices(struct._indices, getattr(cls, key)),
+                )
+            else:
+                setattr(struct, key, value.p_with_indices(indices))
         return struct
 
     def __getitem__(self, key: npt.NDArray[np.bool_]) -> typing.Self:

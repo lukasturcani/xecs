@@ -6,7 +6,7 @@ from xecs._internal.commands import Commands
 from xecs._internal.component import Component, ComponentPool
 from xecs._internal.float import Float
 from xecs._internal.int import Int
-from xecs._internal.py_field import PyField
+from xecs._internal.py_field import PyField, py_field
 from xecs._internal.query import Query
 from xecs._internal.real_time_app import (
     RealTimeApp,
@@ -45,6 +45,7 @@ __all__ = [
     "PendingStartupSystems",
     "PendingSystems",
     "PyField",
+    "py_field",
     "Query",
     "RealTimeApp",
     "RealTimeAppPlugin",

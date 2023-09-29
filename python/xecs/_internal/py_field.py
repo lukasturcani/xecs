@@ -1,4 +1,4 @@
-from typing import Any, Generic, TypeVar
+from typing import Generic, TypeVar, cast
 
 import numpy as np
 import numpy.typing as npt
@@ -8,7 +8,8 @@ from xecs import xecs
 T = TypeVar("T")
 
 
-no_default: Any = object()
+class PyFieldError(Exception):
+    pass
 
 
 class PyField(Generic[T]):
@@ -25,8 +26,10 @@ class PyField(Generic[T]):
         return py_field
 
     @staticmethod
-    def p_with_indices(indices: xecs.ArrayViewIndices) -> "PyField[T]":
-        return PyField.p_new(xecs.PyField.p_with_indices(indices))
+    def p_with_indices(
+        indices: xecs.ArrayViewIndices, default: T
+    ) -> "PyField[T]":
+        return PyField.p_new(xecs.PyField.p_with_indices(indices, default))
 
     def p_new_view_with_indices(
         self,
@@ -43,18 +46,15 @@ class PyField(Generic[T]):
         """
         self._inner.fill(value)
 
-    def get(self, index: int, default: T = no_default) -> T:
+    def get(self, index: int) -> T:
         """
         Get the value at a specific index.
 
         Parameters:
             index: The index where the value is located.
-            default: The value to return if `index` is out of bounds.
         Returns:
             The value at `index`.
         """
-        if index >= len(self._inner) and default is not no_default:
-            return default
         return self._inner.get(index)
 
     def __getitem__(self, key: npt.NDArray[np.bool_]) -> "PyField[T]":
@@ -62,3 +62,7 @@ class PyField(Generic[T]):
 
     def __len__(self) -> int:
         return len(self._inner)
+
+
+def py_field(*, default: T) -> PyField[T]:
+    return cast(PyField[T], default)

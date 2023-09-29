@@ -129,16 +129,10 @@ impl Int32 {
     ///
     /// Parameters:
     ///     index (int): The index where the value is located.
-    ///     default (int): The default value if `index` is out of bounds.
     /// Returns:
     ///     int: The value at `index`.
-    fn get(&self, index: usize, default: Option<i32>) -> PyResult<i32> {
+    fn get(&self, index: usize) -> PyResult<i32> {
         let indices = self.indices.0.read().map_err(cannot_read)?;
-        if let Some(default_) = default {
-            if index >= indices.len() {
-                return Ok(default_);
-            }
-        }
         let array = self.array.read().map_err(cannot_read)?;
         Ok(unsafe { *array.get_unchecked(*indices.get_unchecked(index) as usize) })
     }

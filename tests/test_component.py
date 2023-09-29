@@ -1,12 +1,17 @@
+from typing import TypeVar
+
 import numpy as np
-import numpy.typing as npt
 import xecs as xx
 
+T = TypeVar("T", bound=xx.Component | xx.Struct)
 
-def indices(length: int, indices: list[int]) -> npt.NDArray[np.bool_]:
-    mask = np.zeros(length, dtype=np.bool_)
+
+def get(component: T, indices: list[int]) -> T:
+    mask = np.zeros(len(component), dtype=np.bool_)
     mask[indices] = True
-    return mask
+    x = component[mask]
+    assert isinstance(x, type(component))
+    return x
 
 
 class StructA(xx.Struct):
@@ -16,12 +21,14 @@ class StructA(xx.Struct):
 class StructB(xx.Struct):
     b: xx.Float32
     c: StructA
+    h: xx.PyField[str] = xx.py_field(default="hello")
 
 
 class MyComponent(xx.Component):
     d: xx.Float32
     e: StructA
     f: StructB
+    g: xx.PyField[str] = xx.py_field(default="world")
 
 
 def test_spawning_entities_updates_views_of_children() -> None:
@@ -38,7 +45,7 @@ def test_spawning_entities_updates_views_of_children() -> None:
     assert len(component.f.c) == 50
     assert len(component.f.c.a) == 50
 
-    sub_view = component[indices(50, [0, 10, 32])]
+    sub_view = get(component, [0, 10, 32])
     assert len(sub_view) == 3
     assert len(sub_view.d) == 3
     assert len(sub_view.e) == 3
@@ -77,7 +84,7 @@ def test_struct_getitem_creates_shared_view() -> None:
     assert len(struct.b) == 10
     assert len(struct.c) == 10
     assert len(struct.c.a) == 10
-    sub_view = struct[indices(10, list(range(5)))]
+    sub_view = get(struct, list(range(5)))
     assert len(sub_view) == 5
     assert len(sub_view.b) == 5
     assert len(sub_view.c) == 5
@@ -89,3 +96,11 @@ def test_struct_getitem_creates_shared_view() -> None:
     sub_view.c.a[all_mask] = 1
     assert np.sum(struct.c.a.numpy()) == 5
     assert np.sum(sub_view.c.a.numpy()) == 5
+
+
+def test_py_field_default_value_is_used() -> None:
+    pool = MyComponent.create_pool(10)
+    pool.p_spawn(10)
+    component = pool.p_component
+    assert component.f.h.get(6) == "hello"
+    assert component.g.get(6) == "world"

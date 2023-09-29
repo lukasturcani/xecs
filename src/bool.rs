@@ -120,16 +120,10 @@ impl Bool {
     ///
     /// Parameters:
     ///     index (int): The index where the value is located.
-    ///     default (bool): The default value if `index` is out of bounds.
     /// Returns:
     ///     bool: The value at `index`.
-    fn get(&self, index: usize, default: Option<bool>) -> PyResult<bool> {
+    fn get(&self, index: usize) -> PyResult<bool> {
         let indices = self.indices.0.read().map_err(cannot_read)?;
-        if let Some(default_) = default {
-            if index >= indices.len() {
-                return Ok(default_);
-            }
-        }
         let array = self.array.read().map_err(cannot_read)?;
         Ok(unsafe { *array.get_unchecked(*indices.get_unchecked(index) as usize) })
     }
