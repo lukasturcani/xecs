@@ -132,11 +132,17 @@ impl Float32 {
     ///
     /// Parameters:
     ///     index (int): The index where the value is located.
+    ///     default (float): The value to return if `index` is out of bounds.
     /// Returns:
     ///     float: The value at `index`.
-    fn get(&self, index: usize) -> PyResult<f32> {
-        let array = self.array.read().map_err(cannot_read)?;
+    fn get(&self, index: usize, default: Option<f32>) -> PyResult<f32> {
         let indices = self.indices.0.read().map_err(cannot_read)?;
+        if let Some(default_) = default {
+            if index >= indices.len() {
+                return Ok(default_);
+            }
+        }
+        let array = self.array.read().map_err(cannot_read)?;
         Ok(unsafe { *array.get_unchecked(*indices.get_unchecked(index) as usize) })
     }
     /// Get a string representation.
