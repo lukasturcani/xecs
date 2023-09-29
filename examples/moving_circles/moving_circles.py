@@ -21,22 +21,23 @@ class Params(xx.Resource):
     max_position: float
     max_velocity: float
     generator: np.random.Generator
+    time_step: xx.Duration
 
 
 def main() -> None:
     app = xx.RealTimeApp()
     app.add_plugin(PyGamePlugin())
-    num_circles = 10
-    app.add_resource(
-        Params(
-            num_circles=num_circles,
-            max_position=200,
-            max_velocity=50,
-            generator=np.random.default_rng(9),
-        )
+    num_circles = 20
+    params = Params(
+        num_circles=num_circles,
+        max_position=200,
+        max_velocity=50,
+        generator=np.random.default_rng(9),
+        time_step=xx.Duration.from_millis(16),
     )
+    app.add_resource(params)
     app.add_startup_system(spawn_circles)
-    app.add_system(move_circles, xx.Duration.from_millis(16))
+    app.add_system(move_circles, params.time_step)
     app.add_pool(xx.Transform2.create_pool(num_circles))
     app.add_pool(Velocity.create_pool(num_circles))
     app.add_pool(Circle.create_pool(num_circles))
@@ -66,7 +67,7 @@ def move_circles(
 ) -> None:
     (transform, velocity) = query.result()
     transform.translation += velocity.value * (
-        xx.Duration.from_millis(16).as_nanos() / 1e9
+        params.time_step.as_nanos() / 1e9
     )
     velocity.value.x[transform.translation.x > params.max_position] *= -1
     velocity.value.y[transform.translation.y > params.max_position] *= -1
