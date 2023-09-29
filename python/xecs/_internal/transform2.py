@@ -18,22 +18,29 @@ class Transform2(Component):
     def fill_random(
         self,
         generator: np.random.Generator,
-        scale: float,
+        min_translation: tuple[float, float] = (0.0, 0.0),
+        max_translation: tuple[float, float] = (10.0, 0.0),
     ) -> None:
         """
         Create a transforms with random values.
 
-        The transforms will be centered around the origin.
-
         Parameters:
             generator:
                 The random number generator to use.
-            scale:
-                The maximum value for the translation, both negative and
-                positive.
+            min_translation:
+                The minimum (x, y) coordinate.
+            max_translation:
+                The maximum (x, y) coordinate.
         """
-        self.translation.fill(
-            (generator.random((2, len(self)), dtype=np.float32) - 0.5) * scale
+        min_x, min_y = min_translation
+        max_x, max_y = max_translation
+        x_diff = max_x - min_x
+        y_diff = max_y - min_y
+        self.translation.x.fill(
+            generator.random(len(self), dtype=np.float32) * x_diff - min_x
+        )
+        self.translation.y.fill(
+            generator.random(len(self), dtype=np.float32) * y_diff - min_y
         )
         self.rotation.fill(
             generator.random(len(self), dtype=np.float32) * 2 * np.pi
