@@ -131,7 +131,10 @@ class RealTimeApp:
                         other_components=[],
                     )
                     query_args[name] = Query.p_new(
-                        query_id, [component_tuple], False
+                        f"{system.__name__}:{parameter.name}",
+                        query_id,
+                        [component_tuple],
+                        False,
                     )
 
                 else:
@@ -145,7 +148,12 @@ class RealTimeApp:
                         first_component=component_ids[0],
                         other_components=component_ids[1:],
                     )
-                    query_args[name] = Query.p_new(query_id, components, True)
+                    query_args[name] = Query.p_new(
+                        f"{system.__name__}:{parameter.name}",
+                        query_id,
+                        components,
+                        True,
+                    )
 
             elif parameter.annotation is Commands:
                 other_args[name] = self._commands
