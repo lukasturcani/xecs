@@ -33,6 +33,7 @@ dev = [
   "sphinx-copybutton",
   "furo",
   "xecs-pygame",
+  "sphinxcontrib-youtube",
 ]
 
 
