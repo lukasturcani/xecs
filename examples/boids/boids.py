@@ -181,11 +181,12 @@ def spawn_boids(
     )
     world.get_view(xx.Transform2, transformi).fill_random(
         generator.value,
-        min_translation=(-params.box_size / 2, -params.box_size),
-        max_translation=(params.box_size / 2, params.box_size),
+        min_translation=(-params.box_size / 2, -params.box_size / 2),
+        max_translation=(params.box_size / 2, params.box_size / 2),
     )
     world.get_view(Velocity, velocityi).value.fill(
-        generator.value.random((2, params.num_boids), dtype=np.float32)
+        (generator.value.random((2, params.num_boids), dtype=np.float32) - 0.5)
+        * 2
         * params.max_speed
     )
     polygon = world.get_view(Polygon, polygoni)

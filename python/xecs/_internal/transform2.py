@@ -37,10 +37,10 @@ class Transform2(Component):
         x_diff = max_x - min_x
         y_diff = max_y - min_y
         self.translation.x.fill(
-            generator.random(len(self), dtype=np.float32) * x_diff - min_x
+            generator.random(len(self), dtype=np.float32) * x_diff + min_x
         )
         self.translation.y.fill(
-            generator.random(len(self), dtype=np.float32) * y_diff - min_y
+            generator.random(len(self), dtype=np.float32) * y_diff + min_y
         )
         self.rotation.fill(
             generator.random(len(self), dtype=np.float32) * 2 * np.pi
