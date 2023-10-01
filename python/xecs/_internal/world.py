@@ -64,6 +64,15 @@ class World:
         component = type(pool.p_component)
         self._pools[component] = cast(ComponentPool[Component], pool)
 
+    def has_pool(self, component: type[Component]) -> bool:
+        """
+        Check if a pool for a given component type exists.
+
+        Returns:
+            Whether the pool exists.
+        """
+        return component in self._pools
+
     def get_view(
         self,
         component: type[ComponentT],

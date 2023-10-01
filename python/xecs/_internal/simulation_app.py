@@ -8,6 +8,7 @@ from xecs._internal.component import (
     Component,
     ComponentPool,
     ComponentT,
+    MissingPoolError,
 )
 from xecs._internal.query import Query
 from xecs._internal.resource import Resource
@@ -175,6 +176,7 @@ class SimulationApp:
         return query_args, other_args
 
     def _run_query(self, query: Query[Any]) -> None:
+        self._assert_has_pools(query.p_components)
         component_indices = self._rust_app.run_query(query.p_query_id)
         query.p_result = tuple(
             pool.p_component.p_new_view_with_indices(indices)
@@ -189,6 +191,18 @@ class SimulationApp:
         )
         if not query.p_tuple_query:
             query.p_result = query.p_result[0]
+
+    def _assert_has_pools(
+        self,
+        components: abc.Iterable[type[Component]],
+    ) -> None:
+        for component in components:
+            if not self.world.has_pool(component):
+                error = MissingPoolError(
+                    f"missing a pool for the {component.__name__} component"
+                )
+                error.add_note("Did you forget to run app.add_pool(...)?")
+                raise error
 
     def _process_pending_startup_systems(self) -> None:
         pending_startup_systems = self.world.get_resource(
