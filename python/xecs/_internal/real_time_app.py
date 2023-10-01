@@ -9,6 +9,7 @@ from xecs._internal.component import (
     Component,
     ComponentPool,
     ComponentT,
+    MissingPoolError,
 )
 from xecs._internal.query import Query
 from xecs._internal.resource import Resource
@@ -131,7 +132,10 @@ class RealTimeApp:
                         other_components=[],
                     )
                     query_args[name] = Query.p_new(
-                        query_id, [component_tuple], False
+                        str(parameter.annotation),
+                        query_id,
+                        [component_tuple],
+                        False,
                     )
 
                 else:
@@ -145,7 +149,12 @@ class RealTimeApp:
                         first_component=component_ids[0],
                         other_components=component_ids[1:],
                     )
-                    query_args[name] = Query.p_new(query_id, components, True)
+                    query_args[name] = Query.p_new(
+                        str(parameter.annotation),
+                        query_id,
+                        components,
+                        True,
+                    )
 
             elif parameter.annotation is Commands:
                 other_args[name] = self._commands
@@ -168,6 +177,7 @@ class RealTimeApp:
         return query_args, other_args
 
     def _run_query(self, query: Query[Any]) -> None:
+        self._assert_has_pools(query.p_components)
         component_indices = self._rust_app.run_query(query.p_query_id)
         query.p_result = tuple(
             pool.p_component.p_new_view_with_indices(indices)
@@ -182,6 +192,18 @@ class RealTimeApp:
         )
         if not query.p_tuple_query:
             query.p_result = query.p_result[0]
+
+    def _assert_has_pools(
+        self,
+        components: abc.Iterable[type[Component]],
+    ) -> None:
+        for component in components:
+            if not self.world.has_pool(component):
+                error = MissingPoolError(
+                    f"missing a pool for the {component.__name__} component"
+                )
+                error.add_note("Did you forget to run app.add_pool(...)?")
+                raise error
 
     def _process_pending_startup_systems(self) -> None:
         pending_startup_systems = self.world.get_resource(

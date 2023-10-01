@@ -12,15 +12,6 @@ from xecs_pygame import Display, Polygon, PyGamePlugin, Rectangle
 class Velocity(xx.Component):
     value: xx.Vec2
 
-    def fill_random(
-        self,
-        generator: np.random.Generator,
-        scale: float,
-    ) -> None:
-        self.value.fill(
-            (generator.random((2, len(self)), dtype=np.float32) - 0.5) * scale
-        )
-
 
 class Separation(xx.Component):
     displacement_sum: xx.Vec2
@@ -47,6 +38,7 @@ class Params(xx.Resource):
     cohesion_coefficient: float
     box_bound_coefficient: float
     box_size: float
+    time_step: xx.Duration
 
 
 class Generator(xx.Resource):
@@ -120,30 +112,29 @@ def main() -> None:
     app = xx.RealTimeApp()
     num_boids = 100
     app.add_plugin(PyGamePlugin())
-    app.add_resource(
-        Params(
-            num_boids=num_boids,
-            min_speed=15.0,
-            max_speed=60.0,
-            separation_radius=6.0,
-            visible_radius=12.0,
-            separation_coefficient=0.1,
-            alignment_coefficient=0.01,
-            cohesion_coefficient=0.01,
-            box_bound_coefficient=1.0,
-            box_size=250.0,
-        )
+    params = Params(
+        num_boids=num_boids,
+        min_speed=15.0,
+        max_speed=60.0,
+        separation_radius=6.0,
+        visible_radius=12.0,
+        separation_coefficient=0.1,
+        alignment_coefficient=0.01,
+        cohesion_coefficient=0.01,
+        box_bound_coefficient=1.0,
+        box_size=250.0,
+        time_step=xx.Duration.from_millis(16),
     )
-    app.add_resource(Generator(np.random.default_rng(55)))
+    app.add_resource(params)
+    app.add_resource(Generator(np.random.default_rng(11)))
     app.add_startup_system(init_ui)
     app.add_startup_system(spawn_bounding_box)
     app.add_startup_system(spawn_boids)
-    time_step = xx.Duration.from_millis(16)
-    app.add_system(calculate_separation, time_step)
-    app.add_system(calculate_alignment, time_step)
-    app.add_system(calculate_cohesion, time_step)
-    app.add_system(update_boid_velocity, time_step)
-    app.add_system(move_boids, time_step)
+    app.add_system(calculate_separation, params.time_step)
+    app.add_system(calculate_alignment, params.time_step)
+    app.add_system(calculate_cohesion, params.time_step)
+    app.add_system(update_boid_velocity, params.time_step)
+    app.add_system(move_boids, params.time_step)
     app.add_system(handle_ui)
     app.add_pool(xx.Transform2.create_pool(num_boids + 1))
     app.add_pool(Velocity.create_pool(num_boids))
@@ -189,10 +180,14 @@ def spawn_boids(
         num=params.num_boids,
     )
     world.get_view(xx.Transform2, transformi).fill_random(
-        generator.value, params.box_size
+        generator.value,
+        min_translation=(-params.box_size / 2, -params.box_size / 2),
+        max_translation=(params.box_size / 2, params.box_size / 2),
     )
-    world.get_view(Velocity, velocityi).fill_random(
-        generator.value, params.max_speed
+    world.get_view(Velocity, velocityi).value.fill(
+        (generator.value.random((2, params.num_boids), dtype=np.float32) - 0.5)
+        * 2
+        * params.max_speed
     )
     polygon = world.get_view(Polygon, polygoni)
     polygon.vertices.fill([(-4, -5), (0, 10), (4, -5)])
@@ -200,10 +195,13 @@ def spawn_boids(
 
 
 def move_boids(
+    params: Params,
     query: xx.Query[tuple[xx.Transform2, Velocity]],
 ) -> None:
     transform, velocity = query.result()
-    transform.translation += velocity.value * 16 / 1e3
+    transform.translation += (
+        velocity.value * params.time_step.as_millis() / 1e3
+    )
     transform.rotation.fill(-velocity.value.angle_between_xy(0.0, 1.0))
 
 

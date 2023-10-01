@@ -14,6 +14,10 @@ if typing.TYPE_CHECKING:
 ComponentT = typing.TypeVar("ComponentT", bound="Component")
 
 
+class MissingPoolError(Exception):
+    pass
+
+
 class ComponentPool(typing.Generic[ComponentT]):
     """
     A preallocated pool of components.

@@ -16,6 +16,7 @@ class Query(typing.Generic[T]):
     A system parameter providing selective access to component data.
     """
 
+    p_name: str
     p_num_queries: typing.ClassVar[int] = 0
     p_query_id: "QueryId"
     p_result: T
@@ -25,11 +26,13 @@ class Query(typing.Generic[T]):
     @classmethod
     def p_new(
         cls,
+        name: str,
         query_id: int,
         components: Sequence[type[Component]],
         tuple_query: bool,
     ) -> typing.Self:
         query = cls()
+        query.p_name = name
         query.p_query_id = query_id
         query.p_components = components
         query.p_tuple_query = tuple_query
