@@ -131,7 +131,7 @@ class RealTimeApp:
                         other_components=[],
                     )
                     query_args[name] = Query.p_new(
-                        f"{system.__name__}:{parameter.name}",
+                        str(parameter.annotation),
                         query_id,
                         [component_tuple],
                         False,
@@ -149,7 +149,7 @@ class RealTimeApp:
                         other_components=component_ids[1:],
                     )
                     query_args[name] = Query.p_new(
-                        f"{system.__name__}:{parameter.name}",
+                        str(parameter.annotation),
                         query_id,
                         components,
                         True,
