@@ -29,6 +29,8 @@ GitHub: https://github.com/lukasturcani/xecs
   Vec2 <_autosummary/xecs.Vec2>
   Transform2 <_autosummary/xecs.Transform2>
   Query <_autosummary/xecs.Query>
+  EventReader <_autosummary/xecs.EventReader>
+  EventWriter <_autosummary/xecs.EventWriter>
   Commands <_autosummary/xecs.Commands>
   World <_autosummary/xecs.World>
   RealTimeApp <_autosummary/xecs.RealTimeApp>
