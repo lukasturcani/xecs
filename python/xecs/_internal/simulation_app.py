@@ -10,12 +10,13 @@ from xecs._internal.component import (
     ComponentT,
     MissingPoolError,
 )
+from xecs._internal.events import EventReader, Events, EventWriter
 from xecs._internal.query import Query
 from xecs._internal.resource import Resource
 from xecs._internal.systems import (
     FixedTimeStepSystems,
     FixedTimeStepSystemSpec,
-    NonQueryParameter,
+    OtherParameter,
     PendingStartupSystems,
     PendingSystems,
     StartupSystems,
@@ -117,11 +118,17 @@ class SimulationApp:
     def _get_system_args(
         self,
         system: abc.Callable[P, R],
-    ) -> tuple[dict[str, Query[Any]], dict[str, NonQueryParameter]]:
+    ) -> tuple[
+        dict[str, Query[Any]],
+        dict[str, EventReader[Any]],
+        dict[str, OtherParameter],
+    ]:
         query_args: dict[str, Query[Any]] = {}
-        other_args: dict[str, NonQueryParameter] = {}
+        reader_args: dict[str, EventReader[Any]] = {}
+        other_args: dict[str, OtherParameter] = {}
         for name, parameter in inspect.signature(system).parameters.items():
-            if typing.get_origin(parameter.annotation) is Query:
+            origin = typing.get_origin(parameter.annotation)
+            if origin is Query:
                 (component_tuple,) = typing.get_args(parameter.annotation)
                 if issubclass(component_tuple, Component):
                     query_id = self._rust_app.add_query(
@@ -154,6 +161,22 @@ class SimulationApp:
                         components,
                         True,
                     )
+            elif origin is EventReader:
+                (event_type,) = typing.get_args(parameter.annotation)
+                reader: EventReader[Any] = EventReader()
+                reader_args[name] = reader
+                events = self.world.get_resource(Events)
+                if event_type not in events.writers:
+                    events.writers[event_type] = EventWriter()
+                writer = events.writers[event_type]
+                writer.p_readers.append(reader)
+
+            elif origin is EventWriter:
+                (event_type,) = typing.get_args(parameter.annotation)
+                events = self.world.get_resource(Events)
+                if event_type not in events.writers:
+                    events.writers[event_type] = EventWriter()
+                other_args[name] = events.writers[event_type]
 
             elif parameter.annotation is Commands:
                 other_args[name] = self._commands
@@ -173,7 +196,7 @@ class SimulationApp:
                     "but needs to be "
                     f"{expected_type}"
                 )
-        return query_args, other_args
+        return query_args, reader_args, other_args
 
     def _run_query(self, query: Query[Any]) -> None:
         self._assert_has_pools(query.p_components)
@@ -210,11 +233,12 @@ class SimulationApp:
         )
         startup_systems = self.world.get_resource(StartupSystems)
         for system in pending_startup_systems.systems:
-            query_args, other_args = self._get_system_args(system)
+            query_args, reader_args, other_args = self._get_system_args(system)
             startup_systems.systems.append(
                 SystemSpec(
                     function=system,
                     query_args=query_args,
+                    reader_args=reader_args,
                     other_args=other_args,
                 )
             )
@@ -225,18 +249,22 @@ class SimulationApp:
         systems = self.world.get_resource(Systems)
         fixed_time_step_systems = self.world.get_resource(FixedTimeStepSystems)
         for system, run_condition in pending_systems.systems:
-            query_args, other_args = self._get_system_args(system)
+            query_args, reader_args, other_args = self._get_system_args(system)
 
             match run_condition:
                 case Duration():
                     fixed_time_step_systems.systems.append(
                         FixedTimeStepSystemSpec(
-                            system, query_args, other_args, run_condition
+                            system,
+                            query_args,
+                            reader_args,
+                            other_args,
+                            run_condition,
                         )
                     )
                 case None:
                     systems.systems.append(
-                        SystemSpec(system, query_args, other_args)
+                        SystemSpec(system, query_args, reader_args, other_args)
                     )
         pending_systems.systems = []
 
@@ -248,8 +276,11 @@ class SimulationApp:
 
             system.function(
                 **system.query_args,
+                **system.reader_args,
                 **system.other_args,
             )
+            for reader in system.reader_args.values():
+                reader.events.clear()
 
     def _run_systems(self) -> None:
         for system in self.world.get_resource(Systems).systems:
@@ -260,6 +291,8 @@ class SimulationApp:
                 **system.query_args,
                 **system.other_args,
             )
+            for reader in system.reader_args.values():
+                reader.events.clear()
 
     def _run_fixed_time_step_systems(
         self,
@@ -276,6 +309,9 @@ class SimulationApp:
                     **system.other_args,
                 )
                 system.time_to_simulate -= system.time_step
+
+                for reader in system.reader_args.values():
+                    reader.events.clear()
 
     def update(self, time_step: Duration) -> None:
         """

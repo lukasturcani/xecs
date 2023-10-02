@@ -8,3 +8,4 @@ Getting Started
   ECS <ecs>
   Plugins <plugins>
   Resources <resources>
+  Events <events>

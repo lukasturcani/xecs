@@ -2,6 +2,7 @@ from collections import abc
 from typing import Any, TypeAlias
 
 from xecs._internal.commands import Commands
+from xecs._internal.events import EventReader, EventWriter
 from xecs._internal.query import Query
 from xecs._internal.resource import Resource
 from xecs._internal.world import World
@@ -13,7 +14,7 @@ class SystemSignatureError(Exception):
 
 
 SystemParameter: TypeAlias = Query[Any] | Commands | Resource
-NonQueryParameter: TypeAlias = Commands | Resource | World
+OtherParameter: TypeAlias = Commands | Resource | World | EventWriter
 System: TypeAlias = abc.Callable[..., Any]
 
 
@@ -22,29 +23,34 @@ class SystemSpec:
     Specification for a system.
     """
 
-    __slots__ = "function", "query_args", "other_args"
+    __slots__ = "function", "query_args", "reader_args", "other_args"
 
     function: System
     """The function which runs the system."""
     query_args: dict[str, Query[Any]]
     """The query arguments for the system."""
-    other_args: dict[str, NonQueryParameter]
-    """The non-query arguments for the system."""
+    reader_args: dict[str, EventReader[Any]]
+    """The event reader arguments for the system."""
+    other_args: dict[str, OtherParameter]
+    """The other arguments for the system."""
 
     def __init__(
         self,
         function: System,
         query_args: dict[str, Query[Any]],
-        other_args: dict[str, NonQueryParameter],
+        reader_args: dict[str, EventReader[Any]],
+        other_args: dict[str, OtherParameter],
     ) -> None:
         """
         Parameters:
             function: The function which runs the system.
             query_args: The query arguments for the system.
-            other_args: The non-query arguments for the system.
+            reader_args: The event reader arguments for the system.
+            other_args: The other arguments for the system.
         """
         self.function = function
         self.query_args = query_args
+        self.reader_args = reader_args
         self.other_args = other_args
 
 
@@ -56,6 +62,7 @@ class FixedTimeStepSystemSpec:
     __slots__ = (
         "function",
         "query_args",
+        "reader_args",
         "other_args",
         "time_step",
         "time_to_simulate",
@@ -65,8 +72,10 @@ class FixedTimeStepSystemSpec:
     """The function which runs the system."""
     query_args: dict[str, Query[Any]]
     """The query arguments for the system."""
-    other_args: dict[str, NonQueryParameter]
-    """The non-query arguments for the system."""
+    reader_args: dict[str, EventReader[Any]]
+    """The event reader arguments for the system."""
+    other_args: dict[str, OtherParameter]
+    """The other arguments for the system."""
     time_step: Duration
     """The time span between runs of the system."""
     time_to_simulate: Duration
@@ -76,18 +85,21 @@ class FixedTimeStepSystemSpec:
         self,
         function: System,
         query_args: dict[str, Query[Any]],
-        other_args: dict[str, NonQueryParameter],
+        reader_args: dict[str, EventReader[Any]],
+        other_args: dict[str, OtherParameter],
         time_step: Duration,
     ) -> None:
         """
         Parameters:
             function: The function which runs the system.
             query_args: The query arguments for the system.
-            other_args: The non-query arguments for the system.
+            reader_args: The event reader arguments for the system.
+            other_args: The other arguments for the system.
             time_step: The time span between runs of the system.
         """
         self.function = function
         self.query_args = query_args
+        self.reader_args = reader_args
         self.other_args = other_args
         self.time_step = time_step
         self.time_to_simulate = Duration.new(0, 0)
