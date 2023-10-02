@@ -4,6 +4,7 @@ A fast ECS library.
 
 from xecs._internal.commands import Commands
 from xecs._internal.component import Component, ComponentPool
+from xecs._internal.events import EventReader, EventWriter
 from xecs._internal.float import Float
 from xecs._internal.int import Int
 from xecs._internal.py_field import PyField, py_field
@@ -36,6 +37,8 @@ __all__ = [
     "Component",
     "ComponentPool",
     "Duration",
+    "EventReader",
+    "EventWriter",
     "FixedTimeStepSystems",
     "FixedTimeStepSystemSpec",
     "Float",
