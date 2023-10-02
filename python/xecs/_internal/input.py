@@ -25,18 +25,32 @@ class MouseButton:
         return MouseButton(1)
 
     @staticmethod
-    def right() -> "MouseButton":
-        """
-        The right button.
-        """
-        return MouseButton(2)
-
-    @staticmethod
     def middle() -> "MouseButton":
         """
         The middle button.
         """
+        return MouseButton(2)
+
+    @staticmethod
+    def right() -> "MouseButton":
+        """
+        The right button.
+        """
         return MouseButton(3)
+
+    @staticmethod
+    def xinput1() -> "MouseButton":
+        """
+        The first extra button.
+        """
+        return MouseButton(4)
+
+    @staticmethod
+    def xinput2() -> "MouseButton":
+        """
+        The second extra button.
+        """
+        return MouseButton(5)
 
 
 class Mouse(Resource):

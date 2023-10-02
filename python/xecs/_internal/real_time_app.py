@@ -12,6 +12,7 @@ from xecs._internal.component import (
     MissingPoolError,
 )
 from xecs._internal.events import EventReader, Events, EventWriter
+from xecs._internal.input import Mouse
 from xecs._internal.query import Query
 from xecs._internal.resource import Resource
 from xecs._internal.systems import (
@@ -63,6 +64,7 @@ class RealTimeApp:
         self.add_resource(Systems([]))
         self.add_resource(FixedTimeStepSystems([]))
         self.add_resource(Events({}))
+        self.add_resource(Mouse(set()))
 
         self._rust_app = RustApp(
             num_pools=len(Component.component_ids),
