@@ -33,6 +33,7 @@ GitHub: https://github.com/lukasturcani/xecs
   EventWriter <_autosummary/xecs.EventWriter>
   Commands <_autosummary/xecs.Commands>
   World <_autosummary/xecs.World>
+  Mouse <_autosummary/xecs.Mouse>
   RealTimeApp <_autosummary/xecs.RealTimeApp>
   SimulationApp <_autosummary/xecs.SimulationApp>
   Modules <modules>
