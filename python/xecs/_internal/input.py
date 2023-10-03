@@ -111,7 +111,7 @@ class KeyboardButton(Enum):
     """The ``G`` key."""
     H = auto()
     """The ``H`` key."""
-    I = auto()
+    I = auto()  # noqa: E741
     """The ``I`` key."""
     J = auto()
     """The ``J`` key."""
@@ -123,7 +123,7 @@ class KeyboardButton(Enum):
     """The ``M`` key."""
     N = auto()
     """The ``N`` key."""
-    O = auto()
+    O = auto()  # noqa: E741
     """The ``O`` key."""
     P = auto()
     """The ``P`` key."""
@@ -274,7 +274,7 @@ class KeyboardButton(Enum):
     AX = auto()
     """The ``Ax`` key."""
     BACKSLASH = auto()
-    """The ``Backslash`` / ``\`` key."""
+    """The ``Backslash`` / ``\\`` key."""
     CALCULATOR = auto()
     """The ``Calculator`` key."""
     CAPITAL = auto()
