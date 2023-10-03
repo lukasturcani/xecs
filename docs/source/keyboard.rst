@@ -1,5 +1,5 @@
-Mouse Presses
-=============
+Keyboard
+========
 
 https://github.com/lukasturcani/xecs/blob/master/examples/keyboard/keyboard.py
 
