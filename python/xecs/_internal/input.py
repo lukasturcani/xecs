@@ -62,3 +62,8 @@ class Mouse(Resource):
     """
     The currently pressed buttons.
     """
+
+    position: tuple[int, int]
+    """
+    The x and y position of the mouse.
+    """

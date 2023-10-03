@@ -61,6 +61,7 @@ class SimulationApp:
         self.add_resource(PendingSystems([]))
         self.add_resource(Systems([]))
         self.add_resource(FixedTimeStepSystems([]))
+        self.add_resource(Events({}))
 
         self._rust_app = RustApp(
             num_pools=len(Component.component_ids),

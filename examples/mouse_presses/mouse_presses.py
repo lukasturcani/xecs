@@ -45,18 +45,18 @@ def spawn_circles(
         (LeftCircle, xx.Transform2, Circle), 1
     )
     transform = world.get_view(xx.Transform2, transformi)
-    transform.translation.x.fill(-160)
+    transform.translation.x.fill(-320)
     circle = world.get_view(Circle, circlei)
-    circle.radius.fill(30)
+    circle.radius.fill(60)
     circle.color.fill("red")
 
     _, transformi, circlei = commands.spawn(
         (MiddleCircle, xx.Transform2, Circle), 1
     )
     transform = world.get_view(xx.Transform2, transformi)
-    transform.translation.x.fill(-80)
+    transform.translation.x.fill(-160)
     circle = world.get_view(Circle, circlei)
-    circle.radius.fill(30)
+    circle.radius.fill(60)
     circle.color.fill("green")
 
     _, transformi, circlei = commands.spawn(
@@ -65,25 +65,25 @@ def spawn_circles(
     transform = world.get_view(xx.Transform2, transformi)
     transform.translation.x.fill(0)
     circle = world.get_view(Circle, circlei)
-    circle.radius.fill(30)
+    circle.radius.fill(60)
     circle.color.fill("blue")
 
     _, transformi, circlei = commands.spawn(
         (XInput1Circle, xx.Transform2, Circle), 1
     )
     transform = world.get_view(xx.Transform2, transformi)
-    transform.translation.x.fill(80)
+    transform.translation.x.fill(160)
     circle = world.get_view(Circle, circlei)
-    circle.radius.fill(30)
+    circle.radius.fill(60)
     circle.color.fill("yellow")
 
     _, transformi, circlei = commands.spawn(
         (XInput2Circle, xx.Transform2, Circle), 1
     )
     transform = world.get_view(xx.Transform2, transformi)
-    transform.translation.x.fill(160)
+    transform.translation.x.fill(320)
     circle = world.get_view(Circle, circlei)
-    circle.radius.fill(30)
+    circle.radius.fill(60)
     circle.color.fill("purple")
 
 

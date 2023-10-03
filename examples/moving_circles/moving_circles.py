@@ -21,7 +21,7 @@ def main() -> None:
     num_circles = 20
     params = Params(
         num_circles=num_circles,
-        max_position=200,
+        max_position=400,
         max_velocity=50,
         generator=np.random.default_rng(9),
         time_step=xx.Duration.from_millis(16),
