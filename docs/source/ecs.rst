@@ -36,7 +36,9 @@ Here's a breakdown of the core concepts in an ECS:
 
   .. testcode:: ecs
 
-    def print_person_system(query: xx.Query[Person]) -> None:
+    def print_person_system(
+        query: xx.Query[Person],
+    ) -> None:
         person = query.result()
         print(person)
 
