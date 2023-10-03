@@ -14,6 +14,7 @@ classifiers = [
     "Programming Language :: Python :: Implementation :: CPython",
     "Programming Language :: Python :: Implementation :: PyPy",
 ]
+description = "A fast and ergonomic ECS library for Python, written in Rust."
 
 [project.urls]
 github = "https://github.com/lukasturcani/xecs"
