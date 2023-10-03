@@ -23,6 +23,10 @@ pub struct Bool {
 #[pymethods]
 impl Bool {
     #[staticmethod]
+    fn p_default_value() -> bool {
+        false
+    }
+    #[staticmethod]
     fn p_from_value(value: bool, num: usize) -> PyResult<Self> {
         Ok(Self {
             array: Arc::new(RwLock::new(vec![value; num])),
@@ -40,10 +44,10 @@ impl Bool {
         })
     }
     #[staticmethod]
-    fn p_with_indices(indices: &ArrayViewIndices) -> PyResult<Self> {
+    fn p_from_indices(indices: &ArrayViewIndices, default: bool) -> PyResult<Self> {
         Ok(Self {
             array: Arc::new(RwLock::new(vec![
-                false;
+                default;
                 indices
                     .0
                     .read()

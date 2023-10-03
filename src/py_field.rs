@@ -16,7 +16,7 @@ pub struct PyField {
 #[pymethods]
 impl PyField {
     #[staticmethod]
-    fn p_with_indices(indices: &ArrayViewIndices, default: PyObject) -> PyResult<Self> {
+    fn p_from_indices(indices: &ArrayViewIndices, default: PyObject) -> PyResult<Self> {
         Ok(Self {
             array: Arc::new(RwLock::new(vec![
                 default;

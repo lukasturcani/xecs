@@ -16,7 +16,7 @@ class Struct:
     _indices: ArrayViewIndices
 
     @classmethod
-    def p_with_indices(cls, indices: ArrayViewIndices) -> typing.Self:
+    def p_from_indices(cls, indices: ArrayViewIndices) -> typing.Self:
         struct = cls()
         struct._indices = indices
         for key, value in inspect.get_annotations(cls).items():
@@ -31,10 +31,22 @@ class Struct:
                 setattr(
                     struct,
                     key,
-                    value.p_with_indices(struct._indices, getattr(cls, key)),
+                    value.p_from_indices(struct._indices, getattr(cls, key)),
+                )
+            elif issubclass(value, Struct):
+                setattr(
+                    struct,
+                    key,
+                    value.p_from_indices(struct._indices),
                 )
             else:
-                setattr(struct, key, value.p_with_indices(indices))
+                setattr(
+                    struct,
+                    key,
+                    value.p_from_indices(
+                        indices, getattr(cls, key, value.p_default_value())
+                    ),
+                )
         return struct
 
     def __getitem__(self, key: npt.NDArray[np.bool_]) -> typing.Self:

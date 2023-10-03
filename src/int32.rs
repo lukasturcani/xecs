@@ -32,6 +32,10 @@ pub struct Int32 {
 #[pymethods]
 impl Int32 {
     #[staticmethod]
+    fn p_default_value() -> i32 {
+        0
+    }
+    #[staticmethod]
     fn p_from_value(value: i32, num: usize) -> PyResult<Self> {
         Ok(Self {
             array: Arc::new(RwLock::new(vec![value; num])),
@@ -49,10 +53,10 @@ impl Int32 {
         })
     }
     #[staticmethod]
-    fn p_with_indices(indices: &ArrayViewIndices) -> PyResult<Self> {
+    fn p_from_indices(indices: &ArrayViewIndices, default: i32) -> PyResult<Self> {
         Ok(Self {
             array: Arc::new(RwLock::new(vec![
-                0;
+                default;
                 indices
                     .0
                     .read()

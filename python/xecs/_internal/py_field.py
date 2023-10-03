@@ -26,10 +26,10 @@ class PyField(Generic[T]):
         return py_field
 
     @staticmethod
-    def p_with_indices(
+    def p_from_indices(
         indices: xecs.ArrayViewIndices, default: T
     ) -> "PyField[T]":
-        return PyField.p_new(xecs.PyField.p_with_indices(indices, default))
+        return PyField.p_new(xecs.PyField.p_from_indices(indices, default))
 
     def p_new_view_with_indices(
         self,

@@ -78,16 +78,26 @@ class Component:
                 setattr(
                     component,
                     key,
-                    value.p_with_indices(
+                    value.p_from_indices(
                         component.p_indices, getattr(cls, key)
                     ),
+                )
+            elif issubclass(value, Struct):
+                setattr(
+                    component,
+                    key,
+                    value.p_from_indices(component.p_indices),
                 )
             else:
                 setattr(
                     component,
                     key,
-                    value.p_with_indices(component.p_indices),
+                    value.p_from_indices(
+                        component.p_indices,
+                        getattr(cls, key, value.p_default_value()),
+                    ),
                 )
+
         return ComponentPool.p_new(component, capacity)
 
     def __getitem__(self, key: npt.NDArray[np.bool_]) -> typing.Self:
