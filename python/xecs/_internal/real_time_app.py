@@ -64,7 +64,7 @@ class RealTimeApp:
         self.add_resource(Systems([]))
         self.add_resource(FixedTimeStepSystems([]))
         self.add_resource(Events({}))
-        self.add_resource(Mouse(set()))
+        self.add_resource(Mouse(set(), (0, 0)))
 
         self._rust_app = RustApp(
             num_pools=len(Component.component_ids),
