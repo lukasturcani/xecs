@@ -53,7 +53,9 @@ familiar to you. Here is a little taste:
   class Velocity(xx.Component):
       value: xx.Vec2
 
-  def update_positions(query: xx.Query[tuple[xx.Transform2, Velocity]]) -> None:
+  def update_positions(
+      query: xx.Query[tuple[xx.Transform2, Velocity]],
+  ) -> None:
       (transform, velocity) = query.result()
       transform.translation += velocity.value
 
