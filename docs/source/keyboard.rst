@@ -3,6 +3,6 @@ Mouse Presses
 
 https://github.com/lukasturcani/xecs/blob/master/examples/keyboard/keyboard.py
 
-.. youtube::
+.. youtube:: uhcTv-Pm-Bs
 
 .. literalinclude:: ../../examples/keyboard/keyboard.py
