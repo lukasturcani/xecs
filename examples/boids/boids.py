@@ -114,7 +114,7 @@ def main() -> None:
     app.add_plugin(PyGamePlugin())
     params = Params(
         num_boids=num_boids,
-        min_speed=15.0,
+        min_speed=50.0,
         max_speed=60.0,
         separation_radius=6.0,
         visible_radius=12.0,
@@ -122,7 +122,7 @@ def main() -> None:
         alignment_coefficient=0.01,
         cohesion_coefficient=0.01,
         box_bound_coefficient=1.0,
-        box_size=250.0,
+        box_size=500.0,
         time_step=xx.Duration.from_millis(16),
     )
     app.add_resource(params)
@@ -415,7 +415,7 @@ def init_ui(params: Params, world: xx.World, display: Display) -> None:
             next(slider_y),
             params.box_size,
             0,
-            500,
+            1000,
             1,
         ),
     )
