@@ -34,6 +34,7 @@ GitHub: https://github.com/lukasturcani/xecs
   Commands <_autosummary/xecs.Commands>
   World <_autosummary/xecs.World>
   Mouse <_autosummary/xecs.Mouse>
+  Keyboard <_autosummary/xecs.Keyboard>
   RealTimeApp <_autosummary/xecs.RealTimeApp>
   SimulationApp <_autosummary/xecs.SimulationApp>
   Modules <modules>

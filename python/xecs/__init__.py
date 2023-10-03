@@ -6,7 +6,7 @@ from xecs._internal.commands import Commands
 from xecs._internal.component import Component, ComponentPool
 from xecs._internal.events import EventReader, EventWriter
 from xecs._internal.float import Float
-from xecs._internal.input import Mouse, MouseButton
+from xecs._internal.input import Keyboard, KeyboardButton, Mouse, MouseButton
 from xecs._internal.int import Int
 from xecs._internal.py_field import PyField, py_field
 from xecs._internal.query import Query
@@ -46,6 +46,8 @@ __all__ = [
     "Float32",
     "Int",
     "Int32",
+    "Keyboard",
+    "KeyboardButton",
     "Mouse",
     "MouseButton",
     "PendingStartupSystems",
