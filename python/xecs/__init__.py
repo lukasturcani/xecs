@@ -2,12 +2,15 @@
 A fast ECS library.
 """
 
+from xecs._internal.bool import bool
 from xecs._internal.commands import Commands
 from xecs._internal.component import Component, ComponentPool
 from xecs._internal.events import EventReader, EventWriter
-from xecs._internal.float import Float
+from xecs._internal.float import Float, float
+from xecs._internal.float32 import float32
 from xecs._internal.input import Keyboard, KeyboardButton, Mouse, MouseButton
-from xecs._internal.int import Int
+from xecs._internal.int import Int, int
+from xecs._internal.int32 import int32
 from xecs._internal.py_field import PyField, py_field
 from xecs._internal.query import Query
 from xecs._internal.real_time_app import (
@@ -33,6 +36,7 @@ from xecs.xecs import ArrayViewIndices, Bool, Duration, Float32, Int32
 
 __all__ = [
     "ArrayViewIndices",
+    "bool",
     "Bool",
     "Commands",
     "Component",
@@ -42,9 +46,13 @@ __all__ = [
     "EventWriter",
     "FixedTimeStepSystems",
     "FixedTimeStepSystemSpec",
+    "float",
     "Float",
+    "float32",
     "Float32",
+    "int",
     "Int",
+    "int32",
     "Int32",
     "Keyboard",
     "KeyboardButton",
