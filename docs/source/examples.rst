@@ -9,3 +9,4 @@ Examples
   Mouse Presses <mouse_presses>
   Mouse Position <mouse_position>
   Text <text>
+  Keyboard <keyboard>

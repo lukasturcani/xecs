@@ -7,7 +7,7 @@ def main() -> None:
     app = xx.RealTimeApp()
     app.add_plugin(PyGamePlugin())
     app.add_startup_system(spawn_text)
-    app.add_system(pressed_buttons)
+    app.add_system(move_text)
     app.add_pool(xx.Transform2.create_pool(1))
     app.add_pool(Text.create_pool(1))
     app.run()
@@ -23,7 +23,7 @@ def spawn_text(
     text.text.fill("Move with me with WASD")
 
 
-def pressed_buttons(
+def move_text(
     keyboard: xx.Keyboard,
     text_query: xx.Query[xx.Transform2],
 ) -> None:
