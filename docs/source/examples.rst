@@ -8,3 +8,4 @@ Examples
   Boids <boids>
   Mouse Presses <mouse_presses>
   Mouse Position <mouse_position>
+  Text <text>
