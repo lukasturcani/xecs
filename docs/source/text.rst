@@ -1,5 +1,5 @@
-Mouse Presses
-=============
+Text
+====
 
 https://github.com/lukasturcani/xecs/blob/master/examples/text/text.py
 
