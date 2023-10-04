@@ -1,4 +1,3 @@
-import builtins
 import typing
 
 from xecs.xecs import Int32
@@ -6,7 +5,7 @@ from xecs.xecs import Int32
 Int: typing.TypeAlias = Int32
 
 
-def int(*, default: builtins.int) -> Int:
+def int_(*, default: int) -> Int:
     """
     Provide additional data about a component field.
 

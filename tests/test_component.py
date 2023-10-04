@@ -106,12 +106,21 @@ def test_py_field_default_value_is_used() -> None:
     assert component.g.get(6) == "world"
 
 
-class ComponentWithDefaults(xx.Component):
-    a: xx.Float = xx.float(default=1.0)
+class StructWithDefaults(xx.Struct):
+    a: xx.Float = xx.float_(default=1.0)
     b: xx.Float32 = xx.float32(default=2.0)
-    c: xx.Int = xx.int(default=3)
+    c: xx.Int = xx.int_(default=3)
     d: xx.Int32 = xx.int32(default=4)
-    e: xx.Bool = xx.bool(default=True)
+    e: xx.Bool = xx.bool_(default=True)
+
+
+class ComponentWithDefaults(xx.Component):
+    a: xx.Float = xx.float_(default=1.0)
+    b: xx.Float32 = xx.float32(default=2.0)
+    c: xx.Int = xx.int_(default=3)
+    d: xx.Int32 = xx.int32(default=4)
+    e: xx.Bool = xx.bool_(default=True)
+    f: StructWithDefaults
 
 
 def test_default_values_get_used() -> None:
@@ -122,4 +131,9 @@ def test_default_values_get_used() -> None:
     assert np.all(component.b == 2.0)
     assert np.all(component.c == 3)
     assert np.all(component.d == 4)
-    assert np.all(component.e.numpy() == True)
+    assert np.all(component.e == True)
+    assert np.all(component.f.a == 1.0)
+    assert np.all(component.f.b == 2.0)
+    assert np.all(component.f.c == 3)
+    assert np.all(component.f.d == 4)
+    assert np.all(component.f.e == True)
