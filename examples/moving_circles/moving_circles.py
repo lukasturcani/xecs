@@ -59,7 +59,8 @@ def spawn_circles(
         num=1,
     )
     rectangle = world.get_view(Rectangle, rectanglei)
-    rectangle.size.fill((params.max_position, params.max_position))
+    rectangle.length_x.fill(params.max_position)
+    rectangle.length_y.fill(params.max_position)
     rectangle.width.fill(1)
 
 
