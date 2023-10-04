@@ -18,12 +18,14 @@ mod query;
 mod query_id;
 mod set;
 mod time;
+mod uint32;
 
 /// Internal Rust implementations.
 #[pymodule]
 fn xecs(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<float32::Float32>()?;
     m.add_class::<int32::Int32>()?;
+    m.add_class::<uint32::UInt32>()?;
     m.add_class::<bool::Bool>()?;
     m.add_class::<app::RustApp>()?;
     m.add_class::<array_view_indices::ArrayViewIndices>()?;
