@@ -14,14 +14,6 @@ enum UInt32Rhs<'a> {
     VecU32(Vec<u32>),
 }
 
-#[derive(FromPyObject)]
-enum PowRhs<'a> {
-    U32(u32),
-    UInt32(PyRef<'a, UInt32>),
-    PyArrayU32(&'a PyArray1<u32>),
-    VecU32(Vec<u32>),
-}
-
 /// An array of uint32 values.
 #[pyclass(module = "xecs")]
 pub struct UInt32 {
@@ -834,19 +826,19 @@ impl UInt32 {
         Ok(())
     }
     #[args(_modulo = "None")]
-    fn __pow__(&self, py: Python, rhs: PowRhs, _modulo: &PyAny) -> PyResult<Py<PyArray1<u32>>> {
+    fn __pow__(&self, py: Python, rhs: UInt32Rhs, _modulo: &PyAny) -> PyResult<Py<PyArray1<u32>>> {
         let array = self.array.read().map_err(cannot_read)?;
         let indices = self.indices.0.read().map_err(cannot_read)?;
         let mut result = Vec::with_capacity(indices.len());
         match rhs {
-            PowRhs::U32(other) => {
+            UInt32Rhs::U32(other) => {
                 for &index in indices.iter() {
                     unsafe {
                         result.push(array.get_unchecked(index as usize).pow(other));
                     }
                 }
             }
-            PowRhs::UInt32(uint32) => {
+            UInt32Rhs::UInt32(uint32) => {
                 if Arc::ptr_eq(&self.array, &uint32.array) {
                     let other_indices = uint32.indices.0.read().map_err(cannot_read)?;
                     for (&index, &other_index) in indices.iter().zip(other_indices.iter()) {
@@ -868,14 +860,14 @@ impl UInt32 {
                     }
                 }
             }
-            PowRhs::PyArrayU32(py_array) => {
+            UInt32Rhs::PyArrayU32(py_array) => {
                 for (&index, value) in indices.iter().zip(py_array.readonly().as_array()) {
                     unsafe {
                         result.push(array.get_unchecked(index as usize).pow(*value));
                     }
                 }
             }
-            PowRhs::VecU32(vec) => {
+            UInt32Rhs::VecU32(vec) => {
                 for (&index, value) in indices.iter().zip(vec) {
                     unsafe {
                         result.push(array.get_unchecked(index as usize).pow(value));
@@ -886,17 +878,17 @@ impl UInt32 {
         Ok(PyArray1::from_vec(py, result).into_py(py))
     }
     #[args(_modulo = "None")]
-    fn __ipow__(&mut self, rhs: PowRhs, _modulo: &PyAny) -> PyResult<()> {
+    fn __ipow__(&mut self, rhs: UInt32Rhs, _modulo: &PyAny) -> PyResult<()> {
         let mut array = self.array.write().map_err(cannot_write)?;
         let indices = self.indices.0.read().map_err(cannot_read)?;
         match rhs {
-            PowRhs::U32(other) => {
+            UInt32Rhs::U32(other) => {
                 for &index in indices.iter() {
                     let a = unsafe { array.get_unchecked_mut(index as usize) };
                     *a = a.pow(other);
                 }
             }
-            PowRhs::UInt32(uint32) => {
+            UInt32Rhs::UInt32(uint32) => {
                 if Arc::ptr_eq(&self.array, &uint32.array) {
                     let other_indices = uint32.indices.0.read().map_err(cannot_read)?;
                     for (&index, &other_index) in indices.iter().zip(other_indices.iter()) {
@@ -916,13 +908,13 @@ impl UInt32 {
                     }
                 }
             }
-            PowRhs::PyArrayU32(py_array) => {
+            UInt32Rhs::PyArrayU32(py_array) => {
                 for (&index, value) in indices.iter().zip(py_array.readonly().as_array()) {
                     let a = unsafe { array.get_unchecked_mut(index as usize) };
                     *a = a.pow(*value);
                 }
             }
-            PowRhs::VecU32(vec) => {
+            UInt32Rhs::VecU32(vec) => {
                 for (&index, value) in indices.iter().zip(vec) {
                     let a = unsafe { array.get_unchecked_mut(index as usize) };
                     *a = a.pow(value);

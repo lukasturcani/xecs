@@ -5,6 +5,7 @@ A fast ECS library.
 from xecs._internal.bool_ import bool_
 from xecs._internal.commands import Commands
 from xecs._internal.component import Component, ComponentPool
+from xecs._internal.entity_id import EntityId
 from xecs._internal.events import EventReader, EventWriter
 from xecs._internal.float32 import float32
 from xecs._internal.float_ import Float, float_
@@ -42,6 +43,7 @@ __all__ = [
     "Component",
     "ComponentPool",
     "Duration",
+    "EntityId",
     "EventReader",
     "EventWriter",
     "FixedTimeStepSystems",
