@@ -154,7 +154,8 @@ def spawn_bounding_box(
     transformi, rectanglei = commands.spawn((xx.Transform2, Rectangle), 1)
     rectangle = world.get_view(Rectangle, rectanglei)
     rectangle.color.fill("turquoise")
-    rectangle.size.fill((int(params.box_size), int(params.box_size)))
+    rectangle.length_x.fill(params.box_size)
+    rectangle.length_y.fill(params.box_size)
     rectangle.width.fill(5)
 
     transform = world.get_view(xx.Transform2, transformi)
@@ -448,7 +449,8 @@ def handle_ui(
     params.box_size = ui.box_size_slider.slider.getValue()
 
     (transform, rectangle) = box_query.result()
-    rectangle.size.fill((int(params.box_size), int(params.box_size)))
+    rectangle.length_x.fill(params.box_size)
+    rectangle.length_y.fill(params.box_size)
 
     transform.translation.x.fill(-params.box_size / 2)
     transform.translation.y.fill(-params.box_size / 2)
