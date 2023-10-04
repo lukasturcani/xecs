@@ -60,10 +60,7 @@ class RealTimeApp:
         num_entities: The maximum number of entities which can be spawned.
     """
 
-    def __init__(self, num_entities: int | None = None) -> None:
-        if num_entities is None:
-            num_entities = 100
-
+    def __init__(self, num_entities: int) -> None:
         self.world = World()
         self.add_resource(PendingStartupSystems([]))
         self.add_resource(StartupSystems([]))

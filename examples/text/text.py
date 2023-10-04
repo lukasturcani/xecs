@@ -4,7 +4,7 @@ from xecs_pygame import PyGamePlugin, Text
 
 
 def main() -> None:
-    app = xx.RealTimeApp()
+    app = xx.RealTimeApp(num_entities=1)
     app.add_plugin(PyGamePlugin())
     app.add_startup_system(spawn_text)
     app.add_pool(xx.Transform2.create_pool(1))

@@ -23,7 +23,7 @@ class XInput2Circle(xx.Component):
 
 
 def main() -> None:
-    app = xx.RealTimeApp()
+    app = xx.RealTimeApp(num_entities=5)
     app.add_plugin(PyGamePlugin())
     app.add_startup_system(spawn_circles)
     app.add_system(mouse_presses)

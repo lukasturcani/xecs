@@ -63,7 +63,7 @@ def spawn_entities(world: xx.World, commands: xx.Commands) -> None:
 
 @pytest.fixture
 def app() -> xx.RealTimeApp:
-    app = xx.RealTimeApp()
+    app = xx.RealTimeApp(num_entities=30)
     app.add_pool(One.create_pool(10))
     app.add_pool(Two.create_pool(10))
     app.add_pool(Three.create_pool(10))

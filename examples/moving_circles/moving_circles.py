@@ -16,7 +16,7 @@ class Params(xx.Resource):
 
 
 def main() -> None:
-    app = xx.RealTimeApp()
+    app = xx.RealTimeApp(num_entities=30)
     app.add_plugin(PyGamePlugin())
     num_circles = 20
     params = Params(

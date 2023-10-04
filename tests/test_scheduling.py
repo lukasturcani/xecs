@@ -18,7 +18,7 @@ def system2(ticks: System2Ticks) -> None:
 
 
 def test_scheduling() -> None:
-    app = xx.RealTimeApp()
+    app = xx.RealTimeApp(num_entities=1)
     system1_ticks = System1Ticks(num=0)
     system2_ticks = System2Ticks(num=0)
     app.add_resource(system1_ticks)

@@ -42,7 +42,7 @@ def benchmark_component_access_and_query(
 
 @pytest.fixture
 def app() -> xx.RealTimeApp:
-    app = xx.RealTimeApp()
+    app = xx.RealTimeApp(num_entities=10_000)
     app.add_startup_system(spawn)
     app.add_pool(One.create_pool(10_000))
     app.update()

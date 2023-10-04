@@ -1,4 +1,3 @@
-import numpy as np
 import pytest
 import xecs as xx
 
@@ -38,7 +37,7 @@ def spawn_entities(commands: xx.Commands) -> None:
 
 @pytest.fixture
 def app() -> xx.RealTimeApp:
-    app = xx.RealTimeApp()
+    app = xx.RealTimeApp(num_entities=30)
     app.add_pool(One.create_pool(20))
     app.add_pool(Two.create_pool(10))
     app.add_startup_system(spawn_entities)
