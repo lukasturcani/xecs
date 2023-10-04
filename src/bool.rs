@@ -2,7 +2,9 @@ use crate::error_handlers::cannot_read;
 use crate::{array_view_indices::ArrayViewIndices, error_handlers::cannot_write};
 use itertools::izip;
 use numpy::PyArray1;
+use pyo3::exceptions::PyNotImplementedError;
 use pyo3::prelude::*;
+use pyo3::pyclass::CompareOp;
 use std::sync::{Arc, RwLock};
 
 #[derive(FromPyObject)]
@@ -23,6 +25,10 @@ pub struct Bool {
 #[pymethods]
 impl Bool {
     #[staticmethod]
+    fn p_default_value() -> bool {
+        false
+    }
+    #[staticmethod]
     fn p_from_value(value: bool, num: usize) -> PyResult<Self> {
         Ok(Self {
             array: Arc::new(RwLock::new(vec![value; num])),
@@ -40,10 +46,10 @@ impl Bool {
         })
     }
     #[staticmethod]
-    fn p_with_indices(indices: &ArrayViewIndices) -> PyResult<Self> {
+    fn p_from_indices(indices: &ArrayViewIndices, default: bool) -> PyResult<Self> {
         Ok(Self {
             array: Arc::new(RwLock::new(vec![
-                false;
+                default;
                 indices
                     .0
                     .read()
@@ -230,86 +236,99 @@ impl Bool {
         }
         Ok(())
     }
-    fn __eq__(&self, py: Python, other: BoolRhs) -> PyResult<Py<PyArray1<bool>>> {
-        let array = self.array.read().map_err(cannot_write)?;
-        let indices = self.indices.0.read().map_err(cannot_read)?;
-        let mut result = Vec::with_capacity(indices.len());
-        match other {
-            BoolRhs::BoolValue(other) => {
-                for &index in indices.iter() {
-                    unsafe {
-                        result.push(*array.get_unchecked(index as usize) == other);
+    fn __richcmp__(
+        &self,
+        py: Python,
+        other: BoolRhs,
+        op: CompareOp,
+    ) -> PyResult<Py<PyArray1<bool>>> {
+        match op {
+            CompareOp::Lt => Err(PyNotImplementedError::new_err("< not implemented")),
+            CompareOp::Le => Err(PyNotImplementedError::new_err("<= not implemented")),
+            CompareOp::Gt => Err(PyNotImplementedError::new_err("> not implemented")),
+            CompareOp::Ge => Err(PyNotImplementedError::new_err(">= not implemented")),
+            CompareOp::Eq => {
+                let array = self.array.read().map_err(cannot_write)?;
+                let indices = self.indices.0.read().map_err(cannot_read)?;
+                let mut result = Vec::with_capacity(indices.len());
+                match other {
+                    BoolRhs::BoolValue(other) => {
+                        for &index in indices.iter() {
+                            unsafe {
+                                result.push(*array.get_unchecked(index as usize) == other);
+                            }
+                        }
+                    }
+                    BoolRhs::Bool(b) => {
+                        let other_array = b.array.read().map_err(cannot_read)?;
+                        let other_indices = b.indices.0.read().map_err(cannot_read)?;
+                        for (&index, &other_index) in indices.iter().zip(other_indices.iter()) {
+                            unsafe {
+                                result.push(
+                                    array.get_unchecked(index as usize)
+                                        == other_array.get_unchecked(other_index as usize),
+                                );
+                            }
+                        }
+                    }
+                    BoolRhs::PyArrayBool(py_array) => {
+                        for (&index, value) in indices.iter().zip(py_array.readonly().as_array()) {
+                            unsafe {
+                                result.push(array.get_unchecked(index as usize) == value);
+                            }
+                        }
+                    }
+                    BoolRhs::VecBool(vec) => {
+                        for (&index, value) in indices.iter().zip(vec) {
+                            unsafe {
+                                result.push(*array.get_unchecked(index as usize) == value);
+                            }
+                        }
                     }
                 }
+                Ok(PyArray1::from_vec(py, result).into_py(py))
             }
-            BoolRhs::Bool(b) => {
-                let other_array = b.array.read().map_err(cannot_read)?;
-                let other_indices = b.indices.0.read().map_err(cannot_read)?;
-                for (&index, &other_index) in indices.iter().zip(other_indices.iter()) {
-                    unsafe {
-                        result.push(
-                            array.get_unchecked(index as usize)
-                                == other_array.get_unchecked(other_index as usize),
-                        );
+            CompareOp::Ne => {
+                let array = self.array.read().map_err(cannot_write)?;
+                let indices = self.indices.0.read().map_err(cannot_read)?;
+                let mut result = Vec::with_capacity(indices.len());
+                match other {
+                    BoolRhs::BoolValue(other) => {
+                        for &index in indices.iter() {
+                            unsafe {
+                                result.push(*array.get_unchecked(index as usize) != other);
+                            }
+                        }
+                    }
+                    BoolRhs::Bool(b) => {
+                        let other_array = b.array.read().map_err(cannot_read)?;
+                        let other_indices = b.indices.0.read().map_err(cannot_read)?;
+                        for (&index, &other_index) in indices.iter().zip(other_indices.iter()) {
+                            unsafe {
+                                result.push(
+                                    array.get_unchecked(index as usize)
+                                        != other_array.get_unchecked(other_index as usize),
+                                );
+                            }
+                        }
+                    }
+                    BoolRhs::PyArrayBool(py_array) => {
+                        for (&index, value) in indices.iter().zip(py_array.readonly().as_array()) {
+                            unsafe {
+                                result.push(array.get_unchecked(index as usize) != value);
+                            }
+                        }
+                    }
+                    BoolRhs::VecBool(vec) => {
+                        for (&index, value) in indices.iter().zip(vec) {
+                            unsafe {
+                                result.push(*array.get_unchecked(index as usize) != value);
+                            }
+                        }
                     }
                 }
-            }
-            BoolRhs::PyArrayBool(py_array) => {
-                for (&index, value) in indices.iter().zip(py_array.readonly().as_array()) {
-                    unsafe {
-                        result.push(array.get_unchecked(index as usize) == value);
-                    }
-                }
-            }
-            BoolRhs::VecBool(vec) => {
-                for (&index, value) in indices.iter().zip(vec) {
-                    unsafe {
-                        result.push(*array.get_unchecked(index as usize) == value);
-                    }
-                }
+                Ok(PyArray1::from_vec(py, result).into_py(py))
             }
         }
-        Ok(PyArray1::from_vec(py, result).into_py(py))
-    }
-    fn __ne__(&self, py: Python, other: BoolRhs) -> PyResult<Py<PyArray1<bool>>> {
-        let array = self.array.read().map_err(cannot_write)?;
-        let indices = self.indices.0.read().map_err(cannot_read)?;
-        let mut result = Vec::with_capacity(indices.len());
-        match other {
-            BoolRhs::BoolValue(other) => {
-                for &index in indices.iter() {
-                    unsafe {
-                        result.push(*array.get_unchecked(index as usize) != other);
-                    }
-                }
-            }
-            BoolRhs::Bool(b) => {
-                let other_array = b.array.read().map_err(cannot_read)?;
-                let other_indices = b.indices.0.read().map_err(cannot_read)?;
-                for (&index, &other_index) in indices.iter().zip(other_indices.iter()) {
-                    unsafe {
-                        result.push(
-                            array.get_unchecked(index as usize)
-                                != other_array.get_unchecked(other_index as usize),
-                        );
-                    }
-                }
-            }
-            BoolRhs::PyArrayBool(py_array) => {
-                for (&index, value) in indices.iter().zip(py_array.readonly().as_array()) {
-                    unsafe {
-                        result.push(array.get_unchecked(index as usize) != value);
-                    }
-                }
-            }
-            BoolRhs::VecBool(vec) => {
-                for (&index, value) in indices.iter().zip(vec) {
-                    unsafe {
-                        result.push(*array.get_unchecked(index as usize) != value);
-                    }
-                }
-            }
-        }
-        Ok(PyArray1::from_vec(py, result).into_py(py))
     }
 }
