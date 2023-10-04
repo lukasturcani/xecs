@@ -131,9 +131,9 @@ def test_default_values_get_used() -> None:
     assert np.all(component.b == 2.0)
     assert np.all(component.c == 3)
     assert np.all(component.d == 4)
-    assert np.all(component.e == True)
+    assert np.all(component.e == True)  # noqa: E712
     assert np.all(component.f.a == 1.0)
     assert np.all(component.f.b == 2.0)
     assert np.all(component.f.c == 3)
     assert np.all(component.f.d == 4)
-    assert np.all(component.f.e == True)
+    assert np.all(component.f.e == True)  # noqa: E712
