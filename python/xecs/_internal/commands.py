@@ -43,7 +43,7 @@ class Commands:
               entities.
         """
         indices = []
-        component_ids = []
+        component_ids = [Component.component_ids[EntityId]]
         entity_id_indices = None
         for component in components:
             component_id = Component.component_ids[component]
@@ -51,7 +51,8 @@ class Commands:
             indices.append(pool.p_spawn(num))
             if component is EntityId:
                 entity_id_indices = indices[-1]
-            component_ids.append(component_id)
+            else:
+                component_ids.append(component_id)
 
         entity_id_pool = self._world.p_get_pool(EntityId)
         if entity_id_indices is None:
@@ -61,5 +62,4 @@ class Commands:
         self._world.get_view(EntityId, entity_id_indices).value.fill(
             entity_ids
         )
-
         return indices

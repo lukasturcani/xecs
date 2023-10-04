@@ -144,7 +144,7 @@ impl UInt32 {
             .iter()
             .map(|index| unsafe { array.get_unchecked(*index as usize) })
             .collect();
-        result += &format!("<xecs.Int32 {view:?}>");
+        result += &format!("<xecs.UInt32 {view:?}>");
         Ok(result)
     }
     fn __str__(&self) -> PyResult<String> {
@@ -155,7 +155,7 @@ impl UInt32 {
             .map(|index| unsafe { array.get_unchecked(*index as usize) })
             .collect();
 
-        Ok(format!("<xecs.Int32 {view:#?}>"))
+        Ok(format!("<xecs.UInt32 {view:#?}>"))
     }
     fn __repr__(&self) -> PyResult<String> {
         self.__str__()
