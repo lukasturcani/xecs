@@ -1,6 +1,7 @@
 use crate::error_handlers::{cannot_read, cannot_write};
 use crate::index::Index;
 use numpy::PyArray1;
+use pyo3::exceptions::PyRuntimeError;
 use pyo3::prelude::*;
 use std::sync::{Arc, RwLock};
 
@@ -57,10 +58,16 @@ impl ArrayViewIndices {
     pub fn spawn(&mut self, num: Index) -> PyResult<Self> {
         let mut indices = self.0.write().map_err(cannot_write)?;
         let num_indices = indices.len() as Index;
-        indices.extend(num_indices..num_indices + num);
-        Ok(Self(Arc::new(RwLock::new(Vec::from_iter(
-            num_indices..num_indices + num,
-        )))))
+        if num_indices + num > (indices.capacity() as Index) {
+            Err(PyRuntimeError::new_err(
+                "cannot spawn more entities because pool is full",
+            ))
+        } else {
+            indices.extend(num_indices..num_indices + num);
+            Ok(Self(Arc::new(RwLock::new(Vec::from_iter(
+                num_indices..num_indices + num,
+            )))))
+        }
     }
     pub fn __len__(&self) -> PyResult<usize> {
         Ok(self.0.read().map_err(cannot_read)?.len())
