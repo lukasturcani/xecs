@@ -37,7 +37,7 @@ events:
   :hide:
 
   def main() -> None:
-      app = xx.RealTimeApp()
+      app = xx.RealTimeApp(num_entities=0)
       app.add_system(writer_system)
       app.add_system(reader_system)
       app.update()

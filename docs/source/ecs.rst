@@ -50,7 +50,7 @@ Here's a breakdown of the core concepts in an ECS:
         (personi,) = commands.spawn((Person,), 2)
         person = world.get_view(Person, personi)
 
-    app = xx.SimulationApp()
+    app = xx.SimulationApp(num_entities=2)
     app.add_startup_system(spawn_people)
     app.add_system(print_person_system)
     app.add_pool(Person.create_pool(2))
@@ -86,7 +86,7 @@ boilerplate:
       print("Hello world!")
 
   def main() -> None:
-      app = xx.RealTimeApp()
+      app = xx.RealTimeApp(num_entities=0)
       app.add_system(hello_world)
       app.update()
 
@@ -181,7 +181,7 @@ register our new systems:
 .. testcode:: first-component
 
   def main() -> None:
-      app = xx.RealTimeApp()
+      app = xx.RealTimeApp(num_entities=5)
       app.add_startup_system(spawn_people)
       app.add_system(report_person_health)
       app.add_pool(Person.create_pool(5))
@@ -333,7 +333,7 @@ the mask was ``True``.
   :hide:
 
   def main() -> None:
-      app = xx.RealTimeApp()
+      app = xx.RealTimeApp(num_entities=5)
       app.add_startup_system(spawn_people)
       app.add_system(damage_system)
       app.add_system(healing_system)
@@ -387,7 +387,7 @@ app. In this app we will:
       print(query.result())
 
   def main() -> None:
-      app = xx.RealTimeApp()
+      app = xx.RealTimeApp(num_entities=5)
       app.add_startup_system(spawn_entities)
       app.add_system(count_neighbors)
       app.add_system(print_neighbors)
@@ -404,7 +404,7 @@ app. In this app we will:
   def print_neighbors(query: xx.Query[Neighbors]) -> None:
       print(sorted(query.result().num_neighbors.numpy()))
   def main() -> None:
-      app = xx.RealTimeApp()
+      app = xx.RealTimeApp(num_entities=5)
       app.add_startup_system(spawn_entities)
       app.add_system(count_neighbors)
       app.add_system(print_neighbors)

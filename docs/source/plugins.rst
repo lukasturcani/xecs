@@ -22,7 +22,7 @@ Creating Your First Plugin
           app.add_system(my_system)
 
   def main() -> None:
-      app = xx.RealTimeApp()
+      app = xx.RealTimeApp(num_entities=0)
       app.add_plugin(FirstPlugin())
       app.update()
 
