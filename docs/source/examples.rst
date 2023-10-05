@@ -10,3 +10,4 @@ Examples
   Mouse Position <mouse_position>
   Text <text>
   Keyboard <keyboard>
+  Entity Id <entity_id>
