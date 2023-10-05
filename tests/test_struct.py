@@ -1,3 +1,4 @@
+import pytest
 import xecs as xx
 
 
@@ -9,14 +10,30 @@ class MyComponent(xx.Component):
     s: MyStruct
 
 
-def test_to_str() -> None:
-    pool = MyComponent.create_pool(2)
-    pool.p_spawn(2)
+def test_to_str(app: xx.RealTimeApp) -> None:
+    app.add_system(to_str)
+    app.update()
+
+
+def to_str(q: xx.Query[MyComponent]) -> None:
+    component = q.result()
     assert (
-        repr(pool.p_component)
-        == str(pool.p_component)
+        repr(component)
+        == str(component)
         == (
             "<MyComponent(\n    "
             "s=<MyStruct(\n        x=<xecs.Int32 [0, 0]>,\n    )>,\n)>"
         )
     )
+
+
+@pytest.fixture
+def app() -> xx.RealTimeApp:
+    app = xx.RealTimeApp(num_entities=2)
+    app.add_pool(MyComponent, 2)
+    app.add_startup_system(spawn_entities)
+    return app
+
+
+def spawn_entities(commands: xx.Commands) -> None:
+    commands.spawn((MyComponent,), 2)

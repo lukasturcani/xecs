@@ -1,6 +1,6 @@
 from typing import cast
 
-from xecs._internal.component import Component, ComponentPool, ComponentT
+from xecs._internal.component import Components, ComponentT
 from xecs._internal.resource import Resource, ResourceT
 from xecs.xecs import ArrayViewIndices
 
@@ -11,7 +11,6 @@ class World:
     """
 
     def __init__(self) -> None:
-        self._pools: dict[type[Component], ComponentPool[Component]] = {}
         self._resources: dict[type[Resource], Resource] = {}
 
     def has_resource(self, resource: type[Resource]) -> bool:
@@ -45,53 +44,24 @@ class World:
         """
         self._resources[type(resource)] = resource
 
-    def p_get_pool(
-        self,
-        component: type[ComponentT],
-    ) -> ComponentPool[ComponentT]:
-        return cast(
-            ComponentPool[ComponentT],
-            self._pools[component],
-        )
-
-    def add_pool(self, pool: ComponentPool[ComponentT]) -> None:
-        """
-        Add a component pool to the world.
-
-        Parameters:
-            pool: The component pool to add.
-        """
-        component = type(pool.p_component)
-        self._pools[component] = cast(ComponentPool[Component], pool)
-
-    def has_pool(self, component: type[Component]) -> bool:
-        """
-        Check if a pool for a given component type exists.
-
-        Returns:
-            Whether the pool exists.
-        """
-        return component in self._pools
-
     def get_view(
         self,
         component: type[ComponentT],
         indices: ArrayViewIndices | None = None,
     ) -> ComponentT:
         """
-        Get a view of some components.
+            Get a view of some components.
 
         Parameters:
-            component:
-                The component which you want to view.
-            indices:
-                The indices specifying which entities in the
-                component pool you want to view.
-        Returns:
-            A component view of your selected entities.
+                component:
+                    The component which you want to view.
+                indices:
+                    The indices specifying which entities in the
+                    component pool you want to view.
+            Returns:
+                A component view of your selected entities.
         """
+        view = self.get_resource(Components).get_component(component)
         if indices is None:
-            return self.p_get_pool(component).p_component
-        return self.p_get_pool(component).p_component.p_new_view_with_indices(
-            indices
-        )
+            return view
+        return view.p_new_view_with_indices(indices)

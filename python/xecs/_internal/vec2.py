@@ -5,7 +5,7 @@ import numpy as np
 import numpy.typing as npt
 
 from xecs._internal.struct import Struct
-from xecs.xecs import ArrayViewIndices, Float32
+from xecs.xecs import Float32
 
 if typing.TYPE_CHECKING:
     from xecs.xecs import Float32Rhs
@@ -20,53 +20,6 @@ class Vec2(Struct):
     """The x values."""
     y: Float32
     """The y values."""
-
-    @staticmethod
-    def from_numpy(array: npt.NDArray[np.float32]) -> "Vec2":
-        """
-        Create the vectors from a NumPy array.
-
-        Parameters:
-            array: The NumPy array.
-        Returns:
-            The vectors.
-        """
-        obj = Vec2.__new__(Vec2)
-        if isinstance(array, np.ndarray) and array.ndim == 2:
-            indices = ArrayViewIndices.with_capacity(len(array[0]))
-            indices.spawn(len(array[0]))
-            obj.x = Float32.p_from_numpy(array[0]).p_new_view_with_indices(
-                indices
-            )
-            obj.y = Float32.p_from_numpy(array[1]).p_new_view_with_indices(
-                indices
-            )
-        else:
-            indices = ArrayViewIndices.with_capacity(len(array))
-            obj.x = Float32.p_from_numpy(array).p_new_view_with_indices(
-                indices
-            )
-            obj.y = Float32.p_from_numpy(array).p_new_view_with_indices(
-                indices
-            )
-        obj._indices = indices
-        return obj
-
-    @staticmethod
-    def from_xy(x: float, y: float, num: int) -> "Vec2":
-        """
-        Create the vectors from x and y values.
-
-        Parameters:
-            x: The x value of the vectors.
-            y: The y value of the vectors.
-            num: The number of vectors to create.
-        Returns:
-            The vectors.
-        """
-        obj = Vec2.__new__(Vec2)
-        obj._init(Float32.p_from_value(x, num), Float32.p_from_value(y, num))
-        return obj
 
     def clamp_length(self, min: float, max: float) -> Self:
         """

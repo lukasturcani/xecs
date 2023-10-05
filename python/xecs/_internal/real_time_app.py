@@ -7,7 +7,7 @@ from typing import Any
 from xecs._internal.commands import Commands
 from xecs._internal.component import (
     Component,
-    ComponentPool,
+    Components,
     ComponentT,
     MissingPoolError,
 )
@@ -70,15 +70,19 @@ class RealTimeApp:
         self.add_resource(Events({}))
         self.add_resource(Mouse(set(), (0, 0)))
         self.add_resource(Keyboard(set()))
+        components = Components({})
+        self.add_resource(components)
 
-        self._rust_app = RustApp(
-            num_pools=len(Component.component_ids),
+        entity_id = EntityId()
+        components.add_component(entity_id)
+        self._rust_app, entity_id.value = RustApp.new(
+            entity_id_component=Component.p_component_ids[EntityId],
+            num_entities=num_entities,
+            num_pools=len(Component.p_component_ids),
             num_queries=Query.p_num_queries,
         )
         self._commands = Commands.p_new(self._rust_app, self.world)
         self._has_run_startup_systems = False
-
-        self.add_pool(EntityId.create_pool(num_entities))
 
     def add_plugin(self, plugin: RealTimeAppPlugin) -> None:
         """
@@ -143,7 +147,7 @@ class RealTimeApp:
                 (component_tuple,) = typing.get_args(parameter.annotation)
                 if issubclass(component_tuple, Component):
                     query_id = self._rust_app.add_query(
-                        first_component=Component.component_ids[
+                        first_component=Component.p_component_ids[
                             component_tuple
                         ],
                         other_components=[],
@@ -158,7 +162,7 @@ class RealTimeApp:
                 else:
                     components = typing.get_args(component_tuple)
                     component_ids = [
-                        Component.component_ids[component]
+                        Component.p_component_ids[component]
                         for component in components
                     ]
 
@@ -212,11 +216,12 @@ class RealTimeApp:
     def _run_query(self, query: Query[Any]) -> None:
         self._assert_has_pools(query.p_components)
         component_indices = self._rust_app.run_query(query.p_query_id)
+        components = self.world.get_resource(Components)
         query.p_result = tuple(
-            pool.p_component.p_new_view_with_indices(indices)
-            for pool, indices in zip(
+            component.p_new_view_with_indices(indices)
+            for component, indices in zip(
                 (
-                    self.world.p_get_pool(component)
+                    components.get_component(component)
                     for component in query.p_components
                 ),
                 iter(lambda: component_indices.next(), None),
@@ -230,8 +235,9 @@ class RealTimeApp:
         self,
         components: abc.Iterable[type[Component]],
     ) -> None:
+        pools = self.world.get_resource(Components)
         for component in components:
-            if not self.world.has_pool(component):
+            if not pools.has_component(component):
                 error = MissingPoolError(
                     f"missing a pool for the {component.__name__} component"
                 )
@@ -378,7 +384,7 @@ class RealTimeApp:
             sleep_time = frame_time.saturating_sub(start.elapsed())
             sleep(sleep_time.as_nanos() / 1e9)
 
-    def add_pool(self, pool: ComponentPool[ComponentT]) -> None:
+    def add_pool(self, component: type[ComponentT], capacity: int) -> None:
         """
         Add a preallocated pool of components.
 
@@ -386,8 +392,11 @@ class RealTimeApp:
         are spawned during runtime.
 
         Parameters:
-            pool: The component pool.
+            component: The component for which to add a pool.
+            capacity: The maximum number of components the pool can hold.
         """
-        component_id = Component.component_ids[type(pool.p_component)]
-        self._rust_app.add_pool(component_id, pool.p_capacity)
-        self.world.add_pool(pool)
+        component_id = Component.p_component_ids[component]
+        indices = self._rust_app.add_pool(component_id, capacity)
+        self.world.get_resource(Components).add_component(
+            component.p_from_indices(indices)
+        )

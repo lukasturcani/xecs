@@ -7,7 +7,7 @@ use pyo3::pyclass::CompareOp;
 use std::sync::{Arc, RwLock};
 
 #[derive(FromPyObject)]
-enum UInt32Rhs<'a> {
+pub enum UInt32Rhs<'a> {
     U32(u32),
     UInt32(PyRef<'a, UInt32>),
     PyArrayU32(&'a PyArray1<u32>),
@@ -45,7 +45,7 @@ impl UInt32 {
         })
     }
     #[staticmethod]
-    fn p_from_indices(indices: &ArrayViewIndices, default: u32) -> PyResult<Self> {
+    pub fn p_from_indices(indices: &ArrayViewIndices, default: u32) -> PyResult<Self> {
         Ok(Self {
             array: Arc::new(RwLock::new(vec![
                 default;
@@ -58,7 +58,7 @@ impl UInt32 {
             indices: ArrayViewIndices(Arc::clone(&indices.0)),
         })
     }
-    fn p_new_view_with_indices(&self, indices: &ArrayViewIndices) -> Self {
+    pub fn p_new_view_with_indices(&self, indices: &ArrayViewIndices) -> Self {
         Self {
             array: Arc::clone(&self.array),
             indices: ArrayViewIndices(Arc::clone(&indices.0)),
@@ -81,7 +81,7 @@ impl UInt32 {
     ///
     /// Parameters:
     ///     values (int | list[int]): The new values.
-    fn fill(&mut self, values: UInt32Rhs) -> PyResult<()> {
+    pub fn fill(&mut self, values: UInt32Rhs) -> PyResult<()> {
         let mut array = self.array.write().map_err(cannot_write)?;
         let indices = self.indices.0.read().map_err(cannot_read)?;
         match values {

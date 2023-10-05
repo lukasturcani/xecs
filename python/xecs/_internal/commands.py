@@ -42,24 +42,11 @@ class Commands:
               be used with this method to access the newly spawned
               entities.
         """
-        indices = []
-        component_ids = [Component.component_ids[EntityId]]
-        entity_id_indices = None
-        for component in components:
-            component_id = Component.component_ids[component]
-            pool = self._world.p_get_pool(component)
-            indices.append(pool.p_spawn(num))
-            if component is EntityId:
-                entity_id_indices = indices[-1]
-            else:
-                component_ids.append(component_id)
 
-        entity_id_pool = self._world.p_get_pool(EntityId)
-        if entity_id_indices is None:
-            entity_id_indices = entity_id_pool.p_spawn(num)
-
-        entity_ids = self._app.spawn(component_ids, num)
-        self._world.get_view(EntityId, entity_id_indices).value.fill(
-            entity_ids
+        return self._app.spawn(
+            [Component.p_component_ids[component] for component in components],
+            num,
         )
-        return indices
+
+    def despawn(self, entity_ids: EntityId) -> None:
+        self._app.despawn(entity_ids.value)

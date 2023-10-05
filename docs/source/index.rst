@@ -25,6 +25,7 @@ GitHub: https://github.com/lukasturcani/xecs
   Bool <_autosummary/xecs.Bool>
   Int32 <_autosummary/xecs.Int32>
   Float32 <_autosummary/xecs.Float32>
+  UInt32 <_autosummary/xecs.UInt32>
   PyField <_autosummary/xecs.PyField>
   Vec2 <_autosummary/xecs.Vec2>
   Transform2 <_autosummary/xecs.Transform2>

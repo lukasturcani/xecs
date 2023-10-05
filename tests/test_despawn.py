@@ -45,7 +45,7 @@ def system3(
 @pytest.fixture
 def app() -> xx.RealTimeApp:
     app = xx.RealTimeApp(num_entities=5)
-    app.add_pool(One.create_pool(5))
+    app.add_pool(One, 5)
     app.add_startup_system(spawn_entities)
     app.add_system(system1)
     app.add_system(system2)

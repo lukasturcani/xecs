@@ -4,7 +4,7 @@ A fast ECS library.
 
 from xecs._internal.bool_ import bool_
 from xecs._internal.commands import Commands
-from xecs._internal.component import Component, ComponentPool
+from xecs._internal.component import Component
 from xecs._internal.entity_id import EntityId
 from xecs._internal.events import EventReader, EventWriter
 from xecs._internal.float32 import float32
@@ -33,7 +33,7 @@ from xecs._internal.systems import (
 from xecs._internal.transform2 import Transform2
 from xecs._internal.vec2 import Vec2
 from xecs._internal.world import World
-from xecs.xecs import ArrayViewIndices, Bool, Duration, Float32, Int32
+from xecs.xecs import ArrayViewIndices, Bool, Duration, Float32, Int32, UInt32
 
 __all__ = [
     "ArrayViewIndices",
@@ -41,7 +41,6 @@ __all__ = [
     "Bool",
     "Commands",
     "Component",
-    "ComponentPool",
     "Duration",
     "EntityId",
     "EventReader",
@@ -74,6 +73,7 @@ __all__ = [
     "Systems",
     "SystemSpec",
     "Transform2",
+    "UInt32",
     "Vec2",
     "World",
 ]

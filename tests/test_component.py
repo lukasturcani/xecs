@@ -1,6 +1,7 @@
 from typing import TypeVar
 
 import numpy as np
+import pytest
 import xecs as xx
 
 T = TypeVar("T", bound=xx.Component | xx.Struct)
@@ -31,55 +32,30 @@ class MyComponent(xx.Component):
     g: xx.PyField[str] = xx.py_field(default="world")
 
 
-def test_spawning_entities_updates_views_of_children() -> None:
-    pool = MyComponent.create_pool(100)
-    pool.p_spawn(50)
-
-    component = pool.p_component
-    assert len(component) == 50
-    assert len(component.d) == 50
-    assert len(component.e) == 50
-    assert len(component.f) == 50
-    assert len(component.e.a) == 50
-    assert len(component.f.b) == 50
-    assert len(component.f.c) == 50
-    assert len(component.f.c.a) == 50
-
-    sub_view = get(component, [0, 10, 32])
-    assert len(sub_view) == 3
-    assert len(sub_view.d) == 3
-    assert len(sub_view.e) == 3
-    assert len(sub_view.f) == 3
-    assert len(sub_view.e.a) == 3
-    assert len(sub_view.f.b) == 3
-    assert len(sub_view.f.c) == 3
-    assert len(sub_view.f.c.a) == 3
-
-    pool.p_spawn(50)
-    assert len(component) == 100
-    assert len(component.d) == 100
-    assert len(component.e) == 100
-    assert len(component.f) == 100
-    assert len(component.e.a) == 100
-    assert len(component.f.b) == 100
-    assert len(component.f.c) == 100
-    assert len(component.f.c.a) == 100
-
-    assert len(sub_view) == 3
-    assert len(sub_view.d) == 3
-    assert len(sub_view.e) == 3
-    assert len(sub_view.f) == 3
-    assert len(sub_view.e.a) == 3
-    assert len(sub_view.f.b) == 3
-    assert len(sub_view.f.c) == 3
-    assert len(sub_view.f.c.a) == 3
+@pytest.fixture
+def app() -> xx.RealTimeApp:
+    app = xx.RealTimeApp(num_entities=20)
+    app.add_pool(MyComponent, 10)
+    app.add_pool(ComponentWithDefaults, 10)
+    app.add_startup_system(spawn_entities)
+    return app
 
 
-def test_struct_getitem_creates_shared_view() -> None:
-    pool = MyComponent.create_pool(10)
-    pool.p_spawn(10)
+def spawn_entities(commands: xx.Commands) -> None:
+    commands.spawn((MyComponent,), 10)
+    commands.spawn((ComponentWithDefaults,), 10)
 
-    struct = pool.p_component.f
+
+def test_struct_getitem_creates_shared_view(app: xx.RealTimeApp) -> None:
+    app.add_system(struct_getitem_creates_shared_view)
+    app.update()
+
+
+def struct_getitem_creates_shared_view(
+    component_query: xx.Query[MyComponent],
+) -> None:
+    component = component_query.result()
+    struct = component.f
     assert len(struct) == 10
     assert len(struct.b) == 10
     assert len(struct.c) == 10
@@ -98,10 +74,15 @@ def test_struct_getitem_creates_shared_view() -> None:
     assert np.sum(sub_view.c.a.numpy()) == 5
 
 
-def test_py_field_default_value_is_used() -> None:
-    pool = MyComponent.create_pool(10)
-    pool.p_spawn(10)
-    component = pool.p_component
+def test_py_field_default_value_is_used(app: xx.RealTimeApp) -> None:
+    app.add_system(py_field_default_value_is_used)
+    app.update()
+
+
+def py_field_default_value_is_used(
+    query: xx.Query[MyComponent],
+) -> None:
+    component = query.result()
     assert component.f.h.get(6) == "hello"
     assert component.g.get(6) == "world"
 
@@ -123,10 +104,13 @@ class ComponentWithDefaults(xx.Component):
     f: StructWithDefaults
 
 
-def test_default_values_get_used() -> None:
-    pool = ComponentWithDefaults.create_pool(10)
-    pool.p_spawn(10)
-    component = pool.p_component
+def test_default_values_get_used(app: xx.RealTimeApp) -> None:
+    app.add_system(default_values_get_used)
+    app.update()
+
+
+def default_values_get_used(query: xx.Query[ComponentWithDefaults]) -> None:
+    component = query.result()
     assert np.all(component.a == 1.0)
     assert np.all(component.b == 2.0)
     assert np.all(component.c == 3)

@@ -1,6 +1,13 @@
 import numpy as np
+import numpy.typing as npt
 import pytest
 import xecs as xx
+
+
+def indices(length: int, indices: list[int]) -> npt.NDArray[np.bool_]:
+    mask = np.zeros(length, dtype=np.bool_)
+    mask[indices] = True
+    return mask
 
 
 class One(xx.Component):
@@ -63,6 +70,45 @@ def system_with_resource(params: Params, query: xx.Query[tuple[One]]) -> None:
     assert params.z == "hi"
 
 
+def test_spawning_to_a_full_array_causes_error(app: xx.RealTimeApp) -> None:
+    app.add_system(spawning_to_a_full_array_causes_error)
+    app.update()
+
+
+def spawning_to_a_full_array_causes_error(commands: xx.Commands) -> None:
+    commands.spawn((One,), 10)
+    with pytest.raises(
+        RuntimeError,
+        match="cannot spawn more entities because pool is full",
+    ):
+        commands.spawn((One,), 1)
+
+
+def test_new_view_uses_same_array(app: xx.RealTimeApp) -> None:
+    app.add_system(new_view_uses_same_array)
+    app.update()
+
+
+def new_view_uses_same_array(q: xx.Query[One]) -> None:
+    array_1 = q.result().x
+    array_2 = array_1[
+        np.array(
+            [True, True, True, True, True, False, False, False, False, False]
+        )
+    ]
+
+    assert len(array_1) == 10
+    assert len(array_2) == 5
+    assert array_1.numpy()[2] == array_2.numpy()[2] == 0
+    assert array_1.numpy()[4] == array_2.numpy()[4] == 0
+
+    array_1[indices(10, [2])] = 1
+    assert array_1.numpy()[2] == array_2.numpy()[2] == 1
+
+    array_2[indices(5, [4])] = 2
+    assert array_1.numpy()[4] == array_2.numpy()[4] == 2
+
+
 def spawning_sytem(world: xx.World, commands: xx.Commands) -> None:
     (one_indices, two_indices) = commands.spawn((One, Two), 2)
     one = world.get_view(One, one_indices)
@@ -89,7 +135,7 @@ def spawn_entities(commands: xx.Commands) -> None:
 @pytest.fixture
 def app() -> xx.RealTimeApp:
     app = xx.RealTimeApp(num_entities=30)
-    app.add_pool(One.create_pool(20))
-    app.add_pool(Two.create_pool(10))
+    app.add_pool(One, 20)
+    app.add_pool(Two, 10)
     app.add_startup_system(spawn_entities)
     return app
