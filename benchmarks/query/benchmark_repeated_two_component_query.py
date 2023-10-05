@@ -43,7 +43,7 @@ def app(request: pytest.FixtureRequest) -> xx.RealTimeApp:
         commands.spawn(components=(Two,), num=5)
         commands.spawn(components=(One, Two), num=request.param - 10)
 
-    app = xx.RealTimeApp()
+    app = xx.RealTimeApp(num_entities=request.param)
     app.add_startup_system(startup_system)
     app.add_pool(One.create_pool(request.param))
     app.add_pool(Two.create_pool(request.param))

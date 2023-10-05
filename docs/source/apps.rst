@@ -17,7 +17,7 @@ Apps
   import xecs as xx
 
   def main() -> None:
-      app = xx.RealTimeApp()
+      app = xx.RealTimeApp(num_entities=10)
       app.update()
 
   if __name__ == "__main__":
@@ -35,7 +35,7 @@ Apps
   import xecs as xx
 
   def main() -> None:
-      app = xx.SimulationApp()
+      app = xx.SimulationApp(num_entities=10)
       app.update(xx.Duration.from_millis(1000))
 
   if __name__ == "__main__":

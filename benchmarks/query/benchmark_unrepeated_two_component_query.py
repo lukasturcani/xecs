@@ -75,7 +75,7 @@ def fixed_overlap_app_one_grows(
         commands.spawn(components=(Two,), num=5)
         commands.spawn(components=(One, Two), num=5)
 
-    app = xx.RealTimeApp()
+    app = xx.RealTimeApp(num_entities=request.param + 5)
     app.add_startup_system(startup_system)
     app.add_pool(One.create_pool(request.param))
     app.add_pool(Two.create_pool(request.param))
@@ -95,7 +95,7 @@ def fixed_overlap_app_both_grow(
         commands.spawn(components=(Two,), num=request.param - 5)
         commands.spawn(components=(One, Two), num=5)
 
-    app = xx.RealTimeApp()
+    app = xx.RealTimeApp(num_entities=2 * request.param)
     app.add_startup_system(startup_system)
     app.add_pool(One.create_pool(request.param))
     app.add_pool(Two.create_pool(request.param))
@@ -113,7 +113,7 @@ def increasing_overlap_app(request: pytest.FixtureRequest) -> xx.RealTimeApp:
         commands.spawn(components=(Two,), num=5)
         commands.spawn(components=(One, Two), num=request.param - 10)
 
-    app = xx.RealTimeApp()
+    app = xx.RealTimeApp(num_entities=request.param)
     app.add_startup_system(startup_system)
     app.add_pool(One.create_pool(request.param))
     app.add_pool(Two.create_pool(request.param))

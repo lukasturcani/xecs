@@ -33,7 +33,7 @@ to our app:
 .. testcode:: resources
 
   def main() -> None:
-      app = xx.RealTimeApp()
+      app = xx.RealTimeApp(num_entities=0)
       app.add_resource(
           Params(
               max_velocity=100.0,

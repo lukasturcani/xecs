@@ -1,11 +1,11 @@
 use crate::array_view_indices::MultipleArrayViewIndices;
 use crate::component_id::ComponentId;
 use crate::component_pool::ComponentPool;
-use crate::entity_id::EntityId;
 use crate::index::Index;
 use crate::map::Map;
 use crate::query::Query;
 use crate::query_id::QueryId;
+use numpy::PyArray1;
 use pyo3::prelude::*;
 
 #[pyclass]
@@ -20,10 +20,8 @@ pub struct RustApp {
 
 #[pymethods]
 impl RustApp {
-    fn spawn(&mut self, components: Vec<ComponentId>, num: Index) {
-        let entity_ids = (self.num_spawned_entities..self.num_spawned_entities + num)
-            .map(EntityId)
-            .collect();
+    fn spawn(&mut self, py: Python, components: Vec<ComponentId>, num: Index) -> Py<PyArray1<u32>> {
+        let entity_ids = (self.num_spawned_entities..self.num_spawned_entities + num).collect();
         self.num_spawned_entities += num;
 
         components.iter().for_each(|component_id| {
@@ -31,6 +29,7 @@ impl RustApp {
                 pool.add_entities(&entity_ids);
             }
         });
+        PyArray1::from_vec(py, entity_ids).to_owned()
     }
 
     #[new]

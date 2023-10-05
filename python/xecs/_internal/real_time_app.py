@@ -11,6 +11,7 @@ from xecs._internal.component import (
     ComponentT,
     MissingPoolError,
 )
+from xecs._internal.entity_id import EntityId
 from xecs._internal.events import EventReader, Events, EventWriter
 from xecs._internal.input import Keyboard, Mouse
 from xecs._internal.query import Query
@@ -54,9 +55,12 @@ class RealTimeAppPlugin:
 class RealTimeApp:
     """
     An app which runs in real time.
+
+    Parameters:
+        num_entities: The maximum number of entities which can be spawned.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, num_entities: int) -> None:
         self.world = World()
         self.add_resource(PendingStartupSystems([]))
         self.add_resource(StartupSystems([]))
@@ -73,6 +77,8 @@ class RealTimeApp:
         )
         self._commands = Commands.p_new(self._rust_app, self.world)
         self._has_run_startup_systems = False
+
+        self.add_pool(EntityId.create_pool(num_entities))
 
     def add_plugin(self, plugin: RealTimeAppPlugin) -> None:
         """

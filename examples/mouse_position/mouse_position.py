@@ -3,7 +3,7 @@ from xecs_pygame import Circle, Display, PyGamePlugin
 
 
 def main() -> None:
-    app = xx.RealTimeApp()
+    app = xx.RealTimeApp(num_entities=1)
     app.add_plugin(PyGamePlugin())
     app.add_startup_system(spawn_circle)
     app.add_system(update_circle)

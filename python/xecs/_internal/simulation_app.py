@@ -10,6 +10,7 @@ from xecs._internal.component import (
     ComponentT,
     MissingPoolError,
 )
+from xecs._internal.entity_id import EntityId
 from xecs._internal.events import EventReader, Events, EventWriter
 from xecs._internal.query import Query
 from xecs._internal.resource import Resource
@@ -54,7 +55,7 @@ class SimulationApp:
     An app which runs as fast as possible.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, num_entities: int) -> None:
         self.world = World()
         self.add_resource(PendingStartupSystems([]))
         self.add_resource(StartupSystems([]))
@@ -69,6 +70,8 @@ class SimulationApp:
         )
         self._commands = Commands.p_new(self._rust_app, self.world)
         self._has_run_startup_systems = False
+
+        self.add_pool(EntityId.create_pool(num_entities))
 
     def add_plugin(self, plugin: SimulationAppPlugin) -> None:
         """

@@ -109,7 +109,7 @@ class Ui(xx.Resource):
 
 
 def main() -> None:
-    app = xx.RealTimeApp()
+    app = xx.RealTimeApp(num_entities=110)
     num_boids = 100
     app.add_plugin(PyGamePlugin())
     params = Params(

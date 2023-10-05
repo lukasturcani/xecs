@@ -1,6 +1,7 @@
 from collections.abc import Iterable
 
 from xecs._internal.component import Component
+from xecs._internal.entity_id import EntityId
 from xecs._internal.world import World
 from xecs.xecs import ArrayViewIndices, RustApp
 
@@ -42,11 +43,23 @@ class Commands:
               entities.
         """
         indices = []
-        component_ids = []
+        component_ids = [Component.component_ids[EntityId]]
+        entity_id_indices = None
         for component in components:
             component_id = Component.component_ids[component]
             pool = self._world.p_get_pool(component)
             indices.append(pool.p_spawn(num))
-            component_ids.append(component_id)
-        self._app.spawn(component_ids, num)
+            if component is EntityId:
+                entity_id_indices = indices[-1]
+            else:
+                component_ids.append(component_id)
+
+        entity_id_pool = self._world.p_get_pool(EntityId)
+        if entity_id_indices is None:
+            entity_id_indices = entity_id_pool.p_spawn(num)
+
+        entity_ids = self._app.spawn(component_ids, num)
+        self._world.get_view(EntityId, entity_id_indices).value.fill(
+            entity_ids
+        )
         return indices

@@ -45,5 +45,5 @@ def test_events(app: xx.RealTimeApp) -> None:
 
 @pytest.fixture
 def app() -> xx.RealTimeApp:
-    app = xx.RealTimeApp()
+    app = xx.RealTimeApp(num_entities=0)
     return app
