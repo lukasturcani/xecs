@@ -35,6 +35,7 @@ dev = [
   "furo",
   "xecs-pygame",
   "sphinxcontrib-youtube",
+  "polars",
 ]
 
 
