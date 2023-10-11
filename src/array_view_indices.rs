@@ -34,13 +34,19 @@ impl MultipleArrayViewIndices {
 
 /// Indices into the component pool which form the array view.
 #[pyclass(module = "xecs")]
-pub struct ArrayViewIndices(pub Arc<RwLock<Vec<Index>>>);
+pub struct ArrayViewIndices {
+    pub indices: Arc<RwLock<Vec<Index>>>,
+    pub entity_ids: Arc<RwLock<Vec<Index>>>,
+}
 
 impl ArrayViewIndices {
     pub fn with_capacity(capacity: usize) -> Self {
-        Self(Arc::new(RwLock::new(Vec::with_capacity(capacity))))
+        Self {
+            indices: Arc::new(RwLock::new(Vec::with_capacity(capacity))),
+            entity_ids: Arc::new(RwLock::new(Vec::with_capacity(capacity))),
+        }
     }
-    pub fn spawn(&mut self, num: Index) -> PyResult<Self> {
+    pub fn spawn(&mut self, entity_ids: &[EntityId]) -> PyResult<Self> {
         let mut indices = self.0.write().map_err(cannot_write)?;
         let num_indices = indices.len() as Index;
         if num_indices + num > (indices.capacity() as Index) {
