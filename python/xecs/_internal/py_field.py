@@ -65,4 +65,10 @@ class PyField(Generic[T]):
 
 
 def py_field(*, default: T) -> PyField[T]:
+    """
+    Provide additional data about a component field.
+
+    Parameters:
+        default: The default value for the field.
+    """
     return cast(PyField[T], default)
