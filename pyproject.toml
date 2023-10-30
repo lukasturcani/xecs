@@ -5,6 +5,7 @@ build-backend = "maturin"
 [project]
 name = "xecs"
 dependencies = [
+  "polars",
   "numpy",
 ]
 requires-python = ">=3.11"

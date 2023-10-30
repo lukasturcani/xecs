@@ -2,7 +2,10 @@ import typing
 from collections.abc import Sequence
 from typing import cast
 
+import polars as pl
+
 from xecs._internal.component import Component
+from xecs._internal.world import World
 from xecs.xecs import product_2
 
 if typing.TYPE_CHECKING:
@@ -12,6 +15,51 @@ T = typing.TypeVar("T")
 
 
 class Query(typing.Generic[T]):
+    p_world: World
+    p_df: pl.DataFrame
+
+    @staticmethod
+    def p_new(world: World) -> "Query[T]":
+        query = Query()
+        query.p_df = df
+        query.p_world = world
+        return query
+
+    def keep_if(self, predicate: pl.Expr) -> "Query[T]":
+        """
+        Keep only the entities matching the predicate.
+
+        Parameters:
+            predicate: Defines entities to keep.
+        Returns:
+            A new query holding matching entities.
+        """
+        return Query.p_new(self.p_df.filter(predicate))
+
+    def drop_if(self, predicate: pl.Expr) -> "Query[T]":
+        """
+        Drop the entities matching the predicate.
+
+        Parameters:
+            predicate: Defines entities to drop.
+        Returns:
+            A new query holding matching entities.
+        """
+        return Query.p_new(self.p_df.filter(predicate.not_()))
+
+    def apply(self, *expressions: pl.Expr) -> "Query[T]":
+        """
+        Apply an expression to the query.
+
+        Parameters:
+            expressions: The expressions to apply.
+        Returns:
+            A new query holding the result of the expression.
+        """
+        return Query.p_new(self.p_df.select(expr))
+
+
+class _Query(typing.Generic[T]):
     """
     A system parameter providing selective access to component data.
     """

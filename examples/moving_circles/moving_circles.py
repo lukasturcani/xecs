@@ -3,6 +3,10 @@ import xecs as xx
 from xecs_pygame import Circle, PyGamePlugin, Rectangle
 
 
+class MyComponent(xx.Component):
+    number: xx.Int32
+
+
 class Velocity(xx.Component):
     value: xx.Vec2
 
@@ -66,8 +70,10 @@ def spawn_circles(
 
 def move_circles(
     params: Params,
-    query: xx.Query[tuple[xx.Transform2, Velocity]],
+    circles: xx.Query[tuple[xx.Transform2, Velocity]],
 ) -> None:
+    circles.keep_if(xx.Transform2.translation.x < params.max_position)
+
     (transform, velocity) = query.result()
     transform.translation += velocity.value * (
         params.time_step.as_nanos() / 1e9

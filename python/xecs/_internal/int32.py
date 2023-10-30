@@ -1,6 +1,18 @@
-from typing import cast
+from typing import Any, cast
 
-from xecs.xecs import Int32
+import polars as pl
+
+
+class Int32:
+    def __get__(self, instance: Any, owner: type | None = None) -> pl.Expr:
+        return pl.col(self._name)
+
+    def __set_name__(self, owner: type, name: str) -> None:
+        self._name = name
+
+    @classmethod
+    def iadd(cls):
+        pass
 
 
 def int32(*, default: int) -> Int32:
